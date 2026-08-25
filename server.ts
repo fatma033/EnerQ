@@ -1,6 +1,5 @@
 import express from "express";
 import path from "path";
-import { createServer as createViteServer } from "vite";
 import OpenAI from "openai";
 import dotenv from "dotenv";
 import { retrieveKnowledge, buildGroundingContext, toCitations } from "./src/knowledge/retriever";
@@ -8,7 +7,7 @@ import { retrieveKnowledge, buildGroundingContext, toCitations } from "./src/kno
 dotenv.config();
 
 const app = express();
-const PORT = 3000;
+const PORT = Number(process.env.PORT) || 3000;
 
 // Ollama exposes an OpenAI-compatible Chat Completions API, so the same
 // OpenAI SDK talks to a fully local, free, key-less LLM — nothing leaves
@@ -141,8 +140,10 @@ function generateDeterministicAnalysis(stage: string, facility: any, userPrompt?
 }
 
 async function startServer() {
-  // Vite middleware for development
+  // Vite middleware for development — dynamically imported so the
+  // production bundle never pulls Vite (a dev-only dependency) in.
   if (process.env.NODE_ENV !== "production") {
+    const { createServer: createViteServer } = await import("vite");
     const vite = await createViteServer({
       server: { middlewareMode: true },
       appType: "spa",
