@@ -18,6 +18,9 @@ import { EnergyCalculationEngine } from "../simulation/engine";
 // during a live demo instead of requiring you to wait real days.
 const REMINDER_DELAY_MS = 16000;
 const ESCALATION_DELAY_MS = 30000;
+const AUTONOMOUS_EXECUTION_DELAY_MS = 3500;
+
+export type AutonomyMode = "approval" | "autonomous";
 
 export interface AgentContext {
   facility: FacilityState;
@@ -38,6 +41,7 @@ export interface AgentContext {
   isRunningAutonomous: boolean;
   activeScenarioId: "BASELINE" | "CURRENT" | "A" | "B" | "C";
   followUp: FollowUpState;
+  autonomyMode: AutonomyMode;
 }
 
 export class EnerQAgentOrchestrator {
@@ -46,6 +50,7 @@ export class EnerQAgentOrchestrator {
   private abortController: AbortController | null = null;
   private reminderTimer: ReturnType<typeof setTimeout> | null = null;
   private escalationTimer: ReturnType<typeof setTimeout> | null = null;
+  private autoExecuteTimer: ReturnType<typeof setTimeout> | null = null;
 
   constructor(initialFacility: FacilityState) {
     this.state = {
@@ -67,7 +72,13 @@ export class EnerQAgentOrchestrator {
       isRunningAutonomous: false,
       activeScenarioId: "CURRENT",
       followUp: { status: "idle", responsibleTeam: "Facilities & Operations Team", reminderCount: 0 },
+      autonomyMode: "approval",
     };
+  }
+
+  public setAutonomyMode(mode: AutonomyMode) {
+    this.state.autonomyMode = mode;
+    this.notify();
   }
 
   private clearFollowUpTimers() {
@@ -78,6 +89,10 @@ export class EnerQAgentOrchestrator {
     if (this.escalationTimer) {
       clearTimeout(this.escalationTimer);
       this.escalationTimer = null;
+    }
+    if (this.autoExecuteTimer) {
+      clearTimeout(this.autoExecuteTimer);
+      this.autoExecuteTimer = null;
     }
   }
 
@@ -415,6 +430,8 @@ export class EnerQAgentOrchestrator {
     const symbol = this.state.facility.config.currency_symbol;
     const solC = this.state.solutions?.C;
 
+    const isAutonomous = this.state.autonomyMode === "autonomous";
+
     this.addLog(
       "RECOMMEND",
       "recommend",
@@ -426,10 +443,28 @@ export class EnerQAgentOrchestrator {
         { label: "Risk Rating", value: "Low / Medium" },
         { label: "Responsible", value: this.state.followUp.responsibleTeam },
       ],
-      "Awaiting User Approval"
+      isAutonomous ? "Autonomous Execution Authorized" : "Awaiting User Approval"
     );
 
-    this.startFollowUp();
+    if (isAutonomous) {
+      // Level 3: for a low-risk, pre-authorized action, the agent proceeds
+      // without waiting on a human — this is the "insight -> decision ->
+      // action" jump the concept explicitly calls out as what separates
+      // an agent from a recommendation system. Still logged transparently.
+      this.addLog(
+        "RECOMMEND",
+        "info",
+        "Autonomous Action: No Manual Approval Required",
+        `Risk score ${solC?.risk_score ?? "—"}/10 falls within the pre-authorized autonomous-action threshold. EnerQ will implement Solution C automatically in ${(AUTONOMOUS_EXECUTION_DELAY_MS / 1000).toFixed(1)}s.`,
+        [{ label: "Authorization Level", value: "Level 3 — Autonomous" }],
+        "Executing"
+      );
+      this.autoExecuteTimer = setTimeout(() => {
+        this.stepVerify();
+      }, AUTONOMOUS_EXECUTION_DELAY_MS);
+    } else {
+      this.startFollowUp();
+    }
 
     // Call server-side RAG + Ollama reasoning for rich, source-grounded explainability
     const { text, citations, source } = await this.fetchInsight("recommend", {

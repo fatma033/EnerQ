@@ -15,13 +15,16 @@ import {
   BellRing,
   AlertOctagon,
   UserCheck,
+  Zap,
 } from "lucide-react";
 import { ProposedSolution, FacilityState, FollowUpState } from "../types";
+import { AutonomyMode } from "../agent/orchestrator";
 
 interface RecommendationCardProps {
   solution: ProposedSolution;
   facility: FacilityState;
   followUp: FollowUpState;
+  autonomyMode: AutonomyMode;
   onApprove: () => void;
   onReviewAlternatives: () => void;
   isVerified?: boolean;
@@ -31,6 +34,7 @@ export const RecommendationCard: React.FC<RecommendationCardProps> = ({
   solution,
   facility,
   followUp,
+  autonomyMode,
   onApprove,
   onReviewAlternatives,
   isVerified,
@@ -141,6 +145,17 @@ export const RecommendationCard: React.FC<RecommendationCardProps> = ({
               </div>
               <p className="text-xs text-slate-300">
                 Virtual facility verified at {facility.current_kwh} kWh/day.
+              </p>
+            </div>
+          ) : autonomyMode === "autonomous" ? (
+            <div className="p-4 rounded-xl bg-amber-950/60 border border-amber-600/50 text-center space-y-2">
+              <div className="w-6 h-6 mx-auto border-2 border-amber-400 border-t-transparent rounded-full animate-spin" />
+              <div className="text-sm font-bold text-amber-300 flex items-center justify-center gap-1.5">
+                <Zap className="w-4 h-4 fill-current" />
+                Executing Autonomously
+              </div>
+              <p className="text-xs text-slate-300">
+                Level 3 authorization — no manual approval required. Implementing now.
               </p>
             </div>
           ) : (

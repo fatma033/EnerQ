@@ -53,6 +53,15 @@ export default function App() {
     };
   }, [orchestrator]);
 
+  // Auto-open the Verification modal whenever the pipeline reaches COMPLETED,
+  // whether that came from a manual Approve click or an autonomous
+  // (Level 3) auto-execution — the confirmation moment matters either way.
+  useEffect(() => {
+    if (context.currentStage === "COMPLETED") {
+      setIsVerificationOpen(true);
+    }
+  }, [context.currentStage]);
+
   // Handler: Run full autonomous 9-step pipeline
   const handleRunFullAnalysis = () => {
     orchestrator.runAutonomousPipeline(1100);
@@ -145,6 +154,7 @@ export default function App() {
         onOpenSettings={() => setIsSettingsOpen(true)}
         onOpenReport={() => setIsReportOpen(true)}
         onToggleChat={() => setIsChatOpen(!isChatOpen)}
+        onSetAutonomyMode={(mode) => orchestrator.setAutonomyMode(mode)}
       />
 
       {/* Main Container */}
@@ -183,6 +193,7 @@ export default function App() {
               solution={chosenSolution}
               facility={context.facility}
               followUp={context.followUp}
+              autonomyMode={context.autonomyMode}
               onApprove={handleApprove}
               onReviewAlternatives={() => setActiveTab("SOLUTIONS")}
               isVerified={isVerified}

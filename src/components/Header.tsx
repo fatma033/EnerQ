@@ -11,8 +11,10 @@ import {
   CheckCircle2,
   AlertTriangle,
   BrainCircuit,
+  Handshake,
+  Zap as ZapAuto,
 } from "lucide-react";
-import { AgentContext } from "../agent/orchestrator";
+import { AgentContext, AutonomyMode } from "../agent/orchestrator";
 
 interface HeaderProps {
   context: AgentContext;
@@ -22,6 +24,7 @@ interface HeaderProps {
   onOpenSettings: () => void;
   onOpenReport: () => void;
   onToggleChat: () => void;
+  onSetAutonomyMode: (mode: AutonomyMode) => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -32,8 +35,9 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenSettings,
   onOpenReport,
   onToggleChat,
+  onSetAutonomyMode,
 }) => {
-  const { facility, currentStage, isRunningAutonomous } = context;
+  const { facility, currentStage, isRunningAutonomous, autonomyMode } = context;
   const currencySymbol = facility.config.currency_symbol;
 
   return (
@@ -70,6 +74,35 @@ export const Header: React.FC<HeaderProps> = ({
 
         {/* Right: Actions & Agent Controls */}
         <div className="flex items-center flex-wrap gap-2 sm:gap-3">
+          {/* Autonomy Level Toggle */}
+          <div
+            title="Controls what happens after EnerQ decides on a recommendation: wait for human approval, or execute autonomously for pre-authorized low-risk actions."
+            className="hidden lg:flex items-center gap-0.5 p-0.5 rounded-lg bg-slate-800/90 border border-slate-700/80"
+          >
+            <button
+              onClick={() => onSetAutonomyMode("approval")}
+              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-semibold transition-all ${
+                autonomyMode === "approval"
+                  ? "bg-teal-600 text-white shadow-sm"
+                  : "text-slate-400 hover:text-slate-200"
+              }`}
+            >
+              <Handshake className="w-3.5 h-3.5" />
+              <span>Approval</span>
+            </button>
+            <button
+              onClick={() => onSetAutonomyMode("autonomous")}
+              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-semibold transition-all ${
+                autonomyMode === "autonomous"
+                  ? "bg-amber-500 text-slate-950 shadow-sm"
+                  : "text-slate-400 hover:text-slate-200"
+              }`}
+            >
+              <ZapAuto className="w-3.5 h-3.5 fill-current" />
+              <span>Autonomous</span>
+            </button>
+          </div>
+
           {/* Reasoning Engine Transparency Badge */}
           {engineStatus && (
             <div
