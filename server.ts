@@ -114,7 +114,8 @@ ${userPrompt || `Provide an autonomous agent assessment for the '${stage || "rec
       citations,
     });
   } catch (error: any) {
-    console.error("Ollama call failed, falling back to deterministic response:", error);
+    const reason = error?.cause?.code === "ECONNREFUSED" ? "Ollama not running locally" : error?.message || "unknown error";
+    console.warn(`Ollama unreachable (${reason}) — using deterministic fallback.`);
     return res.json({
       success: true,
       source: "deterministic_fallback",
