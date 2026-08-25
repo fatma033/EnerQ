@@ -377,15 +377,17 @@ export class EnerQAgentOrchestrator {
     if (!this.state.solutions) {
       this.stepGenerateSolutions();
     }
+    const { A, B, C } = this.state.solutions!;
+    const leader = [A, B, C].reduce((best, s) => (s.decision_score > best.decision_score ? s : best));
     this.addLog(
       "COMPARE",
       "decide",
       "Stage 6: Multi-Attribute Tradeoff Evaluation",
-      "Assessing energy savings vs occupant comfort risk vs operational complexity. Solution C delivers highest savings with acceptable Low/Medium risk.",
+      `Weighted scoring across energy savings (60%), operational risk (30%), and occupant comfort (10%). Solution ${leader.id} scores highest at ${leader.decision_score}/100.`,
       [
-        { label: "Sol A Score", value: `${this.state.solutions?.A.decision_score}/100 (Safe, partial saving)` },
-        { label: "Sol B Score", value: `${this.state.solutions?.B.decision_score}/100 (Thermal drift risk)` },
-        { label: "Sol C Score", value: `${this.state.solutions?.C.decision_score}/100 (Optimal Winner)` },
+        { label: "Sol A Score", value: `${A.decision_score}/100${A.id === leader.id ? " (Leading)" : ""}` },
+        { label: "Sol B Score", value: `${B.decision_score}/100${B.id === leader.id ? " (Leading)" : ""}` },
+        { label: "Sol C Score", value: `${C.decision_score}/100${C.id === leader.id ? " (Leading)" : ""}` },
       ],
       "Decision Matrix Computed"
     );
@@ -400,16 +402,20 @@ export class EnerQAgentOrchestrator {
     if (!this.state.solutions) {
       this.stepGenerateSolutions();
     }
-    const chosen = this.state.solutions!.C;
+    const { A, B, C } = this.state.solutions!;
+    // Actually select the highest-scoring candidate — not hardcoded to any
+    // particular id — so the decision follows whatever the multi-criteria
+    // engine computed for the current facility/solution parameters.
+    const chosen = [A, B, C].reduce((best, s) => (s.decision_score > best.decision_score ? s : best));
     this.state.chosenSolution = chosen;
     this.addLog(
       "DECIDE",
       "decide",
       "Stage 7: Optimal Action Selected",
-      `Selected Solution C: Automated 18:00 HVAC Schedule Cutoff + Workstation Sleep Policies.`,
+      `Selected Solution ${chosen.id}: ${chosen.name}.`,
       [
-        { label: "Selected Option", value: "Solution C (Combined)" },
-        { label: "Decision Confidence", value: "96 / 100" },
+        { label: "Selected Option", value: `Solution ${chosen.id} (${chosen.short_label})` },
+        { label: "Decision Confidence", value: `${chosen.decision_score} / 100` },
       ],
       "Decision Reached"
     );
@@ -423,12 +429,13 @@ export class EnerQAgentOrchestrator {
   public async stepRecommend(): Promise<void> {
     this.state.currentStage = "RECOMMEND";
     if (!this.state.chosenSolution && this.state.solutions) {
-      this.state.chosenSolution = this.state.solutions.C;
+      const { A, B, C } = this.state.solutions;
+      this.state.chosenSolution = [A, B, C].reduce((best, s) => (s.decision_score > best.decision_score ? s : best));
     }
-    this.state.activeScenarioId = "C";
+    const chosen = this.state.chosenSolution;
+    this.state.activeScenarioId = (chosen?.id as "A" | "B" | "C") ?? "C";
 
     const symbol = this.state.facility.config.currency_symbol;
-    const solC = this.state.solutions?.C;
 
     const isAutonomous = this.state.autonomyMode === "autonomous";
 
@@ -436,11 +443,11 @@ export class EnerQAgentOrchestrator {
       "RECOMMEND",
       "recommend",
       "Stage 8: Synthesized Actionable Recommendation",
-      `EnerQ recommends executing Solution C. Recaptures ${solC?.estimated_saving_kwh} kWh/day (${solC?.estimated_saving_pct}%), saving ${symbol}${solC?.daily_cost_saving}/day (${symbol}${solC?.monthly_cost_saving}/month) with zero disruption to business hours.`,
+      `EnerQ recommends executing Solution ${chosen?.id}. Recaptures ${chosen?.estimated_saving_kwh} kWh/day (${chosen?.estimated_saving_pct}%), saving ${symbol}${chosen?.daily_cost_saving}/day (${symbol}${chosen?.monthly_cost_saving}/month) with zero disruption to business hours.`,
       [
-        { label: "Expected Daily Saving", value: `${solC?.estimated_saving_kwh} kWh (${solC?.estimated_saving_pct}%)` },
-        { label: "Monthly Cost Recaptured", value: `${symbol}${solC?.monthly_cost_saving}` },
-        { label: "Risk Rating", value: "Low / Medium" },
+        { label: "Expected Daily Saving", value: `${chosen?.estimated_saving_kwh} kWh (${chosen?.estimated_saving_pct}%)` },
+        { label: "Monthly Cost Recaptured", value: `${symbol}${chosen?.monthly_cost_saving}` },
+        { label: "Risk Rating", value: chosen?.risk_level ?? "—" },
         { label: "Responsible", value: this.state.followUp.responsibleTeam },
       ],
       isAutonomous ? "Autonomous Execution Authorized" : "Awaiting User Approval"
@@ -455,7 +462,7 @@ export class EnerQAgentOrchestrator {
         "RECOMMEND",
         "info",
         "Autonomous Action: No Manual Approval Required",
-        `Risk score ${solC?.risk_score ?? "—"}/10 falls within the pre-authorized autonomous-action threshold. EnerQ will implement Solution C automatically in ${(AUTONOMOUS_EXECUTION_DELAY_MS / 1000).toFixed(1)}s.`,
+        `Risk score ${chosen?.risk_score ?? "—"}/10 falls within the pre-authorized autonomous-action threshold. EnerQ will implement Solution ${chosen?.id} automatically in ${(AUTONOMOUS_EXECUTION_DELAY_MS / 1000).toFixed(1)}s.`,
         [{ label: "Authorization Level", value: "Level 3 — Autonomous" }],
         "Executing"
       );

@@ -139,7 +139,12 @@ export default function App() {
     return context.solutions || EnergyCalculationEngine.generateSolutions(context.facility);
   }, [context.solutions, context.facility]);
 
-  const chosenSolution = context.chosenSolution || solutions.C;
+  // The best-scoring candidate, computed — not assumed to be any particular id
+  const bestSolution = useMemo(() => {
+    return [solutions.A, solutions.B, solutions.C].reduce((best, s) => (s.decision_score > best.decision_score ? s : best));
+  }, [solutions]);
+
+  const chosenSolution = context.chosenSolution || bestSolution;
 
   const isVerified = context.currentStage === "COMPLETED" || !!context.verification;
 
@@ -173,7 +178,7 @@ export default function App() {
           <AnomalyBanner
             facility={context.facility}
             anomaly={context.anomalyReport}
-            recommendedSolution={solutions.C}
+            recommendedSolution={bestSolution}
             verification={context.verification}
             onInvestigate={() => {
               orchestrator.stepInvestigate();

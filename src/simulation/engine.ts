@@ -9,6 +9,28 @@ import {
 
 export class EnergyCalculationEngine {
   /**
+   * Multi-criteria decision score (0-100), weighted:
+   *   60% energy savings (normalized against the best candidate in this set)
+   *   30% operational risk (inverted: lower risk_score -> higher score)
+   *   10% occupant comfort impact
+   * This is what actually drives which solution the agent recommends —
+   * it is not a per-solution constant, so changing a solution's savings,
+   * risk, or comfort profile changes the outcome.
+   */
+  private static computeDecisionScore(
+    savingPct: number,
+    maxSavingPct: number,
+    riskScore: number,
+    comfortImpact: string
+  ): number {
+    const savingsNorm = maxSavingPct > 0 ? savingPct / maxSavingPct : 0;
+    const riskNorm = 1 - Math.min(riskScore, 10) / 10;
+    const comfortNorm = comfortImpact === "Zero impact" ? 1.0 : comfortImpact.toLowerCase().includes("slight") ? 0.6 : 0.3;
+    const weighted = 0.6 * savingsNorm + 0.3 * riskNorm + 0.1 * comfortNorm;
+    return Math.round(weighted * 100);
+  }
+
+  /**
    * Evaluates if current consumption exceeds the configured threshold vs baseline
    */
   static detectAnomaly(state: FacilityState, thresholdPct = 10): AnomalyReport {
@@ -114,6 +136,18 @@ export class EnergyCalculationEngine {
     const finalC_kwh = currentKwh - savC_kwh; // 527
     const savC_pct = Number(((savC_kwh / currentKwh) * 100).toFixed(1)); // 15.0%
 
+    const maxSavingPct = Math.max(savA_pct, savB_pct, savC_pct);
+    const riskScoreA = 2.1;
+    const riskScoreB = 4.8;
+    const riskScoreC = 2.8;
+    const comfortA = "Zero impact";
+    const comfortB = "Slight thermal drift (~0.8°C)";
+    const comfortC = "Zero impact";
+    const scoreA = this.computeDecisionScore(savA_pct, maxSavingPct, riskScoreA, comfortA);
+    const scoreB = this.computeDecisionScore(savB_pct, maxSavingPct, riskScoreB, comfortB);
+    const scoreC = this.computeDecisionScore(savC_pct, maxSavingPct, riskScoreC, comfortC);
+    const topScore = Math.max(scoreA, scoreB, scoreC);
+
     const solA: ProposedSolution = {
       id: "A",
       name: "Enforce HVAC Schedule Cutoff",
@@ -130,12 +164,12 @@ export class EnergyCalculationEngine {
       annual_cost_saving: Number((savA_kwh * rate * 365).toFixed(2)),
       monthly_co2_saving_kg: Number((savA_kwh * 30 * state.config.co2_factor_kg_per_kwh).toFixed(1)),
       operational_impact: "Minimal",
-      comfort_impact: "Zero impact",
+      comfort_impact: comfortA,
       risk_level: "Low",
-      risk_score: 2.1,
+      risk_score: riskScoreA,
       implementation_speed: "Immediate (BMS automated schedule)",
-      decision_score: 78,
-      is_recommended: false,
+      decision_score: scoreA,
+      is_recommended: scoreA === topScore,
       pros: ["Zero occupant comfort compromise during work hours", "Simple BMS calendar schedule update", "Reliable 50 kWh/day recapture"],
       cons: ["Does not address unmanaged idle equipment draw (leaves 13-15 kWh on the table)"],
     };
@@ -156,12 +190,12 @@ export class EnergyCalculationEngine {
       annual_cost_saving: Number((savB_kwh * rate * 365).toFixed(2)),
       monthly_co2_saving_kg: Number((savB_kwh * 30 * state.config.co2_factor_kg_per_kwh).toFixed(1)),
       operational_impact: "Moderate",
-      comfort_impact: "Slight thermal drift (~0.8°C)",
+      comfort_impact: comfortB,
       risk_level: "Low / Medium",
-      risk_score: 4.8,
+      risk_score: riskScoreB,
       implementation_speed: "Immediate (Setpoint offset)",
-      decision_score: 62,
-      is_recommended: false,
+      decision_score: scoreB,
+      is_recommended: scoreB === topScore,
       pros: ["Reduces daytime peak cooling load", "No complex hardware modifications required"],
       cons: [
         "Leaves after-hours 4h overtime running unaddressed",
@@ -186,12 +220,12 @@ export class EnergyCalculationEngine {
       annual_cost_saving: Number((savC_kwh * rate * 365).toFixed(2)),
       monthly_co2_saving_kg: Number((savC_kwh * 30 * state.config.co2_factor_kg_per_kwh).toFixed(1)),
       operational_impact: "Low",
-      comfort_impact: "Zero impact",
+      comfort_impact: comfortC,
       risk_level: "Low / Medium",
-      risk_score: 2.8,
+      risk_score: riskScoreC,
       implementation_speed: "Automated (Schedule + Smart Relays)",
-      decision_score: 96, // Clear winner
-      is_recommended: true,
+      decision_score: scoreC,
+      is_recommended: scoreC === topScore,
       pros: [
         `Highest energy reduction: ${savC_pct}% (${savC_kwh} kWh/day saved)`,
         `Recovers ${state.config.currency_symbol}${Math.round(savC_kwh * rate * 30)}+/month in wasted energy`,
