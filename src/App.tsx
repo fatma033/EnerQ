@@ -310,7 +310,7 @@ export default function App() {
             <span>Your Autonomous AI Energy Expert & Digital Twin</span>
           </div>
           <div>
-            From Energy Data to Intelligent Action • Deterministic Energy Physics + OpenAI RAG Reasoning
+            From Energy Data to Intelligent Action • Deterministic Energy Physics + Local Ollama RAG Reasoning
           </div>
         </div>
       </footer>

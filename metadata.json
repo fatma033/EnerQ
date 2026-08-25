@@ -1,6 +1,6 @@
 {
   "name": "EnerQ — AI Energy Agent",
-  "description": "Autonomous AI Energy Agent MVP that detects consumption anomalies, investigates root causes with a RAG-grounded OpenAI reasoning layer, tests solutions in a facility Digital Twin, and recommends actionable savings.",
+  "description": "Autonomous AI Energy Agent MVP that detects consumption anomalies, investigates root causes with a RAG-grounded local Ollama reasoning layer, tests solutions in a facility Digital Twin, and recommends actionable savings.",
   "requestFramePermissions": [],
   "majorCapabilities": []
 }

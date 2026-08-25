@@ -45,7 +45,7 @@ const CitationRow: React.FC<{ citations?: KnowledgeCitation[] }> = ({ citations 
 
 const SourceBadge: React.FC<{ source?: string | null }> = ({ source }) => {
   if (!source) return null;
-  const isLive = source.startsWith("openai:");
+  const isLive = source.startsWith("ollama:");
   return (
     <span
       className={`text-[9px] uppercase tracking-wider font-semibold px-1.5 py-0.2 rounded border ${
@@ -54,7 +54,7 @@ const SourceBadge: React.FC<{ source?: string | null }> = ({ source }) => {
           : "text-slate-400 bg-slate-800/80 border-slate-700/60"
       }`}
     >
-      {isLive ? source.replace("openai:", "OpenAI · ") : "Deterministic Engine"}
+      {isLive ? source.replace("ollama:", "Ollama · ") : "Deterministic Engine"}
     </span>
   );
 };

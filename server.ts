@@ -9,32 +9,41 @@ dotenv.config();
 
 const app = express();
 const PORT = 3000;
-const OPENAI_MODEL = process.env.OPENAI_MODEL || "gpt-4o-mini";
+
+// Ollama exposes an OpenAI-compatible Chat Completions API, so the same
+// OpenAI SDK talks to a fully local, free, key-less LLM — nothing leaves
+// the machine and there's no API billing to manage during the demo.
+const OLLAMA_BASE_URL = process.env.OLLAMA_BASE_URL || "http://localhost:11434/v1";
+const OLLAMA_MODEL = process.env.OLLAMA_MODEL || "llama3.2:3b";
 
 app.use(express.json());
 
-// Initialize OpenAI Client safely
-let aiClient: OpenAI | null = null;
-function getOpenAIClient(): OpenAI | null {
-  if (!aiClient && process.env.OPENAI_API_KEY) {
-    try {
-      aiClient = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-    } catch (e) {
-      console.warn("Failed to initialize OpenAI client:", e);
-      aiClient = null;
-    }
+const aiClient = new OpenAI({ baseURL: OLLAMA_BASE_URL, apiKey: "ollama" }); // Ollama ignores the key; the SDK just requires a non-empty string
+
+/**
+ * Cheap local reachability check so the UI can honestly report whether
+ * Ollama is actually running, rather than only discovering it on the
+ * first failed completion call.
+ */
+async function isOllamaReachable(): Promise<boolean> {
+  try {
+    const tagsUrl = OLLAMA_BASE_URL.replace(/\/v1\/?$/, "") + "/api/tags";
+    const resp = await fetch(tagsUrl, { signal: AbortSignal.timeout(1200) });
+    return resp.ok;
+  } catch {
+    return false;
   }
-  return aiClient;
 }
 
 // API Routes
-app.get("/api/health", (req, res) => {
+app.get("/api/health", async (req, res) => {
+  const ollamaReachable = await isOllamaReachable();
   res.json({
     status: "ok",
     service: "EnerQ AI Energy Agent Engine",
-    provider: "openai",
-    model: OPENAI_MODEL,
-    hasApiKey: !!process.env.OPENAI_API_KEY,
+    provider: "ollama",
+    model: OLLAMA_MODEL,
+    hasApiKey: ollamaReachable, // kept for UI backward-compat: "is live reasoning available"
     ragKnowledgeChunks: retrieveKnowledge("hvac plug load solar lighting decision verification", 999).length,
     timestamp: new Date().toISOString(),
   });
@@ -57,7 +66,7 @@ function buildRetrievalQuery(stage: string | undefined, facilityData: any, userP
   }
 }
 
-// RAG-grounded, OpenAI-powered reasoning endpoint
+// RAG-grounded, local Ollama-powered reasoning endpoint
 app.post("/api/agent/reason", async (req, res) => {
   const { stage, facilityData, userPrompt } = req.body;
 
@@ -65,17 +74,6 @@ app.post("/api/agent/reason", async (req, res) => {
   const retrieved = retrieveKnowledge(retrievalQuery, 3);
   const groundingContext = buildGroundingContext(retrieved);
   const citations = toCitations(retrieved);
-
-  const ai = getOpenAIClient();
-
-  if (!ai) {
-    return res.json({
-      success: true,
-      source: "deterministic_engine",
-      analysis: generateDeterministicAnalysis(stage, facilityData, userPrompt),
-      citations,
-    });
-  }
 
   try {
     const systemInstruction = `You are EnerQ, an autonomous AI Energy Agent and Digital Energy Manager for commercial facilities.
@@ -99,8 +97,8 @@ ${userPrompt || `Provide an autonomous agent assessment for the '${stage || "rec
 2. Why the combined optimization (HVAC schedule + idle equipment shutdown) represents the optimal balance of savings and low operational risk.
 3. Specific actionable guidance for the facility operations team.`}`;
 
-    const completion = await ai.chat.completions.create({
-      model: OPENAI_MODEL,
+    const completion = await aiClient.chat.completions.create({
+      model: OLLAMA_MODEL,
       temperature: 0.3,
       messages: [
         { role: "system", content: systemInstruction },
@@ -112,12 +110,12 @@ ${userPrompt || `Provide an autonomous agent assessment for the '${stage || "rec
 
     return res.json({
       success: true,
-      source: `openai:${OPENAI_MODEL}`,
+      source: `ollama:${OLLAMA_MODEL}`,
       analysis: analysis || generateDeterministicAnalysis(stage, facilityData, userPrompt),
       citations,
     });
   } catch (error: any) {
-    console.error("OpenAI API call failed, falling back to deterministic response:", error);
+    console.error("Ollama call failed, falling back to deterministic response:", error);
     return res.json({
       success: true,
       source: "deterministic_fallback",

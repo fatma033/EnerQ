@@ -70,14 +70,22 @@ Users can toggle live between **Current Anomaly**, **Scenario A**, **Scenario B*
 ## 5. Technical Stack
 
 - **Frontend**: React 19, TypeScript, Tailwind CSS, Lucide React, Motion.
-- **Backend & Simulation**: Express Node.js server with the OpenAI SDK for contextual energy reasoning + a deterministic fallback calculation engine (the app runs and demos fully even with no API key configured).
+- **Backend & Simulation**: Express Node.js server calling a local **Ollama** LLM (`llama3.2:3b` by default, via Ollama's OpenAI-compatible API) for contextual energy reasoning + a deterministic fallback calculation engine (the app runs and demos fully even with Ollama not running — no API key or internet connection required at all).
 - **RAG Knowledge Layer**: A small, transparent energy-management knowledge base (`src/knowledge/energyPlaybook.ts`) with a dependency-free lexical retriever (`src/knowledge/retriever.ts`). Before the agent reasons at the INVESTIGATE and RECOMMEND stages (and in the Ask Agent chat), it retrieves the most relevant playbook entries and grounds the LLM's response in them — every AI-generated explanation in the UI shows its cited sources.
 - **Data Model**: Configurable facility parameters, customizable electricity tariff rate ($/kWh, OMR, AED, EUR), and 24-hour load profiles.
 
 ### Environment Setup
 
 ```bash
+# 1. Install & start Ollama (https://ollama.com), then pull the light model:
+ollama pull llama3.2:3b
+
+# 2. Install app dependencies
 npm install
-cp .env.example .env   # then fill in OPENAI_API_KEY (optional — falls back to deterministic mode without it)
+cp .env.example .env   # defaults already point at local Ollama — edit only if you changed the model/port
+
+# 3. Run
 npm run dev             # starts the Express + Vite dev server on http://localhost:3000
 ```
+
+If Ollama isn't installed or isn't running, EnerQ still runs fully — the agent automatically falls back to its deterministic reasoning engine (same citations, same UI, template narration instead of live LLM text).

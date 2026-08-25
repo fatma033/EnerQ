@@ -212,7 +212,7 @@ export class EnerQAgentOrchestrator {
   }
 
   /**
-   * Calls the server-side RAG + OpenAI reasoning endpoint for a given stage.
+   * Calls the server-side RAG + Ollama reasoning endpoint for a given stage.
    */
   private async fetchInsight(
     stage: string,
@@ -356,7 +356,7 @@ export class EnerQAgentOrchestrator {
       "Awaiting User Approval"
     );
 
-    // Call server-side RAG + OpenAI reasoning for rich, source-grounded explainability
+    // Call server-side RAG + Ollama reasoning for rich, source-grounded explainability
     const { text, citations, source } = await this.fetchInsight("recommend", {
       name: this.state.facility.config.name,
       baseline_kwh: this.state.facility.baseline_kwh,

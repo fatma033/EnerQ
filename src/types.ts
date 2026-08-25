@@ -183,7 +183,7 @@ export interface KnowledgeCitation {
 export interface AgentInsight {
   text: string;
   citations: KnowledgeCitation[];
-  source: string; // e.g. "openai:gpt-4o-mini" | "deterministic_engine"
+  source: string; // e.g. "ollama:llama3.2:3b" | "deterministic_engine"
 }
 
 export interface AgentLogMessage {
