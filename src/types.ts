@@ -175,6 +175,17 @@ export interface VerificationResult {
   next_check_in: string;
 }
 
+export interface KnowledgeCitation {
+  id: string;
+  title: string;
+}
+
+export interface AgentInsight {
+  text: string;
+  citations: KnowledgeCitation[];
+  source: string; // e.g. "openai:gpt-4o-mini" | "deterministic_engine"
+}
+
 export interface AgentLogMessage {
   id: string;
   timestamp: string;

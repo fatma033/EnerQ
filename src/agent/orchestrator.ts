@@ -7,6 +7,7 @@ import {
   DigitalTwinSimulation,
   VerificationResult,
   AgentLogMessage,
+  KnowledgeCitation,
 } from "../types";
 import { EnergyCalculationEngine } from "../simulation/engine";
 
@@ -20,6 +21,11 @@ export interface AgentContext {
   chosenSolution: ProposedSolution | null;
   verification: VerificationResult | null;
   aiExplanation: string | null;
+  aiCitations: KnowledgeCitation[];
+  aiSource: string | null;
+  investigationInsight: string | null;
+  investigationCitations: KnowledgeCitation[];
+  investigationSource: string | null;
   logs: AgentLogMessage[];
   isRunningAutonomous: boolean;
   activeScenarioId: "BASELINE" | "CURRENT" | "A" | "B" | "C";
@@ -41,6 +47,11 @@ export class EnerQAgentOrchestrator {
       chosenSolution: null,
       verification: null,
       aiExplanation: null,
+      aiCitations: [],
+      aiSource: null,
+      investigationInsight: null,
+      investigationCitations: [],
+      investigationSource: null,
       logs: [],
       isRunningAutonomous: false,
       activeScenarioId: "CURRENT",
@@ -103,6 +114,11 @@ export class EnerQAgentOrchestrator {
     this.state.chosenSolution = null;
     this.state.verification = null;
     this.state.aiExplanation = null;
+    this.state.aiCitations = [];
+    this.state.aiSource = null;
+    this.state.investigationInsight = null;
+    this.state.investigationCitations = [];
+    this.state.investigationSource = null;
     this.state.isRunningAutonomous = false;
     this.state.activeScenarioId = "CURRENT";
     this.state.logs = [];
@@ -173,7 +189,51 @@ export class EnerQAgentOrchestrator {
       "Investigation Complete"
     );
     this.notify();
+
+    // Fire a background RAG-grounded reasoning call so the agent's
+    // root-cause narrative is traceable to the knowledge base, not
+    // just deterministic template text. Non-blocking: the deterministic
+    // finding above is already authoritative and displayed immediately.
+    this.fetchInsight("investigate", {
+      name: this.state.facility.config.name,
+      baseline_kwh: this.state.facility.baseline_kwh,
+      current_kwh: this.state.facility.current_kwh,
+      variance_pct: this.state.anomalyReport?.variance_pct || 24,
+      working_hours: this.state.facility.config.working_hours,
+      hvac: this.state.facility.systems.hvac,
+    }).then(({ text, citations, source }) => {
+      this.state.investigationInsight = text;
+      this.state.investigationCitations = citations;
+      this.state.investigationSource = source;
+      this.notify();
+    });
+
     return finding;
+  }
+
+  /**
+   * Calls the server-side RAG + OpenAI reasoning endpoint for a given stage.
+   */
+  private async fetchInsight(
+    stage: string,
+    facilityData: Record<string, unknown>,
+    userPrompt?: string
+  ): Promise<{ text: string | null; citations: KnowledgeCitation[]; source: string | null }> {
+    try {
+      const resp = await fetch("/api/agent/reason", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ stage, facilityData, userPrompt }),
+      });
+      const data = await resp.json();
+      return {
+        text: data?.analysis ?? null,
+        citations: data?.citations ?? [],
+        source: data?.source ?? null,
+      };
+    } catch {
+      return { text: null, citations: [], source: null };
+    }
   }
 
   /**
@@ -296,28 +356,19 @@ export class EnerQAgentOrchestrator {
       "Awaiting User Approval"
     );
 
-    // Call server-side Gemini reasoning in background for rich explainability
-    try {
-      const resp = await fetch("/api/agent/reason", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          stage: "recommend",
-          facilityData: {
-            name: this.state.facility.config.name,
-            baseline_kwh: this.state.facility.baseline_kwh,
-            current_kwh: this.state.facility.current_kwh,
-            variance_pct: this.state.anomalyReport?.variance_pct || 24,
-            hvac: this.state.facility.systems.hvac,
-          },
-        }),
-      });
-      const data = await resp.json();
-      if (data?.analysis) {
-        this.state.aiExplanation = data.analysis;
-      }
-    } catch {
-      // Fallback already handled
+    // Call server-side RAG + OpenAI reasoning for rich, source-grounded explainability
+    const { text, citations, source } = await this.fetchInsight("recommend", {
+      name: this.state.facility.config.name,
+      baseline_kwh: this.state.facility.baseline_kwh,
+      current_kwh: this.state.facility.current_kwh,
+      variance_pct: this.state.anomalyReport?.variance_pct || 24,
+      working_hours: this.state.facility.config.working_hours,
+      hvac: this.state.facility.systems.hvac,
+    });
+    if (text) {
+      this.state.aiExplanation = text;
+      this.state.aiCitations = citations;
+      this.state.aiSource = source;
     }
 
     this.notify();

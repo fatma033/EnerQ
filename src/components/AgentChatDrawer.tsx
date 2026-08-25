@@ -14,6 +14,7 @@ interface ChatMessage {
   sender: "user" | "agent";
   text: string;
   timestamp: string;
+  citations?: { id: string; title: string }[];
 }
 
 export const AgentChatDrawer: React.FC<AgentChatDrawerProps> = ({
@@ -26,7 +27,7 @@ export const AgentChatDrawer: React.FC<AgentChatDrawerProps> = ({
     {
       id: "m-1",
       sender: "agent",
-      text: "Hello! I am EnerQ, your autonomous AI Energy Expert. I have completed the investigation of today's 620 kWh consumption spike (+24%). Ask me anything about the root causes, the Digital Twin simulation, or the trade-offs between Solutions A, B, and C.",
+      text: "Hello! I am EnerQ, your autonomous AI Energy Agent. I have completed the investigation of today's 620 kWh consumption spike (+24%), grounding my reasoning in a facility energy-management knowledge base. Ask me anything about the root causes, the Digital Twin simulation, or the trade-offs between Solutions A, B, and C.",
       timestamp: "Just now",
     },
   ]);
@@ -84,6 +85,7 @@ export const AgentChatDrawer: React.FC<AgentChatDrawerProps> = ({
         sender: "agent",
         text: agentText,
         timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+        citations: data?.citations || [],
       };
 
       setMessages((prev) => [...prev, agentMsg]);
@@ -160,6 +162,18 @@ export const AgentChatDrawer: React.FC<AgentChatDrawerProps> = ({
                 }`}
               >
                 <div className="whitespace-pre-line">{msg.text}</div>
+                {msg.citations && msg.citations.length > 0 && (
+                  <div className="mt-2 pt-2 border-t border-slate-800 flex flex-wrap gap-1.5">
+                    {msg.citations.map((c) => (
+                      <span
+                        key={c.id}
+                        className="text-[10px] px-1.5 py-0.5 rounded bg-teal-950/60 border border-teal-800/60 text-teal-300"
+                      >
+                        📚 {c.title}
+                      </span>
+                    ))}
+                  </div>
+                )}
                 <div
                   className={`text-[10px] mt-1.5 text-right ${
                     msg.sender === "user" ? "text-teal-200" : "text-slate-500"

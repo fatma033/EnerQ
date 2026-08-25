@@ -70,5 +70,14 @@ Users can toggle live between **Current Anomaly**, **Scenario A**, **Scenario B*
 ## 5. Technical Stack
 
 - **Frontend**: React 19, TypeScript, Tailwind CSS, Lucide React, Motion.
-- **Backend & Simulation**: Express Node.js server with `@google/genai` (Gemini 3.7 Flash) for contextual energy reasoning + deterministic fallback calculation engine.
+- **Backend & Simulation**: Express Node.js server with the OpenAI SDK for contextual energy reasoning + a deterministic fallback calculation engine (the app runs and demos fully even with no API key configured).
+- **RAG Knowledge Layer**: A small, transparent energy-management knowledge base (`src/knowledge/energyPlaybook.ts`) with a dependency-free lexical retriever (`src/knowledge/retriever.ts`). Before the agent reasons at the INVESTIGATE and RECOMMEND stages (and in the Ask Agent chat), it retrieves the most relevant playbook entries and grounds the LLM's response in them — every AI-generated explanation in the UI shows its cited sources.
 - **Data Model**: Configurable facility parameters, customizable electricity tariff rate ($/kWh, OMR, AED, EUR), and 24-hour load profiles.
+
+### Environment Setup
+
+```bash
+npm install
+cp .env.example .env   # then fill in OPENAI_API_KEY (optional — falls back to deterministic mode without it)
+npm run dev             # starts the Express + Vite dev server on http://localhost:3000
+```

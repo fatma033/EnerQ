@@ -28,6 +28,7 @@ export default function App() {
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [isReportOpen, setIsReportOpen] = useState(false);
   const [isSimulatingTwin, setIsSimulatingTwin] = useState(false);
+  const [engineStatus, setEngineStatus] = useState<{ provider: string; model: string; hasApiKey: boolean } | null>(null);
 
   // Active view tab in workspace (Overview vs Digital Twin vs Solutions Lab)
   const [activeTab, setActiveTab] = useState<"ALL" | "TWIN" | "SOLUTIONS" | "ANALYTICS">("ALL");
@@ -40,6 +41,12 @@ export default function App() {
     // Auto-run initial observation on first load so user immediately sees real telemetry
     orchestrator.stepObserve();
     orchestrator.stepDetect();
+
+    // Surface which reasoning engine is actually powering the agent
+    fetch("/api/health")
+      .then((r) => r.json())
+      .then((data) => setEngineStatus({ provider: data.provider, model: data.model, hasApiKey: data.hasApiKey }))
+      .catch(() => setEngineStatus(null));
 
     return () => {
       unsubscribe();
@@ -132,6 +139,7 @@ export default function App() {
       {/* 1. Header */}
       <Header
         context={context}
+        engineStatus={engineStatus}
         onRunAnalysis={handleRunFullAnalysis}
         onReset={handleReset}
         onOpenSettings={() => setIsSettingsOpen(true)}
@@ -284,6 +292,11 @@ export default function App() {
             currentStage={context.currentStage}
             isRunning={context.isRunningAutonomous}
             aiExplanation={context.aiExplanation}
+            aiCitations={context.aiCitations}
+            aiSource={context.aiSource}
+            investigationInsight={context.investigationInsight}
+            investigationCitations={context.investigationCitations}
+            investigationSource={context.investigationSource}
           />
         </section>
       </main>
@@ -297,7 +310,7 @@ export default function App() {
             <span>Your Autonomous AI Energy Expert & Digital Twin</span>
           </div>
           <div>
-            From Energy Data to Intelligent Action • Built with Deterministic Energy Physics & Gemini AI
+            From Energy Data to Intelligent Action • Deterministic Energy Physics + OpenAI RAG Reasoning
           </div>
         </div>
       </footer>

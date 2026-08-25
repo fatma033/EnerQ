@@ -10,11 +10,13 @@ import {
   Building2,
   CheckCircle2,
   AlertTriangle,
+  BrainCircuit,
 } from "lucide-react";
 import { AgentContext } from "../agent/orchestrator";
 
 interface HeaderProps {
   context: AgentContext;
+  engineStatus: { provider: string; model: string; hasApiKey: boolean } | null;
   onRunAnalysis: () => void;
   onReset: () => void;
   onOpenSettings: () => void;
@@ -24,6 +26,7 @@ interface HeaderProps {
 
 export const Header: React.FC<HeaderProps> = ({
   context,
+  engineStatus,
   onRunAnalysis,
   onReset,
   onOpenSettings,
@@ -67,6 +70,19 @@ export const Header: React.FC<HeaderProps> = ({
 
         {/* Right: Actions & Agent Controls */}
         <div className="flex items-center flex-wrap gap-2 sm:gap-3">
+          {/* Reasoning Engine Transparency Badge */}
+          {engineStatus && (
+            <div
+              title={engineStatus.hasApiKey ? "Live OpenAI-powered reasoning, grounded in the RAG knowledge base" : "Deterministic reasoning engine (add OPENAI_API_KEY for live LLM synthesis)"}
+              className="hidden md:flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-slate-800/90 border border-slate-700/80 text-[11px] text-slate-300"
+            >
+              <BrainCircuit className={`w-3.5 h-3.5 ${engineStatus.hasApiKey ? "text-emerald-400" : "text-slate-400"}`} />
+              <span className={engineStatus.hasApiKey ? "text-emerald-300 font-medium" : "text-slate-400"}>
+                {engineStatus.hasApiKey ? `OpenAI ${engineStatus.model} + RAG` : "Deterministic Engine"}
+              </span>
+            </div>
+          )}
+
           {/* Agent Activity Badge */}
           <div className="hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-800/90 border border-slate-700/80 text-xs text-slate-300">
             {isRunningAutonomous ? (

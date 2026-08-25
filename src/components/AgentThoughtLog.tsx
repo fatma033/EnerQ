@@ -12,20 +12,63 @@ import {
   ScanSearch,
   Microscope,
 } from "lucide-react";
-import { AgentLogMessage, AgentStage } from "../types";
+import { AgentLogMessage, AgentStage, KnowledgeCitation } from "../types";
 
 interface AgentThoughtLogProps {
   logs: AgentLogMessage[];
   currentStage: AgentStage;
   isRunning: boolean;
   aiExplanation: string | null;
+  aiCitations?: KnowledgeCitation[];
+  aiSource?: string | null;
+  investigationInsight?: string | null;
+  investigationCitations?: KnowledgeCitation[];
+  investigationSource?: string | null;
 }
+
+const CitationRow: React.FC<{ citations?: KnowledgeCitation[] }> = ({ citations }) => {
+  if (!citations || citations.length === 0) return null;
+  return (
+    <div className="mt-2 pt-2 border-t border-emerald-900/50 flex flex-wrap items-center gap-1.5">
+      <span className="text-[10px] text-slate-500 uppercase tracking-wider">Grounded in:</span>
+      {citations.map((c) => (
+        <span
+          key={c.id}
+          className="text-[10px] px-1.5 py-0.5 rounded bg-teal-950/60 border border-teal-800/60 text-teal-300"
+        >
+          📚 {c.title}
+        </span>
+      ))}
+    </div>
+  );
+};
+
+const SourceBadge: React.FC<{ source?: string | null }> = ({ source }) => {
+  if (!source) return null;
+  const isLive = source.startsWith("openai:");
+  return (
+    <span
+      className={`text-[9px] uppercase tracking-wider font-semibold px-1.5 py-0.2 rounded border ${
+        isLive
+          ? "text-emerald-300 bg-emerald-950/80 border-emerald-800/60"
+          : "text-slate-400 bg-slate-800/80 border-slate-700/60"
+      }`}
+    >
+      {isLive ? source.replace("openai:", "OpenAI · ") : "Deterministic Engine"}
+    </span>
+  );
+};
 
 export const AgentThoughtLog: React.FC<AgentThoughtLogProps> = ({
   logs,
   currentStage,
   isRunning,
   aiExplanation,
+  aiCitations,
+  aiSource,
+  investigationInsight,
+  investigationCitations,
+  investigationSource,
 }) => {
   const [isExpanded, setIsExpanded] = useState(true);
   const [filterStage, setFilterStage] = useState<string>("ALL");
@@ -91,16 +134,37 @@ export const AgentThoughtLog: React.FC<AgentThoughtLogProps> = ({
       {/* Main Terminal Content */}
       {isExpanded && (
         <div className="p-4">
+          {/* Investigation Insight (RAG-grounded root-cause reasoning) */}
+          {investigationInsight && (
+            <div className="mb-4 p-3.5 rounded-xl bg-purple-950/30 border border-purple-500/30 text-xs text-slate-200">
+              <div className="flex items-center justify-between gap-2 mb-1.5">
+                <div className="flex items-center gap-2 font-semibold text-purple-300">
+                  <BrainCircuit className="w-4 h-4" />
+                  <span>Agent Root-Cause Reasoning</span>
+                </div>
+                <SourceBadge source={investigationSource} />
+              </div>
+              <div className="text-slate-300 leading-relaxed whitespace-pre-line font-sans text-xs">
+                {investigationInsight}
+              </div>
+              <CitationRow citations={investigationCitations} />
+            </div>
+          )}
+
           {/* AI Reasoning Commentary Box if available */}
           {aiExplanation && (
             <div className="mb-4 p-3.5 rounded-xl bg-emerald-950/40 border border-emerald-500/30 text-xs text-slate-200">
-              <div className="flex items-center gap-2 font-semibold text-emerald-400 mb-1.5">
-                <BrainCircuit className="w-4 h-4" />
-                <span>Autonomous Agent Synthesis & Executive Reasoning</span>
+              <div className="flex items-center justify-between gap-2 mb-1.5">
+                <div className="flex items-center gap-2 font-semibold text-emerald-400">
+                  <BrainCircuit className="w-4 h-4" />
+                  <span>Autonomous Agent Synthesis & Executive Reasoning</span>
+                </div>
+                <SourceBadge source={aiSource} />
               </div>
               <div className="text-slate-300 leading-relaxed whitespace-pre-line font-sans text-xs">
                 {aiExplanation}
               </div>
+              <CitationRow citations={aiCitations} />
             </div>
           )}
 
