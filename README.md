@@ -5,6 +5,15 @@
 
 EnerQ is an autonomous AI Energy Agent that detects energy waste, investigates its causes, tests possible solutions through a simulated facility Digital Twin, and recommends the best action before implementation.
 
+## Quick Start
+
+```bash
+npm install
+npm run dev   # http://localhost:3000
+```
+
+That's it — the app runs fully out of the box on its deterministic reasoning engine. For live, RAG-grounded LLM reasoning, see [Environment Setup](#environment-setup) below to run it against a local Ollama model (optional, free, no API key).
+
 ---
 
 ## 1. The Problem EnerQ Solves
