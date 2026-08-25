@@ -1,0 +1,6 @@
+{
+  "name": "EnerQ — AI Energy Agent",
+  "description": "Autonomous AI Energy Agent MVP that detects consumption anomalies, investigates root causes, tests solutions in a facility Digital Twin, and recommends actionable savings.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
