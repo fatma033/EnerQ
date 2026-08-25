@@ -51,49 +51,54 @@ export const DigitalTwinView: React.FC<DigitalTwinViewProps> = ({
   let hvacHours = facility.systems.hvac.actual_hours;
   let scenarioLabel = "Current Telemetry State (Uncontrolled 4h Overtime)";
 
+  // Energy totals (kWh, savings) are read from the same EnergyCalculationEngine
+  // solutions used everywhere else in the app, not re-derived here, so the
+  // Digital Twin can never drift out of sync with the rest of the UI.
+  // Zone temperature / equipment-state flavor is still scenario-specific
+  // physical-model detail that only lives in this view.
   if (activeScenario === "BASELINE") {
-    simulatedKwh = 500;
+    simulatedKwh = facility.baseline_kwh;
     simulatedHvacKwh = 200;
     simulatedEquipKwh = 100;
     simulatedZoneTemp = 22.0;
-    savingsKwh = 120;
-    savingsPct = 19.4;
+    savingsKwh = facility.current_kwh - facility.baseline_kwh;
+    savingsPct = Number(((savingsKwh / facility.current_kwh) * 100).toFixed(1));
     hvacHours = 10;
     scenarioLabel = "Historical Baseline Target (Ideal Schedule)";
   } else if (activeScenario === "CURRENT") {
-    simulatedKwh = 620;
-    simulatedHvacKwh = 280;
-    simulatedEquipKwh = 120;
+    simulatedKwh = facility.current_kwh;
+    simulatedHvacKwh = facility.systems.hvac.actual_kwh;
+    simulatedEquipKwh = facility.systems.equipment.total_kwh;
     simulatedZoneTemp = 21.8;
     savingsKwh = 0;
     savingsPct = 0;
-    hvacHours = 14;
+    hvacHours = facility.systems.hvac.actual_hours;
     scenarioLabel = "Current Uncontrolled Anomaly (HVAC 08:00–22:00)";
-  } else if (activeScenario === "A") {
-    simulatedKwh = 570;
+  } else if (activeScenario === "A" && solutions) {
+    simulatedKwh = solutions.A.simulated_daily_kwh;
     simulatedHvacKwh = 230;
-    simulatedEquipKwh = 120;
+    simulatedEquipKwh = facility.systems.equipment.total_kwh;
     simulatedZoneTemp = 22.2;
-    savingsKwh = 50;
-    savingsPct = 8.1;
+    savingsKwh = solutions.A.estimated_saving_kwh;
+    savingsPct = solutions.A.estimated_saving_pct;
     hvacHours = 10;
     scenarioLabel = "Scenario A: Enforced 18:00 HVAC Cutoff";
-  } else if (activeScenario === "B") {
-    simulatedKwh = 583;
+  } else if (activeScenario === "B" && solutions) {
+    simulatedKwh = solutions.B.simulated_daily_kwh;
     simulatedHvacKwh = 243;
-    simulatedEquipKwh = 120;
-    simulatedZoneTemp = 23.5;
-    savingsKwh = 37;
-    savingsPct = 6.0;
-    hvacHours = 14;
-    scenarioLabel = "Scenario B: Thermostat Offset +1.5°C (22.0°C → 23.5°C)";
-  } else if (activeScenario === "C") {
-    simulatedKwh = 527;
+    simulatedEquipKwh = facility.systems.equipment.total_kwh;
+    simulatedZoneTemp = facility.systems.hvac.temp_setpoint_c + 1.5;
+    savingsKwh = solutions.B.estimated_saving_kwh;
+    savingsPct = solutions.B.estimated_saving_pct;
+    hvacHours = facility.systems.hvac.actual_hours;
+    scenarioLabel = `Scenario B: Thermostat Offset +1.5°C (${facility.systems.hvac.temp_setpoint_c.toFixed(1)}°C → ${(facility.systems.hvac.temp_setpoint_c + 1.5).toFixed(1)}°C)`;
+  } else if (activeScenario === "C" && solutions) {
+    simulatedKwh = solutions.C.simulated_daily_kwh;
     simulatedHvacKwh = 200;
     simulatedEquipKwh = 105;
     simulatedZoneTemp = 22.2;
-    savingsKwh = 93;
-    savingsPct = 15.0;
+    savingsKwh = solutions.C.estimated_saving_kwh;
+    savingsPct = solutions.C.estimated_saving_pct;
     hvacHours = 10;
     scenarioLabel = "Scenario C: Recommended Combined (18:00 Cutoff + Idle Sleep)";
   }
@@ -152,7 +157,7 @@ export const DigitalTwinView: React.FC<DigitalTwinViewProps> = ({
               : "text-slate-400 hover:text-slate-200"
           }`}
         >
-          Current Anomaly (620 kWh)
+          Current Anomaly ({facility.current_kwh} kWh)
         </button>
 
         <button
@@ -163,7 +168,7 @@ export const DigitalTwinView: React.FC<DigitalTwinViewProps> = ({
               : "text-slate-400 hover:text-slate-200"
           }`}
         >
-          Scenario A: 18:00 Cutoff (570 kWh)
+          Scenario A: 18:00 Cutoff ({solutions?.A.simulated_daily_kwh ?? "—"} kWh)
         </button>
 
         <button
@@ -174,7 +179,7 @@ export const DigitalTwinView: React.FC<DigitalTwinViewProps> = ({
               : "text-slate-400 hover:text-slate-200"
           }`}
         >
-          Scenario B: Setpoint +1.5°C (583 kWh)
+          Scenario B: Setpoint +1.5°C ({solutions?.B.simulated_daily_kwh ?? "—"} kWh)
         </button>
 
         <button
@@ -186,7 +191,7 @@ export const DigitalTwinView: React.FC<DigitalTwinViewProps> = ({
           }`}
         >
           <Sparkles className="w-3 h-3" />
-          <span>Scenario C: Recommended (527 kWh)</span>
+          <span>Scenario C: Recommended ({solutions?.C.simulated_daily_kwh ?? "—"} kWh)</span>
         </button>
 
         <button
@@ -197,7 +202,7 @@ export const DigitalTwinView: React.FC<DigitalTwinViewProps> = ({
               : "text-slate-500 hover:text-slate-300"
           }`}
         >
-          Baseline Reference (500 kWh)
+          Baseline Reference ({facility.baseline_kwh} kWh)
         </button>
       </div>
 
@@ -336,15 +341,15 @@ export const DigitalTwinView: React.FC<DigitalTwinViewProps> = ({
               <span className="text-sm font-semibold text-slate-400">kWh / day</span>
             </div>
 
-            {/* Comparison vs Current 620 */}
+            {/* Comparison vs current measured consumption */}
             <div className="mt-2.5 pt-2.5 border-t border-slate-800/80 flex items-center justify-between text-xs">
-              <span className="text-slate-400">Variance vs Current (620 kWh):</span>
+              <span className="text-slate-400">Variance vs Current ({facility.current_kwh} kWh):</span>
               {savingsKwh > 0 ? (
                 <span className="text-emerald-400 font-bold flex items-center gap-0.5">
                   -{savingsKwh} kWh (-{savingsPct}%)
                 </span>
               ) : (
-                <span className="text-amber-400 font-semibold">+120 kWh over baseline</span>
+                <span className="text-amber-400 font-semibold">+{facility.current_kwh - facility.baseline_kwh} kWh over baseline</span>
               )}
             </div>
           </div>

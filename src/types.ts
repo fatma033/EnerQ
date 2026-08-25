@@ -186,6 +186,12 @@ export interface AgentInsight {
   source: string; // e.g. "ollama:llama3.2:3b" | "deterministic_engine"
 }
 
+export interface FollowUpState {
+  status: "idle" | "pending" | "reminded" | "escalated" | "resolved";
+  responsibleTeam: string;
+  reminderCount: number;
+}
+
 export interface AgentLogMessage {
   id: string;
   timestamp: string;

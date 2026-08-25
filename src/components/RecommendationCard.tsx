@@ -11,12 +11,17 @@ import {
   SlidersHorizontal,
   ThumbsUp,
   RotateCcw,
+  Bell,
+  BellRing,
+  AlertOctagon,
+  UserCheck,
 } from "lucide-react";
-import { ProposedSolution, FacilityState } from "../types";
+import { ProposedSolution, FacilityState, FollowUpState } from "../types";
 
 interface RecommendationCardProps {
   solution: ProposedSolution;
   facility: FacilityState;
+  followUp: FollowUpState;
   onApprove: () => void;
   onReviewAlternatives: () => void;
   isVerified?: boolean;
@@ -25,6 +30,7 @@ interface RecommendationCardProps {
 export const RecommendationCard: React.FC<RecommendationCardProps> = ({
   solution,
   facility,
+  followUp,
   onApprove,
   onReviewAlternatives,
   isVerified,
@@ -49,6 +55,27 @@ export const RecommendationCard: React.FC<RecommendationCardProps> = ({
             </span>
           </div>
 
+          {!isVerified && (
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-medium bg-slate-800/80 border border-slate-700/60 text-slate-300">
+                <UserCheck className="w-3.5 h-3.5 text-teal-400" />
+                Notified: {followUp.responsibleTeam}
+              </span>
+              {followUp.status === "reminded" && (
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-amber-950/60 border border-amber-700/60 text-amber-300 animate-pulse">
+                  <BellRing className="w-3.5 h-3.5" />
+                  Reminder Sent — Action Still Pending
+                </span>
+              )}
+              {followUp.status === "escalated" && (
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-red-950/60 border border-red-700/60 text-red-300 animate-pulse">
+                  <AlertOctagon className="w-3.5 h-3.5" />
+                  Escalated to Management
+                </span>
+              )}
+            </div>
+          )}
+
           <div>
             <h3 className="text-2xl font-extrabold text-white tracking-tight">
               {solution.name}
@@ -65,7 +92,7 @@ export const RecommendationCard: React.FC<RecommendationCardProps> = ({
               <span>Why does EnerQ recommend this action?</span>
             </div>
             <p>
-              Digital Twin simulation proved this intervention achieves the <strong className="text-emerald-300">highest energy reduction (15.0% / 93 kWh/day)</strong> by addressing both the 4-hour after-hours HVAC run (+80 kWh) and unmanaged workstation idle draw (+13 kWh).
+              Digital Twin simulation proved this intervention achieves the <strong className="text-emerald-300">highest energy reduction ({solution.estimated_saving_pct}% / {solution.estimated_saving_kwh} kWh/day)</strong> by addressing both the after-hours HVAC overtime and unmanaged workstation idle draw identified during investigation.
             </p>
             <p className="text-slate-400">
               Occupant comfort during standard working hours (08:00–18:00) is 100% preserved with zero thermal drift penalty.
@@ -77,7 +104,7 @@ export const RecommendationCard: React.FC<RecommendationCardProps> = ({
             <div className="p-3 rounded-xl bg-slate-950/90 border border-slate-800 text-center">
               <div className="text-[10px] uppercase tracking-wider text-slate-400 font-medium">Daily Reduction</div>
               <div className="text-lg font-bold text-emerald-400">
-                -93 kWh <span className="text-xs font-normal text-slate-400">(-15%)</span>
+                -{solution.estimated_saving_kwh} kWh <span className="text-xs font-normal text-slate-400">(-{solution.estimated_saving_pct}%)</span>
               </div>
             </div>
 
@@ -113,7 +140,7 @@ export const RecommendationCard: React.FC<RecommendationCardProps> = ({
                 Recommendation Implemented
               </div>
               <p className="text-xs text-slate-300">
-                Virtual facility verified at 527 kWh/day.
+                Virtual facility verified at {facility.current_kwh} kWh/day.
               </p>
             </div>
           ) : (

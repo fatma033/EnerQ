@@ -166,7 +166,7 @@ export class EnergyCalculationEngine {
       cons: [
         "Leaves after-hours 4h overtime running unaddressed",
         "Higher occupant thermal complaints potential during afternoon peak",
-        "Lowest overall energy savings (only 6.0%)",
+        `Lowest overall energy savings (only ${savB_pct}%)`,
       ],
     };
 
@@ -193,8 +193,8 @@ export class EnergyCalculationEngine {
       decision_score: 96, // Clear winner
       is_recommended: true,
       pros: [
-        "Highest energy reduction: 15.0% (93 kWh/day saved)",
-        "Recovers $390+/month in wasted energy",
+        `Highest energy reduction: ${savC_pct}% (${savC_kwh} kWh/day saved)`,
+        `Recovers ${state.config.currency_symbol}${Math.round(savC_kwh * rate * 30)}+/month in wasted energy`,
         "Zero comfort disruption during core working hours (08:00-18:00)",
         "Eliminates phantom vampire power across workstation circuits",
       ],

@@ -163,6 +163,8 @@ export default function App() {
           <AnomalyBanner
             facility={context.facility}
             anomaly={context.anomalyReport}
+            recommendedSolution={solutions.C}
+            verification={context.verification}
             onInvestigate={() => {
               orchestrator.stepInvestigate();
             }}
@@ -180,6 +182,7 @@ export default function App() {
             <RecommendationCard
               solution={chosenSolution}
               facility={context.facility}
+              followUp={context.followUp}
               onApprove={handleApprove}
               onReviewAlternatives={() => setActiveTab("SOLUTIONS")}
               isVerified={isVerified}

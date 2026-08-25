@@ -85,7 +85,7 @@ export const VerificationModal: React.FC<VerificationModalProps> = ({
           </p>
           <div className="flex items-center gap-2 text-emerald-400 font-semibold pt-1">
             <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-            <span>Expected 15.0% energy reduction successfully verified.</span>
+            <span>Expected {verification.actual_reduction_pct}% energy reduction successfully verified.</span>
           </div>
         </div>
 

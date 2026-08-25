@@ -8,8 +8,16 @@ import {
   VerificationResult,
   AgentLogMessage,
   KnowledgeCitation,
+  FollowUpState,
 } from "../types";
 import { EnergyCalculationEngine } from "../simulation/engine";
+
+// Demo-compressed follow-up timing: in a real deployment these would be
+// hours/days, not seconds. Kept short and clearly labeled so the agent's
+// "does not forget about the problem" behavior is actually observable
+// during a live demo instead of requiring you to wait real days.
+const REMINDER_DELAY_MS = 16000;
+const ESCALATION_DELAY_MS = 30000;
 
 export interface AgentContext {
   facility: FacilityState;
@@ -29,12 +37,15 @@ export interface AgentContext {
   logs: AgentLogMessage[];
   isRunningAutonomous: boolean;
   activeScenarioId: "BASELINE" | "CURRENT" | "A" | "B" | "C";
+  followUp: FollowUpState;
 }
 
 export class EnerQAgentOrchestrator {
   private state: AgentContext;
   private listeners: ((context: AgentContext) => void)[] = [];
   private abortController: AbortController | null = null;
+  private reminderTimer: ReturnType<typeof setTimeout> | null = null;
+  private escalationTimer: ReturnType<typeof setTimeout> | null = null;
 
   constructor(initialFacility: FacilityState) {
     this.state = {
@@ -55,7 +66,66 @@ export class EnerQAgentOrchestrator {
       logs: [],
       isRunningAutonomous: false,
       activeScenarioId: "CURRENT",
+      followUp: { status: "idle", responsibleTeam: "Facilities & Operations Team", reminderCount: 0 },
     };
+  }
+
+  private clearFollowUpTimers() {
+    if (this.reminderTimer) {
+      clearTimeout(this.reminderTimer);
+      this.reminderTimer = null;
+    }
+    if (this.escalationTimer) {
+      clearTimeout(this.escalationTimer);
+      this.escalationTimer = null;
+    }
+  }
+
+  /**
+   * Starts the agent's follow-up loop after a recommendation is issued.
+   * This is what separates EnerQ from a one-shot recommendation system:
+   * if nobody acts, the agent reminds, then escalates — it doesn't just
+   * post an alert and move on.
+   */
+  private startFollowUp() {
+    this.clearFollowUpTimers();
+    this.state.followUp = {
+      status: "pending",
+      responsibleTeam: "Facilities & Operations Team",
+      reminderCount: 0,
+    };
+
+    this.reminderTimer = setTimeout(() => {
+      if (this.state.currentStage === "COMPLETED") return;
+      const solC = this.state.chosenSolution || this.state.solutions?.C;
+      const symbol = this.state.facility.config.currency_symbol;
+      const hourlyWaste = solC ? Number((solC.daily_cost_saving / 24).toFixed(2)) : null;
+      this.state.followUp = { ...this.state.followUp, status: "reminded", reminderCount: this.state.followUp.reminderCount + 1 };
+      this.addLog(
+        "RECOMMEND",
+        "info",
+        "Follow-Up: Reminder Sent",
+        `Action still pending. ${hourlyWaste !== null ? `Continuing to generate approximately ${symbol}${hourlyWaste}/hour of unnecessary energy cost.` : "Estimated waste continues to accumulate."} Notified: ${this.state.followUp.responsibleTeam}.`,
+        [{ label: "Responsible", value: this.state.followUp.responsibleTeam }],
+        "Reminder 1"
+      );
+      this.notify();
+
+      this.escalationTimer = setTimeout(() => {
+        if (this.state.currentStage === "COMPLETED") return;
+        const dailyWaste = solC ? `${symbol}${solC.daily_cost_saving}/day` : "accumulating waste";
+        this.state.followUp = { ...this.state.followUp, status: "escalated" };
+        this.addLog(
+          "RECOMMEND",
+          "info",
+          "Follow-Up: Escalated",
+          `This issue has remained unresolved. Estimated ongoing waste: ${dailyWaste}. Escalating to facility management for visibility.`,
+          [{ label: "Status", value: "Escalated to Management" }],
+          "Escalation"
+        );
+        this.notify();
+      }, ESCALATION_DELAY_MS - REMINDER_DELAY_MS);
+    }, REMINDER_DELAY_MS);
   }
 
   public subscribe(listener: (context: AgentContext) => void): () => void {
@@ -103,6 +173,8 @@ export class EnerQAgentOrchestrator {
       this.abortController.abort();
       this.abortController = null;
     }
+    this.clearFollowUpTimers();
+    this.state.followUp = { status: "idle", responsibleTeam: "Facilities & Operations Team", reminderCount: 0 };
     if (facility) {
       this.state.facility = facility;
     }
@@ -138,7 +210,7 @@ export class EnerQAgentOrchestrator {
       "Stage 1: Ingesting Facility Telemetry",
       `Observed ${this.state.facility.config.name}. Working hours ${this.state.facility.config.working_hours.start}–${this.state.facility.config.working_hours.end}. Reading live power meters.`,
       [
-        { label: "Baseline Baseline", value: `${this.state.facility.baseline_kwh} kWh/day` },
+        { label: "30-Day Baseline", value: `${this.state.facility.baseline_kwh} kWh/day` },
         { label: "Today's Consumption", value: `${this.state.facility.current_kwh} kWh/day` },
       ],
       "Telemetry Sync"
@@ -347,14 +419,17 @@ export class EnerQAgentOrchestrator {
       "RECOMMEND",
       "recommend",
       "Stage 8: Synthesized Actionable Recommendation",
-      `EnerQ recommends executing Solution C. Recaptures 93 kWh/day (15.0%), saving ${symbol}${solC?.daily_cost_saving}/day (${symbol}${solC?.monthly_cost_saving}/month) with zero disruption to business hours.`,
+      `EnerQ recommends executing Solution C. Recaptures ${solC?.estimated_saving_kwh} kWh/day (${solC?.estimated_saving_pct}%), saving ${symbol}${solC?.daily_cost_saving}/day (${symbol}${solC?.monthly_cost_saving}/month) with zero disruption to business hours.`,
       [
-        { label: "Expected Daily Saving", value: `93 kWh (${solC?.estimated_saving_pct}%)` },
+        { label: "Expected Daily Saving", value: `${solC?.estimated_saving_kwh} kWh (${solC?.estimated_saving_pct}%)` },
         { label: "Monthly Cost Recaptured", value: `${symbol}${solC?.monthly_cost_saving}` },
         { label: "Risk Rating", value: "Low / Medium" },
+        { label: "Responsible", value: this.state.followUp.responsibleTeam },
       ],
       "Awaiting User Approval"
     );
+
+    this.startFollowUp();
 
     // Call server-side RAG + Ollama reasoning for rich, source-grounded explainability
     const { text, citations, source } = await this.fetchInsight("recommend", {
@@ -378,18 +453,21 @@ export class EnerQAgentOrchestrator {
    * Run Stage 9: VERIFY (Triggered upon user approval)
    */
   public stepVerify(): VerificationResult {
+    this.clearFollowUpTimers();
+    this.state.followUp = { ...this.state.followUp, status: "resolved" };
     this.state.currentStage = "VERIFY";
-    const solC = this.state.solutions?.C;
+    const solC = this.state.chosenSolution || this.state.solutions?.C;
     const rate = this.state.facility.config.electricity_rate;
-    const verifiedKwh = 527; // 620 - 93
-    const reducedKwh = 93;
-    const reducedPct = 15.0;
+    const initialKwh = this.state.facility.current_kwh;
+    const reducedKwh = solC?.estimated_saving_kwh ?? 0;
+    const reducedPct = solC?.estimated_saving_pct ?? 0;
+    const verifiedKwh = initialKwh - reducedKwh;
 
     const verification: VerificationResult = {
       verified: true,
       status_text: "Expected improvement verified in Digital Twin simulation.",
-      implemented_solution_id: "C",
-      initial_consumption_kwh: this.state.facility.current_kwh,
+      implemented_solution_id: solC?.id ?? "C",
+      initial_consumption_kwh: initialKwh,
       verified_consumption_kwh: verifiedKwh,
       actual_reduction_kwh: reducedKwh,
       actual_reduction_pct: reducedPct,
@@ -433,10 +511,10 @@ export class EnerQAgentOrchestrator {
       "VERIFY",
       "verify",
       "Stage 9: Implementation Verified in Simulation",
-      `Virtual facility updated. Daily consumption reduced from 620 kWh → 527 kWh (-93 kWh / -15.0%). Recapturing ${symbol}${verification.monthly_cost_saved}/month.`,
+      `Virtual facility updated. Daily consumption reduced from ${initialKwh} kWh → ${verifiedKwh} kWh (-${reducedKwh} kWh / -${reducedPct}%). Recapturing ${symbol}${verification.monthly_cost_saved}/month.`,
       [
-        { label: "Optimized Load", value: "527 kWh/day" },
-        { label: "Total Reduction", value: "-93 kWh (-15%)" },
+        { label: "Optimized Load", value: `${verifiedKwh} kWh/day` },
+        { label: "Total Reduction", value: `-${reducedKwh} kWh (-${reducedPct}%)` },
         { label: "Annual Recaptured", value: `${symbol}${verification.annual_cost_saved}` },
       ],
       "Improvement Verified"

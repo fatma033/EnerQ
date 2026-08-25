@@ -11,11 +11,13 @@ import {
   Lightbulb,
   Fan,
 } from "lucide-react";
-import { FacilityState, AnomalyReport } from "../types";
+import { FacilityState, AnomalyReport, ProposedSolution, VerificationResult } from "../types";
 
 interface AnomalyBannerProps {
   facility: FacilityState;
   anomaly: AnomalyReport | null;
+  recommendedSolution: ProposedSolution;
+  verification: VerificationResult | null;
   onInvestigate: () => void;
   onSimulate: () => void;
   isVerified?: boolean;
@@ -24,6 +26,8 @@ interface AnomalyBannerProps {
 export const AnomalyBanner: React.FC<AnomalyBannerProps> = ({
   facility,
   anomaly,
+  recommendedSolution,
+  verification,
   onInvestigate,
   onSimulate,
   isVerified,
@@ -32,13 +36,13 @@ export const AnomalyBanner: React.FC<AnomalyBannerProps> = ({
   const baselineKwh = facility.baseline_kwh;
   const varianceKwh = currentKwh - baselineKwh;
   const variancePct = Number(((varianceKwh / baselineKwh) * 100).toFixed(1));
-  const potentialSavingsKwh = 93;
-  const potentialSavingsPct = 15;
+  const potentialSavingsKwh = recommendedSolution.estimated_saving_kwh;
+  const potentialSavingsPct = recommendedSolution.estimated_saving_pct;
   const currencySymbol = facility.config.currency_symbol;
   const dailyCostWaste = Number((varianceKwh * facility.config.electricity_rate).toFixed(2));
-  const monthlyRecapture = Number((potentialSavingsKwh * facility.config.electricity_rate * 30).toFixed(2));
+  const monthlyRecapture = recommendedSolution.monthly_cost_saving;
 
-  if (isVerified) {
+  if (isVerified && verification) {
     return (
       <div className="bg-gradient-to-r from-emerald-950/80 via-slate-900 to-teal-950/80 border border-emerald-500/40 rounded-2xl p-5 shadow-lg relative overflow-hidden">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -57,7 +61,7 @@ export const AnomalyBanner: React.FC<AnomalyBannerProps> = ({
                 HVAC Schedule & Idle Shutdown Policy Active
               </h3>
               <p className="text-sm text-slate-300 mt-0.5">
-                Facility consumption reduced from <span className="font-semibold text-slate-100 line-through">620 kWh</span> to <span className="font-bold text-emerald-400">527 kWh/day</span> (-15.0%). Recapturing approximately <span className="font-semibold text-emerald-300">{currencySymbol}{monthlyRecapture}/month</span>.
+                Facility consumption reduced from <span className="font-semibold text-slate-100 line-through">{verification.initial_consumption_kwh} kWh</span> to <span className="font-bold text-emerald-400">{verification.verified_consumption_kwh} kWh/day</span> (-{verification.actual_reduction_pct}%). Recapturing approximately <span className="font-semibold text-emerald-300">{currencySymbol}{verification.monthly_cost_saved}/month</span>.
               </p>
             </div>
           </div>
@@ -65,11 +69,11 @@ export const AnomalyBanner: React.FC<AnomalyBannerProps> = ({
           <div className="flex items-center gap-3">
             <div className="bg-slate-900/90 border border-emerald-800/60 rounded-xl px-4 py-2.5 text-center">
               <div className="text-[10px] uppercase tracking-wider text-slate-400 font-medium">Daily Reduction</div>
-              <div className="text-lg font-bold text-emerald-400">-93 kWh</div>
+              <div className="text-lg font-bold text-emerald-400">-{verification.actual_reduction_kwh} kWh</div>
             </div>
             <div className="bg-slate-900/90 border border-emerald-800/60 rounded-xl px-4 py-2.5 text-center">
               <div className="text-[10px] uppercase tracking-wider text-slate-400 font-medium">Net Efficiency</div>
-              <div className="text-lg font-bold text-emerald-400">+15.0%</div>
+              <div className="text-lg font-bold text-emerald-400">+{verification.actual_reduction_pct}%</div>
             </div>
           </div>
         </div>
@@ -131,7 +135,7 @@ export const AnomalyBanner: React.FC<AnomalyBannerProps> = ({
 
             <div className="bg-emerald-950/40 border border-emerald-800/50 rounded-xl p-3 min-w-[120px] text-center">
               <div className="text-[10px] uppercase tracking-wider text-emerald-400 font-semibold">Recoverable</div>
-              <div className="text-xl font-bold text-emerald-300">93 <span className="text-xs font-normal text-slate-400">kWh</span></div>
+              <div className="text-xl font-bold text-emerald-300">{potentialSavingsKwh} <span className="text-xs font-normal text-slate-400">kWh</span></div>
               <div className="text-[10px] text-emerald-400 font-medium mt-0.5">-{potentialSavingsPct}% Target</div>
             </div>
 

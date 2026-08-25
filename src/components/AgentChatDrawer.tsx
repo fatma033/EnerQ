@@ -68,9 +68,9 @@ export const AgentChatDrawer: React.FC<AgentChatDrawerProps> = ({
             name: facility.config.name,
             baseline_kwh: facility.baseline_kwh,
             current_kwh: facility.current_kwh,
-            variance_pct: 24,
+            variance_pct: Number((((facility.current_kwh - facility.baseline_kwh) / facility.baseline_kwh) * 100).toFixed(1)),
             hvac: facility.systems.hvac,
-            solution_c_saving_pct: 15,
+            solution_c_saving_pct: solutions?.C.estimated_saving_pct,
           },
         }),
       });
@@ -78,7 +78,7 @@ export const AgentChatDrawer: React.FC<AgentChatDrawerProps> = ({
       const data = await resp.json();
       const agentText =
         data?.analysis ||
-        "Based on our physical Digital Twin simulation, Solution C eliminates 93 kWh/day of after-hours HVAC runtime and workstation idle baseload while keeping working-hours comfort completely intact.";
+        `Based on our physical Digital Twin simulation, Solution C eliminates ${solutions?.C.estimated_saving_kwh ?? "—"} kWh/day of after-hours HVAC runtime and workstation idle baseload while keeping working-hours comfort completely intact.`;
 
       const agentMsg: ChatMessage = {
         id: `a-${Date.now()}`,

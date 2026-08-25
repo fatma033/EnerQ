@@ -127,16 +127,22 @@ ${userPrompt || `Provide an autonomous agent assessment for the '${stage || "rec
 });
 
 function generateDeterministicAnalysis(stage: string, facility: any, userPrompt?: string): string {
+  const baselineKwh = facility?.baseline_kwh ?? 500;
+  const currentKwh = facility?.current_kwh ?? 620;
+  const variancePct = facility?.variance_pct ?? Number((((currentKwh - baselineKwh) / baselineKwh) * 100).toFixed(1));
+  const overtimeHours = Math.max(0, (facility?.hvac?.actual_hours ?? 14) - (facility?.hvac?.normal_hours ?? 10));
+  const hvacWasteKwh = Math.round(overtimeHours * (facility?.hvac?.power_rating_kw ?? 20));
+
   if (userPrompt) {
-    return `**EnerQ Energy Agent Analysis**:\n\nBased on the current facility telemetry, the facility consumed **620 kWh/day** against an expected baseline of **500 kWh/day** (+24% variance).\n\n• **Primary Driver**: HVAC system ran 4 continuous hours past the 18:00 occupancy cutoff, consuming ~80 kWh of unneeded cooling.\n• **Secondary Driver**: Plug load baseload maintained full operating draw of 25 kWh instead of sleeping.\n• **Recommended Resolution**: Execute Solution C (Enforce 18:00 HVAC schedule cutoff with 20-minute thermal coasting + smart plug sleep policies). This recaptures **93 kWh/day (15.0% total reduction)** with zero disruption to core business hours.`;
+    return `**EnerQ Energy Agent Analysis**:\n\nBased on the current facility telemetry, the facility consumed **${currentKwh} kWh/day** against an expected baseline of **${baselineKwh} kWh/day** (+${variancePct}% variance).\n\n• **Primary Driver**: HVAC system ran ${overtimeHours} continuous hours past the ${facility?.working_hours?.end ?? "18:00"} occupancy cutoff, consuming ~${hvacWasteKwh} kWh of unneeded cooling.\n• **Secondary Driver**: Plug load baseload remained at full operating draw instead of sleeping outside working hours.\n• **Recommended Resolution**: Execute the combined HVAC schedule cutoff + idle equipment sleep policy for the highest available reduction with zero disruption to core business hours.`;
   }
 
   switch (stage) {
     case "investigate":
-      return "Sub-meter audit confirms HVAC Chiller Unit #1 ran until 22:00 (4 hours beyond 18:00 schedule cutoff), drawing 80 kWh unmonitored. Idle workstation plug-loads contributed an additional 13-25 kWh. Lighting and solar sub-meters track their expected schedule, ruling out those systems.";
+      return `Sub-meter audit confirms the HVAC unit ran ${overtimeHours} hours beyond its ${facility?.hvac?.normal_hours ?? 10}h scheduled runtime, drawing an estimated ${hvacWasteKwh} kWh unmonitored. Idle workstation plug-loads contributed additional unmanaged load. Lighting and solar sub-meters track their expected schedule, ruling out those systems.`;
     case "recommend":
     default:
-      return "Recommendation: Implement combined HVAC 18:00 automated shutdown alongside intelligent idle plug-load sleep. Recovers 93 kWh/day ($13.02/day, $390.60/mo) at Low Operational Risk.";
+      return `Recommendation: Implement combined HVAC schedule cutoff alongside intelligent idle plug-load sleep. This is the highest-reduction, low-operational-risk option among the simulated candidates — see the metrics panel for exact cost figures in your configured currency.`;
   }
 }
 
