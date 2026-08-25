@@ -11,9 +11,9 @@ export const initialFacilityData: FacilityState = {
       start: "08:00",
       end: "18:00",
     },
-    electricity_rate: 0.14, // $0.14 per kWh (or OMR 0.054)
-    currency: "USD",
-    currency_symbol: "$",
+    electricity_rate: 0.054, // OMR 0.054 per kWh (Muscat Electricity Distribution Company rate)
+    currency: "OMR",
+    currency_symbol: "OMR ",
     co2_factor_kg_per_kwh: 0.42,
   },
   baseline_kwh: 500,
