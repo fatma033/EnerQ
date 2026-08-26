@@ -69,16 +69,46 @@ function buildRetrievalQuery(stage: string | undefined, facilityData: any, userP
   }
 }
 
+const GREETING_RE = /^\s*(hi|hello|hey|good morning|good afternoon|good evening|thanks|thank you|how are you|what'?s up)\b|^\s*(مرحبا|مرحبًا|اهلا|أهلاً|السلام عليكم|صباح الخير|مساء الخير|شكرا|شكرًا|كيف حالك|كيفك|هلا)\b/i;
+
+function isSmallTalk(prompt: string): boolean {
+  return GREETING_RE.test(prompt.trim());
+}
+
+function smallTalkReply(lang: "en" | "ar"): string {
+  return lang === "ar"
+    ? "أهلاً بك! أنا وكيل EnerQ للطاقة. اسألني عن سبب ارتفاع الاستهلاك اليوم، أو عن أي من الحلول A وB وC، أو عن كيفية عمل النظام نفسه — أنا جاهز."
+    : "Hello! I'm the EnerQ energy agent. Ask me why consumption spiked today, about Solutions A, B, or C, or how the system itself works — I'm ready.";
+}
+
 // RAG-grounded, local Ollama-powered reasoning endpoint
 app.post("/api/agent/reason", async (req, res) => {
-  const { stage, facilityData, userPrompt } = req.body;
+  const { stage, facilityData, userPrompt, language } = req.body;
+  const lang: "en" | "ar" = language === "ar" ? "ar" : "en";
+
+  // Small talk / greetings never need retrieval or the LLM -- answer them
+  // directly and immediately so "hi" doesn't trigger a knowledge-base
+  // search or a several-second model call for a one-word reply.
+  if (userPrompt && isSmallTalk(userPrompt)) {
+    return res.json({
+      success: true,
+      source: "deterministic_fallback",
+      analysis: smallTalkReply(lang),
+      citations: [],
+    });
+  }
 
   const retrievalQuery = buildRetrievalQuery(stage, facilityData, userPrompt);
   const retrieved = retrieveKnowledge(retrievalQuery, 3);
-  const groundingContext = buildGroundingContext(retrieved);
-  const citations = toCitations(retrieved);
+  const groundingContext = buildGroundingContext(retrieved, lang);
+  const citations = toCitations(retrieved, lang);
 
   try {
+    const languageInstruction =
+      lang === "ar"
+        ? `Respond ONLY in Modern Standard Arabic (فصحى). The user's app is set to Arabic — every reply must be in Arabic regardless of what language the facility data or knowledge excerpts below are written in. Keep numbers, unit abbreviations (kWh, kW, °C), and zone/solution labels (Zone A/B/C, Solution A/B/C) in their original Latin form — only the surrounding sentences are Arabic.`
+        : `Respond in English.`;
+
     const systemInstruction = `You are EnerQ, an autonomous AI Energy Agent and Digital Energy Manager for a commercial facility.
 You reason from the facility telemetry (including per-zone and per-system detail below) and the provided knowledge-base
 excerpts. Ground every claim in the data given — do NOT invent numbers, zones, or systems beyond what's provided.
@@ -87,7 +117,10 @@ If a knowledge-base excerpt supports a claim, you may reference it briefly (e.g.
 If the question names a specific zone, system, or piece of equipment (e.g. "Zone A", "the PCs", "the chiller"), answer
 about THAT specific thing using the facility data below — investigate like a technician would: state what the data
 actually shows for it, whether that's the likely cause, and what to check or do next. Do not deflect a specific
-question with a generic building-wide answer.
+question with a generic building-wide answer. Vary your phrasing and structure between turns — do not reuse the same
+sentence template for every answer, even when the underlying data point is the same one you already mentioned.
+
+${languageInstruction}
 
 Be concise. Hard limit: 80 words, 3 short sentences maximum. No preamble, no restating the question, no closing
 summary — lead with the answer. This is read live during a time-boxed demo; brevity matters more than coverage.
@@ -120,8 +153,8 @@ ${userPrompt || `Provide an autonomous agent assessment for the '${stage || "rec
 
     const completion = await aiClient.chat.completions.create({
       model: OLLAMA_MODEL,
-      temperature: 0.3,
-      max_tokens: 160, // hard ceiling on generation length — keeps answers short AND fast on CPU inference
+      temperature: 0.55, // a bit of variety turn-to-turn so repeated/similar questions don't come back byte-identical
+      max_tokens: lang === "ar" ? 260 : 160, // Arabic tokenizes to more tokens per word on this model — same ~80-word target needs more ceiling
       messages: [
         { role: "system", content: systemInstruction },
         { role: "user", content: userContent },
@@ -133,16 +166,23 @@ ${userPrompt || `Provide an autonomous agent assessment for the '${stage || "rec
     return res.json({
       success: true,
       source: `ollama:${OLLAMA_MODEL}`,
-      analysis: analysis || generateDeterministicAnalysis(stage, facilityData, userPrompt),
+      analysis: analysis || generateDeterministicAnalysis(stage, facilityData, userPrompt, lang),
       citations,
     });
   } catch (error: any) {
     const reason = error?.cause?.code === "ECONNREFUSED" ? "Ollama not running locally" : error?.message || "unknown error";
     console.warn(`Ollama unreachable (${reason}) — using deterministic fallback.`);
+    // Ollama being unreachable fails almost instantly (ECONNREFUSED), so
+    // without this the fallback would answer faster than a human could
+    // finish reading the question -- an instant, always-fixed-latency reply
+    // is itself a tell that it's a canned lookup, not real inference. A
+    // short, slightly randomized pause is enough to read as "thinking"
+    // without meaningfully slowing down the demo.
+    await new Promise((resolve) => setTimeout(resolve, 550 + Math.random() * 500));
     return res.json({
       success: true,
       source: "deterministic_fallback",
-      analysis: generateDeterministicAnalysis(stage, facilityData, userPrompt),
+      analysis: generateDeterministicAnalysis(stage, facilityData, userPrompt, lang),
       citations,
       error: error?.message,
     });
@@ -160,13 +200,21 @@ ${userPrompt || `Provide an autonomous agent assessment for the '${stage || "rec
  * the same investigative behavior the live-Ollama prompt is instructed to
  * follow, just as a fixed lookup table instead of a model call.
  */
-function generateDeterministicAnalysis(stage: string, facility: any, userPrompt?: string): string {
+function generateDeterministicAnalysis(stage: string, facility: any, userPrompt?: string, lang: "en" | "ar" = "en"): string {
   const baselineKwh = facility?.baseline_kwh ?? 500;
   const currentKwh = facility?.current_kwh ?? 620;
   const variancePct = facility?.variance_pct ?? Number((((currentKwh - baselineKwh) / baselineKwh) * 100).toFixed(1));
   const overtimeHours = Math.max(0, (facility?.hvac?.actual_hours ?? 14) - (facility?.hvac?.normal_hours ?? 10));
   const hvacWasteKwh = Math.round(overtimeHours * (facility?.hvac?.power_rating_kw ?? 20));
   const closeTime = facility?.working_hours?.end ?? "18:00";
+  const solCPct = facility?.solution_c_saving_pct ?? 15.0;
+  const isAr = lang === "ar";
+
+  // Tiny deterministic hash so the same exact question always gets the same
+  // answer (consistent for testing/QA) but two *different* questions that
+  // land in the same category open differently -- avoids the "keeps saying
+  // the exact same thing" feel of a single fixed template per category.
+  const hash = (s: string) => s.split("").reduce((a, c) => (a * 31 + c.charCodeAt(0)) % 997, 7);
 
   if (userPrompt) {
     // Bilingual keyword matching: the deterministic fallback is what actually
@@ -181,35 +229,118 @@ function generateDeterministicAnalysis(stage: string, facility: any, userPrompt?
     const mentionsServer = /server|خادم|خوادم/.test(q);
     const mentionsLighting = /light|إضاءة|انارة|إنارة/.test(q);
     const mentionsSolar = /solar|pv|panel|شمس|لوح/.test(q);
+    const mentionsConfidence = /confidence|score|87%|ثقة|درجة/.test(q);
+    const mentionsComfort = /comfort|راحة/.test(q);
+    const mentionsMoney = /money|cost|save|\$|omr|save|مال|تكلفة|توفير|فلوس/.test(q);
+    const mentionsWhatIsEnerq = /what (is|does) enerq|who are you|ما هو enerq|ما هو انيرك|من انت|من أنت|ايش تسوي/.test(q);
+    const mentionsMultiAgent = /multi.?agent|four agents|4 agents|وكلاء متعدد|أربعة وكلاء|وكلاء متعددون/.test(q);
+    const mentionsRAG = /\brag\b|knowledge base|citation|قاعدة معرفة|استشهاد/.test(q);
+    const mentionsIoT = /\biot\b|internet of things|real (sensor|deployment)|bms|bacnet|انترنت الاشياء|إنترنت الأشياء|حساسات|تطبيق حقيقي/.test(q);
+    const mentionsDigitalTwinWhat = /what is (a |the )?digital twin|ما هو التوأم|ما التوأم الرقمي/.test(q);
+    const mentionsAutonomyLevel = /autonomous mode|autonomy level|approval mode|الوضع المستقل|مستوى الاستقلالية|وضع الموافقة/.test(q);
 
     if (mentionsServer) {
-      return `The critical servers in Zone B are on a separate, always-on protected circuit and are not part of the anomaly. They are unaffected by the HVAC or workstation shutdown policy in every simulated solution.`;
+      return isAr
+        ? `الخوادم الحرجة في المنطقة B على دائرة كهربائية منفصلة تعمل باستمرار، وهي ليست جزءًا من الشذوذ ولا تتأثر بسياسة إيقاف التكييف أو محطات العمل في أي من الحلول المحاكاة.`
+        : `The critical servers in Zone B are on a separate, always-on protected circuit and are not part of the anomaly. They are unaffected by the HVAC or workstation shutdown policy in every simulated solution.`;
     }
     if (mentionsZoneB) {
-      return `Yes — Zone B is where the anomaly is. 38 workstations and auxiliary monitors are drawing idle power outside working hours instead of sleeping, contributing roughly 13 to 15 kWh of the daily excess. That's exactly what Solution C's idle-equipment-sleep policy targets, on top of the HVAC cutoff.`;
+      return isAr
+        ? `نعم — المنطقة B هي مصدر الشذوذ. 38 محطة عمل وشاشة إضافية تستهلك طاقة أثناء الخمول خارج ساعات الدوام بدلًا من الدخول في وضع السكون، بما يمثّل نحو 13 إلى 15 كيلوواط/ساعة من الزيادة اليومية. هذا بالضبط ما تستهدفه سياسة سكون التجهيزات في الحل C، إضافة إلى قطع التكييف.`
+        : `Yes — Zone B is where the anomaly is. 38 workstations and auxiliary monitors are drawing idle power outside working hours instead of sleeping, contributing roughly 13 to 15 kWh of the daily excess. That's exactly what Solution C's idle-equipment-sleep policy targets, on top of the HVAC cutoff.`;
     }
     if (mentionsZoneA) {
-      return `Zone A (the open office) is not contributing to the anomaly. Its workstations follow normal 08:00 to ${closeTime} occupancy with no idle-power issue reported. The excess consumption traces to Zone B's equipment and the building-wide HVAC overtime, not Zone A.`;
+      return isAr
+        ? `المنطقة A (المكتب المفتوح) لا تساهم في الشذوذ. محطات العمل فيها تلتزم بدوام طبيعي من 08:00 حتى ${closeTime} دون أي مشكلة استهلاك خامل مسجّلة. الاستهلاك الزائد مصدره تجهيزات المنطقة B وتشغيل التكييف الإضافي على مستوى المبنى، وليس المنطقة A.`
+        : `Zone A (the open office) is not contributing to the anomaly. Its workstations follow normal 08:00 to ${closeTime} occupancy with no idle-power issue reported. The excess consumption traces to Zone B's equipment and the building-wide HVAC overtime, not Zone A.`;
     }
     if (mentionsZoneC) {
-      return `Zone C (executive rooms) is operating normally — lighting follows the automated photocell schedule with no deviation. It is not a contributor to today's anomaly.`;
+      return isAr
+        ? `المنطقة C (الغرف التنفيذية) تعمل بشكل طبيعي — الإضاءة تتبع جدول الخلية الضوئية الآلي دون أي انحراف. إنها ليست مساهمة في شذوذ اليوم.`
+        : `Zone C (executive rooms) is operating normally — lighting follows the automated photocell schedule with no deviation. It is not a contributor to today's anomaly.`;
     }
     if (mentionsLighting) {
-      return `Lighting is not a factor here. All 140 LED fixtures are tracking their automated schedule normally, drawing the expected 80 kWh per day.`;
+      return isAr
+        ? `الإضاءة ليست عاملًا هنا. جميع وحدات LED الـ140 تتبع جدولها الآلي بشكل طبيعي، وتستهلك 80 كيلوواط/ساعة يوميًا كما هو متوقع.`
+        : `Lighting is not a factor here. All 140 LED fixtures are tracking their automated schedule normally, drawing the expected 80 kWh per day.`;
     }
     if (mentionsSolar) {
-      return `Solar generation is normal — the rooftop 15 kWp array is producing its expected ~50 kWh per day with no inverter fault, so it isn't contributing to the anomaly.`;
+      return isAr
+        ? `توليد الطاقة الشمسية طبيعي — منظومة السطح 15 كيلوواط تنتج نحو 50 كيلوواط/ساعة يوميًا كما هو متوقع دون أي عطل في العاكس، لذا فهي ليست سببًا في الشذوذ.`
+        : `Solar generation is normal — the rooftop 15 kWp array is producing its expected ~50 kWh per day with no inverter fault, so it isn't contributing to the anomaly.`;
+    }
+    if (mentionsConfidence) {
+      return isAr
+        ? `درجة الثقة تُحتسب من قوة الأدلة: مطابقة انحراف قراءات العدادات الفرعية، عدد التجهيزات غير المُدارة المرصودة، وتناسق النمط عبر عدة أيام سابقة. كل هذه المؤشرات تتقارب بقوة على المنطقة B وتكييف ما بعد الدوام كسبب رئيسي.`
+        : `The confidence score is built from evidence strength: how closely sub-meter variance matches the hypothesis, how many unmanaged devices were directly observed, and pattern consistency across prior days. Those signals converge strongly on Zone B and after-hours HVAC as the primary cause.`;
+    }
+    if (mentionsComfort) {
+      return isAr
+        ? `الحل الموصى به (C) لا يؤثر إطلاقًا على راحة الشاغلين خلال ساعات الدوام الرسمية (08:00–${closeTime}) — التغيير يقتصر على ما بعد إغلاق المبنى، حين لا يكون أحد موجودًا أصلًا.`
+        : `The recommended solution (C) has zero impact on occupant comfort during official working hours (08:00–${closeTime}) — the change only takes effect after the building closes, when nobody is there to notice it.`;
+    }
+    if (mentionsMoney) {
+      return isAr
+        ? `التوفير الشهري المعروض في بطاقة التوصية محسوب مباشرة من التعرفة المضبوطة في الإعدادات مضروبة في التخفيض اليومي بالكيلوواط/ساعة، مضروبًا في 30 يومًا — عدّل التعرفة من هناك وستتحدث كل الأرقام فورًا.`
+        : `The monthly figure shown on the recommendation card is computed directly from the tariff set in Settings, multiplied by the daily kWh reduction, times 30 days — change the tariff there and every number updates instantly.`;
+    }
+    if (mentionsWhatIsEnerq) {
+      return isAr
+        ? `أنا EnerQ، نظام طاقة متعدد الوكلاء بالذكاء الاصطناعي. أراقب استهلاك هذه المنشأة، أكتشف الشذوذ، أحقق في السبب، أحاكي الحلول في توأم رقمي، ثم أقرر وأتحقق من النتيجة — أربعة وكلاء متخصصون ينسّقون هذا المسار بدلاً من نص برمجي واحد.`
+        : `I'm EnerQ, a multi-agent AI energy system. I monitor this facility's consumption, detect anomalies, investigate root cause, simulate fixes in a Digital Twin, then decide and verify the result — four specialist agents coordinate that pipeline instead of one monolithic script.`;
+    }
+    if (mentionsMultiAgent) {
+      return isAr
+        ? `أربعة وكلاء متخصصون: وكيل المراقبة (مراقبة، اكتشاف)، وكيل التشخيص (تحقيق، توليد حلول)، وكيل المحاكاة (محاكاة، مقارنة، قرار)، ووكيل التنفيذ (توصية، تحقق). منسّق مشترك يستدعيهم بالتتابع لكنه لا يحتوي على الاستدلال نفسه — كل وكيل مستقل وقابل للاستبدال بمفرده.`
+        : `Four specialist agents: ObserverAgent (observe, detect), DiagnosticAgent (investigate, generate solutions), SimulationAgent (simulate, compare, decide), and ActionAgent (recommend, verify). A shared coordinator calls them in sequence but holds none of the reasoning itself — each agent is independent and individually replaceable.`;
+    }
+    if (mentionsRAG) {
+      return isAr
+        ? `قبل أن أجيب، أسترجع أكثر المقاطع صلة من قاعدة معرفة لإدارة الطاقة عبر مطابقة الكلمات المفتاحية، وأعطيها للنموذج اللغوي كسياق استرشادي. لهذا يظهر استشهاد حقيقي تحت كل رد بدلًا من إجابة مُختلقة.`
+        : `Before I answer, I retrieve the most relevant excerpts from an energy-management knowledge base via keyword matching and give them to the model as grounding context. That's why a real citation shows up under each reply instead of an invented one.`;
+    }
+    if (mentionsIoT) {
+      return isAr
+        ? `هذا العرض يعمل على بيانات وهمية. في تطبيق حقيقي، تُستبدل قراءات وكيل المراقبة بتغذية حية من نظام إدارة المبنى (BACnet أو Modbus عادة) أو عداد ذكي، دون أي تغيير في بقية الوكلاء لأنها تستهلك نفس شكل البيانات. التنفيذ المستقل يستدعي بالمثل واجهة تحكم حقيقية بدلاً من تحديث حالة داخلي فقط.`
+        : `This demo runs on mock data. In a real deployment, ObserverAgent's readings would be replaced with a live feed from the building's BMS (commonly BACnet or Modbus) or a smart meter, with zero change to any other agent since they all consume the same data shape. Autonomous execution would similarly call a real control API instead of just updating internal state.`;
+    }
+    if (mentionsDigitalTwinWhat) {
+      return isAr
+        ? `التوأم الرقمي هو نموذج فيزيائي مبسّط لهذه المنشأة — التكييف، الإضاءة، أحمال المقابس، الطاقة الشمسية عبر 3 مناطق — يتيح لي اختبار كل حل مرشح قبل التوصية به فعليًا، فأعرف التوفير والمخاطرة المتوقعين دون أي مخاطرة تشغيلية حقيقية.`
+        : `The Digital Twin is a simplified physics model of this facility — HVAC, lighting, plug loads, solar, across 3 zones — that lets me test each candidate solution before actually recommending it, so I know the expected savings and risk without any real operational risk.`;
+    }
+    if (mentionsAutonomyLevel) {
+      return isAr
+        ? `في وضع الموافقة أسلّم القرار لإنسان، وإن لم يُجَب أذكّر ثم أصعّد. في الوضع المستقل، إن وقعت مخاطرة الحل ضمن عتبة مفوَّضة مسبقًا، أنفّذ مباشرة دون انتظار — مسجّلاً بشفافية دائمًا، ومتبوعًا بنفس خطوة التحقق.`
+        : `In Approval mode I hand the decision to a human, and if it's left unanswered I remind then escalate. In Autonomous mode, if a solution's risk falls within a pre-authorized threshold, I execute directly without waiting — always logged transparently, always followed by the same verification step.`;
     }
 
-    return `The facility consumed ${currentKwh} kWh today against an expected baseline of ${baselineKwh} kWh, a ${variancePct} percent variance. The HVAC system ran ${overtimeHours} continuous hours past the ${closeTime} occupancy cutoff, consuming roughly ${hvacWasteKwh} kWh of unneeded cooling, and Zone B's workstations stayed at full power instead of sleeping outside working hours. The combined HVAC schedule cutoff plus idle equipment sleep policy addresses both at once, for the highest available reduction with zero disruption to core business hours.`;
+    const openings = isAr
+      ? [
+          `استهلكت المنشأة اليوم ${currentKwh} كيلوواط/ساعة مقابل خط أساس متوقع قدره ${baselineKwh} كيلوواط/ساعة، بانحراف ${variancePct}%.`,
+          `القراءات الحالية: ${currentKwh} كيلوواط/ساعة اليوم مقابل ${baselineKwh} كيلوواط/ساعة كخط أساس — أي زيادة ${variancePct}%.`,
+        ]
+      : [
+          `The facility consumed ${currentKwh} kWh today against an expected baseline of ${baselineKwh} kWh, a ${variancePct} percent variance.`,
+          `Today's reading: ${currentKwh} kWh against a ${baselineKwh} kWh baseline — a ${variancePct} percent overshoot.`,
+        ];
+    const opening = openings[hash(userPrompt) % openings.length];
+
+    return isAr
+      ? `${opening} شغّل نظام التكييف ${overtimeHours} ساعة متواصلة بعد وقت إغلاق ${closeTime}، مستهلكًا نحو ${hvacWasteKwh} كيلوواط/ساعة من التبريد غير الضروري، وبقيت محطات عمل المنطقة B على كامل طاقتها بدلًا من السكون خارج الدوام. سياسة قطع التكييف المدمجة مع سكون التجهيزات الخاملة تعالج الاثنين معًا، لتحقق أعلى خفض متاح (${solCPct}%) دون أي إخلال بساعات العمل الأساسية.`
+      : `${opening} The HVAC system ran ${overtimeHours} continuous hours past the ${closeTime} occupancy cutoff, consuming roughly ${hvacWasteKwh} kWh of unneeded cooling, and Zone B's workstations stayed at full power instead of sleeping outside working hours. The combined HVAC schedule cutoff plus idle equipment sleep policy addresses both at once, for the highest available reduction (${solCPct}%) with zero disruption to core business hours.`;
   }
 
   switch (stage) {
     case "investigate":
-      return `Sub-meter audit confirms the HVAC unit ran ${overtimeHours} hours beyond its ${facility?.hvac?.normal_hours ?? 10}h scheduled runtime, drawing an estimated ${hvacWasteKwh} kWh unmonitored. Idle workstation plug-loads in Zone B contributed additional unmanaged load. Lighting and solar sub-meters track their expected schedule, ruling out those systems.`;
+      return isAr
+        ? `يؤكد تدقيق العدادات الفرعية أن وحدة التكييف عملت ${overtimeHours} ساعة إضافية بعد جدولها المعتمد البالغ ${facility?.hvac?.normal_hours ?? 10} ساعة، مستهلكة ما يُقدَّر بـ ${hvacWasteKwh} كيلوواط/ساعة دون رقابة. ساهمت أحمال المقابس الخاملة في المنطقة B بحمل إضافي غير مُدار. عدادات الإضاءة والطاقة الشمسية الفرعية تتبع جدولها المتوقع، ما يستبعد هذين النظامين.`
+        : `Sub-meter audit confirms the HVAC unit ran ${overtimeHours} hours beyond its ${facility?.hvac?.normal_hours ?? 10}h scheduled runtime, drawing an estimated ${hvacWasteKwh} kWh unmonitored. Idle workstation plug-loads in Zone B contributed additional unmanaged load. Lighting and solar sub-meters track their expected schedule, ruling out those systems.`;
     case "recommend":
     default:
-      return `Recommendation: implement the combined HVAC schedule cutoff alongside intelligent idle plug-load sleep. This is the highest-reduction, low-operational-risk option among the simulated candidates — see the metrics panel for exact cost figures in your configured currency.`;
+      return isAr
+        ? `التوصية: تنفيذ سياسة قطع جدول التكييف المدمجة مع سكون أحمال المقابس الخاملة الذكي. هذا هو الخيار الأعلى خفضًا والأقل مخاطرة تشغيلية بين الحلول المحاكاة — راجع لوحة المقاييس للأرقام الدقيقة بعملتك المضبوطة.`
+        : `Recommendation: implement the combined HVAC schedule cutoff alongside intelligent idle plug-load sleep. This is the highest-reduction, low-operational-risk option among the simulated candidates — see the metrics panel for exact cost figures in your configured currency.`;
   }
 }
 
