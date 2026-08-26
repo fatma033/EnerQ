@@ -81,8 +81,11 @@ app.post("/api/agent/reason", async (req, res) => {
   try {
     const systemInstruction = `You are EnerQ, an autonomous AI Energy Agent and Digital Energy Manager for commercial facilities.
 You reason from the facility telemetry and the provided knowledge-base excerpts. Ground every claim in the data given.
-Do NOT invent numbers beyond what is provided. Keep the tone crisp, professional, and structured with short bullet points.
-If a knowledge-base excerpt supports a claim, you may reference it briefly (e.g. "per HVAC schedule best practice").`;
+Do NOT invent numbers beyond what is provided. If a knowledge-base excerpt supports a claim, you may reference it briefly
+(e.g. "per HVAC schedule best practice").
+
+Be concise. Hard limit: 80 words, 3 short sentences or bullet points maximum. No preamble, no restating the question,
+no closing summary — lead with the answer. This is read live during a time-boxed demo; brevity matters more than coverage.`;
 
     const userContent = `Facility Context:
 - Name: ${facilityData?.name || "Commercial Tech Center"}
@@ -103,6 +106,7 @@ ${userPrompt || `Provide an autonomous agent assessment for the '${stage || "rec
     const completion = await aiClient.chat.completions.create({
       model: OLLAMA_MODEL,
       temperature: 0.3,
+      max_tokens: 160, // hard ceiling on generation length — keeps answers short AND fast on CPU inference
       messages: [
         { role: "system", content: systemInstruction },
         { role: "user", content: userContent },
