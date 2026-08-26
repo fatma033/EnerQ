@@ -29,6 +29,7 @@ export default function App() {
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [isReportOpen, setIsReportOpen] = useState(false);
   const [isSimulatingTwin, setIsSimulatingTwin] = useState(false);
+  const digitalTwinRef = useRef<HTMLElement | null>(null);
   const [engineStatus, setEngineStatus] = useState<{ provider: string; model: string; hasApiKey: boolean } | null>(null);
 
   // Active view tab in workspace (Overview vs Digital Twin vs Solutions Lab)
@@ -148,9 +149,21 @@ export default function App() {
     setIsVerificationOpen(true);
   };
 
-  // Handler: Scenario toggle
-  const handleSelectScenario = (scenario: "BASELINE" | "CURRENT" | "A" | "B" | "C") => {
+  // Handler: Scenario toggle. Also used as the "pick this option and show
+  // me the process" entry point from the Solutions comparison cards and the
+  // chat drawer -- so any of those, not just Option C, drives the same
+  // visible Digital Twin simulation and scrolls the user to it.
+  const handleSelectScenario = (scenario: "BASELINE" | "CURRENT" | "A" | "B" | "C", opts?: { reveal?: boolean }) => {
     orchestrator.setActiveScenario(scenario);
+
+    if (opts?.reveal) {
+      setActiveTab((prev) => (prev === "SOLUTIONS" || prev === "ANALYTICS" ? "ALL" : prev));
+      setIsSimulatingTwin(true);
+      setTimeout(() => setIsSimulatingTwin(false), 700);
+      setTimeout(() => {
+        digitalTwinRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 60);
+    }
   };
 
   // 24-hour hourly profile computed dynamically
@@ -294,7 +307,7 @@ export default function App() {
 
         {/* 6. Main Interactive Views */}
         {(activeTab === "ALL" || activeTab === "TWIN") && (
-          <section aria-label="Facility Digital Twin Model">
+          <section aria-label="Facility Digital Twin Model" ref={digitalTwinRef as React.RefObject<HTMLElement>}>
             <DigitalTwinView
               facility={context.facility}
               solutions={solutions}
@@ -331,9 +344,7 @@ export default function App() {
             <SolutionsComparison
               solutions={solutions}
               selectedSolutionId={chosenSolution.id}
-              onSelectSolution={(id) => {
-                orchestrator.setActiveScenario(id);
-              }}
+              onSelectSolution={(id) => handleSelectScenario(id, { reveal: true })}
               currencySymbol={context.facility.config.currency_symbol}
               t={t}
               language={language}

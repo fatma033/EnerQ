@@ -1,24 +1,25 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { AnimatedNumber } from "./AnimatedNumber";
 import {
   Cpu,
-  Layers,
   Thermometer,
-  Zap,
   Fan,
   Sun,
   Lightbulb,
   Building,
   RotateCw,
   Sparkles,
-  ArrowRight,
   Info,
-  CheckCircle2,
-  AlertTriangle,
   Play,
+  SlidersHorizontal,
+  RotateCcw,
 } from "lucide-react";
 import { FacilityState, ProposedSolution } from "../types";
+import { EnergyCalculationEngine } from "../simulation/engine";
 import { getTranslation } from "../i18n";
+
+const DEFAULT_CUTOFF_HOUR = 18;
+const DEFAULT_SETPOINT_OFFSET = 1.5;
 
 interface DigitalTwinViewProps {
   facility: FacilityState;
@@ -45,6 +46,37 @@ export const DigitalTwinView: React.FC<DigitalTwinViewProps> = ({
   const currencySymbol = facility.config.currency_symbol;
   const rate = facility.config.electricity_rate;
   const dt = t.digitalTwin;
+
+  // Institute-tunable levers: an institute's actual BMS cutoff schedule or
+  // acceptable thermal drift may differ from the demo defaults. Adjusting
+  // these recomputes A/B/C live through the same EnergyCalculationEngine
+  // used everywhere else -- this is a local "what-if" preview scoped to the
+  // Digital Twin, it doesn't change the agent's own recommendation upstream.
+  const [customCutoffHour, setCustomCutoffHour] = useState(DEFAULT_CUTOFF_HOUR);
+  const [customSetpointOffset, setCustomSetpointOffset] = useState(DEFAULT_SETPOINT_OFFSET);
+  const [customIdleSleep, setCustomIdleSleep] = useState(true);
+  const isCustomized =
+    customCutoffHour !== DEFAULT_CUTOFF_HOUR || customSetpointOffset !== DEFAULT_SETPOINT_OFFSET || !customIdleSleep;
+
+  const customSolutions = useMemo(
+    () =>
+      EnergyCalculationEngine.generateSolutions(facility, {
+        cutoffHour: customCutoffHour,
+        setpointOffsetC: customSetpointOffset,
+        idleSleepEnabled: customIdleSleep,
+      }),
+    [facility, customCutoffHour, customSetpointOffset, customIdleSleep]
+  );
+
+  // Falls back to the prop (the agent's own computed solutions) unless the
+  // user has actually moved a slider -- so nothing changes for anyone who
+  // never touches customization.
+  const effectiveSolutions = isCustomized ? customSolutions : solutions;
+  const resetCustomization = () => {
+    setCustomCutoffHour(DEFAULT_CUTOFF_HOUR);
+    setCustomSetpointOffset(DEFAULT_SETPOINT_OFFSET);
+    setCustomIdleSleep(true);
+  };
 
   // Compute metrics based on active scenario
   let simulatedKwh = facility.current_kwh;
@@ -79,32 +111,36 @@ export const DigitalTwinView: React.FC<DigitalTwinViewProps> = ({
     savingsPct = 0;
     hvacHours = facility.systems.hvac.actual_hours;
     scenarioLabel = dt.scenarioLabels.current;
-  } else if (activeScenario === "A" && solutions) {
-    simulatedKwh = solutions.A.simulated_daily_kwh;
-    simulatedHvacKwh = 230;
+  } else if (activeScenario === "A" && effectiveSolutions) {
+    simulatedKwh = effectiveSolutions.A.simulated_daily_kwh;
+    simulatedHvacKwh = isCustomized
+      ? facility.systems.hvac.base_kwh + (customCutoffHour - 18) * facility.systems.hvac.power_rating_kw
+      : 230;
     simulatedEquipKwh = facility.systems.equipment.total_kwh;
     simulatedZoneTemp = 22.2;
-    savingsKwh = solutions.A.estimated_saving_kwh;
-    savingsPct = solutions.A.estimated_saving_pct;
-    hvacHours = 10;
+    savingsKwh = effectiveSolutions.A.estimated_saving_kwh;
+    savingsPct = effectiveSolutions.A.estimated_saving_pct;
+    hvacHours = customCutoffHour - 8;
     scenarioLabel = dt.scenarioLabels.A;
-  } else if (activeScenario === "B" && solutions) {
-    simulatedKwh = solutions.B.simulated_daily_kwh;
+  } else if (activeScenario === "B" && effectiveSolutions) {
+    simulatedKwh = effectiveSolutions.B.simulated_daily_kwh;
     simulatedHvacKwh = 243;
     simulatedEquipKwh = facility.systems.equipment.total_kwh;
-    simulatedZoneTemp = facility.systems.hvac.temp_setpoint_c + 1.5;
-    savingsKwh = solutions.B.estimated_saving_kwh;
-    savingsPct = solutions.B.estimated_saving_pct;
+    simulatedZoneTemp = facility.systems.hvac.temp_setpoint_c + customSetpointOffset;
+    savingsKwh = effectiveSolutions.B.estimated_saving_kwh;
+    savingsPct = effectiveSolutions.B.estimated_saving_pct;
     hvacHours = facility.systems.hvac.actual_hours;
-    scenarioLabel = dt.scenarioLabels.B(facility.systems.hvac.temp_setpoint_c.toFixed(1), (facility.systems.hvac.temp_setpoint_c + 1.5).toFixed(1));
-  } else if (activeScenario === "C" && solutions) {
-    simulatedKwh = solutions.C.simulated_daily_kwh;
-    simulatedHvacKwh = 200;
-    simulatedEquipKwh = 105;
+    scenarioLabel = dt.scenarioLabels.B(facility.systems.hvac.temp_setpoint_c.toFixed(1), (facility.systems.hvac.temp_setpoint_c + customSetpointOffset).toFixed(1));
+  } else if (activeScenario === "C" && effectiveSolutions) {
+    simulatedKwh = effectiveSolutions.C.simulated_daily_kwh;
+    simulatedHvacKwh = isCustomized
+      ? facility.systems.hvac.base_kwh + (customCutoffHour - 18) * facility.systems.hvac.power_rating_kw
+      : 200;
+    simulatedEquipKwh = customIdleSleep ? 105 : facility.systems.equipment.total_kwh;
     simulatedZoneTemp = 22.2;
-    savingsKwh = solutions.C.estimated_saving_kwh;
-    savingsPct = solutions.C.estimated_saving_pct;
-    hvacHours = 10;
+    savingsKwh = effectiveSolutions.C.estimated_saving_kwh;
+    savingsPct = effectiveSolutions.C.estimated_saving_pct;
+    hvacHours = customCutoffHour - 8;
     scenarioLabel = dt.scenarioLabels.C;
   }
 
@@ -210,6 +246,86 @@ export const DigitalTwinView: React.FC<DigitalTwinViewProps> = ({
           {dt.baselineReference(facility.baseline_kwh)}
         </button>
       </div>
+
+      {/* Customization Panel: tune the two adjustable levers instead of
+          accepting the demo defaults. Only meaningful for A/B/C, and only
+          shown for those so BASELINE/CURRENT stay simple read-only states. */}
+      {(activeScenario === "A" || activeScenario === "B" || activeScenario === "C") && (
+        <div className="mt-3 p-3.5 rounded-xl bg-slate-950/70 border border-slate-800/90">
+          <div className="flex items-center justify-between mb-2.5">
+            <span className="text-[11px] font-semibold text-slate-300 flex items-center gap-1.5 uppercase tracking-wider">
+              <SlidersHorizontal className="w-3.5 h-3.5 text-teal-400" />
+              {dt.customizeTitle}
+            </span>
+            {isCustomized && (
+              <button
+                onClick={resetCustomization}
+                className="flex items-center gap-1 text-[10px] font-medium text-slate-400 hover:text-slate-200 transition-colors"
+              >
+                <RotateCcw className="w-3 h-3" />
+                {dt.customizeReset}
+              </button>
+            )}
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {(activeScenario === "A" || activeScenario === "C") && (
+              <div>
+                <div className="flex items-center justify-between text-[11px] text-slate-400 mb-1">
+                  <span>{dt.customizeCutoffLabel}</span>
+                  <span className="font-semibold text-teal-300 tabular-nums">{customCutoffHour.toString().padStart(2, "0")}:00</span>
+                </div>
+                <input
+                  type="range"
+                  min={18}
+                  max={22}
+                  step={1}
+                  value={customCutoffHour}
+                  onChange={(e) => setCustomCutoffHour(Number(e.target.value))}
+                  className="w-full accent-teal-500"
+                />
+              </div>
+            )}
+
+            {activeScenario === "B" && (
+              <div>
+                <div className="flex items-center justify-between text-[11px] text-slate-400 mb-1">
+                  <span>{dt.customizeSetpointLabel}</span>
+                  <span className="font-semibold text-teal-300 tabular-nums">+{customSetpointOffset.toFixed(1)}°C</span>
+                </div>
+                <input
+                  type="range"
+                  min={0.5}
+                  max={3.0}
+                  step={0.1}
+                  value={customSetpointOffset}
+                  onChange={(e) => setCustomSetpointOffset(Number(e.target.value))}
+                  className="w-full accent-teal-500"
+                />
+              </div>
+            )}
+
+            {activeScenario === "C" && (
+              <label className="flex items-center gap-2 text-[11px] text-slate-300 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={customIdleSleep}
+                  onChange={(e) => setCustomIdleSleep(e.target.checked)}
+                  className="accent-teal-500 w-3.5 h-3.5"
+                />
+                {dt.customizeIdleLabel}
+              </label>
+            )}
+          </div>
+
+          {isCustomized && (
+            <p className="text-[10px] text-amber-400/90 mt-2.5 flex items-center gap-1">
+              <Info className="w-3 h-3" />
+              {dt.customizeNote}
+            </p>
+          )}
+        </div>
+      )}
 
       {/* Main Digital Twin Grid: Visual Schematic + Real-time Calculated Twin Telemetry */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 mt-4">

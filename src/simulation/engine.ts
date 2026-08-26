@@ -112,29 +112,54 @@ export class EnergyCalculationEngine {
   }
 
   /**
-   * Generates candidate intervention solutions with mathematical outcomes
+   * Generates candidate intervention solutions with mathematical outcomes.
+   *
+   * `customization` lets an institute tune the two adjustable levers instead
+   * of accepting the demo defaults: how early HVAC actually cuts off
+   * (cutoffHour, 18-22) and how much the thermostat setpoint is allowed to
+   * drift (setpointOffsetC, 0.5-3.0°C), plus whether the idle-equipment
+   * sleep policy (Option C's second lever) is in scope at all. Omitting it
+   * reproduces the exact original fixed numbers -- every existing call site
+   * is unaffected.
    */
-  static generateSolutions(state: FacilityState): Record<"A" | "B" | "C", ProposedSolution> {
+  static generateSolutions(
+    state: FacilityState,
+    customization?: { cutoffHour?: number; setpointOffsetC?: number; idleSleepEnabled?: boolean }
+  ): Record<"A" | "B" | "C", ProposedSolution> {
     const rate = state.config.electricity_rate;
     const currentKwh = state.current_kwh; // 620
 
-    // Scenario A: Optimize HVAC schedule only (stop at 18:00)
-    // Savings: 50 kWh reduction
-    const savA_kwh = 50;
-    const finalA_kwh = currentKwh - savA_kwh; // 570
-    const savA_pct = Number(((savA_kwh / currentKwh) * 100).toFixed(1)); // 8.1%
+    const cutoffHour = Math.min(22, Math.max(18, customization?.cutoffHour ?? 18));
+    const setpointOffsetC = Math.min(3.0, Math.max(0.5, customization?.setpointOffsetC ?? 1.5));
+    const idleSleepEnabled = customization?.idleSleepEnabled ?? true;
 
-    // Scenario B: Adjust HVAC setpoint +1.5°C (22°C -> 23.5°C) without schedule fix
-    // Savings: ~37 kWh reduction
-    const savB_kwh = 37;
-    const finalB_kwh = currentKwh - savB_kwh; // 583
-    const savB_pct = Number(((savB_kwh / currentKwh) * 100).toFixed(1)); // 6.0%
+    // Both A and C's HVAC savings scale off how many of the 4 overtime hours
+    // (18:00-22:00) an earlier cutoff actually removes -- 0 at cutoffHour=22
+    // (no change), full effect at cutoffHour=18 (the demo default).
+    const overtimeHoursRemoved = 22 - cutoffHour; // 0-4
+    const cutoffFraction = overtimeHoursRemoved / 4;
+    const setpointFraction = setpointOffsetC / 1.5;
 
-    // Scenario C: Combined HVAC 18:00 automated schedule + Idle equipment cutoff
-    // Savings: 80 kWh (HVAC) + 13 kWh (Idle equipment) = 93 kWh reduction
-    const savC_kwh = 93;
-    const finalC_kwh = currentKwh - savC_kwh; // 527
-    const savC_pct = Number(((savC_kwh / currentKwh) * 100).toFixed(1)); // 15.0%
+    // Scenario A: Optimize HVAC schedule only (stop at cutoffHour)
+    // Savings: 50 kWh reduction at the full 18:00 cutoff
+    const savA_kwh = Math.round(50 * cutoffFraction);
+    const finalA_kwh = currentKwh - savA_kwh; // 570 at defaults
+    const savA_pct = Number(((savA_kwh / currentKwh) * 100).toFixed(1)); // 8.1% at defaults
+
+    // Scenario B: Adjust HVAC setpoint by setpointOffsetC without schedule fix
+    // Savings: ~37 kWh reduction at the default +1.5°C offset
+    const savB_kwh = Math.round(37 * setpointFraction);
+    const finalB_kwh = currentKwh - savB_kwh; // 583 at defaults
+    const savB_pct = Number(((savB_kwh / currentKwh) * 100).toFixed(1)); // 6.0% at defaults
+
+    // Scenario C: Combined HVAC cutoff (scaling off the full 80 kWh overtime
+    // waste, not just A's 50 kWh claim) + optional idle equipment cutoff
+    // Savings: 80 kWh (HVAC) + 13 kWh (Idle equipment) = 93 kWh at defaults
+    const savC_hvac_kwh = Math.round(80 * cutoffFraction);
+    const savC_idle_kwh = idleSleepEnabled ? 13 : 0;
+    const savC_kwh = savC_hvac_kwh + savC_idle_kwh;
+    const finalC_kwh = currentKwh - savC_kwh; // 527 at defaults
+    const savC_pct = Number(((savC_kwh / currentKwh) * 100).toFixed(1)); // 15.0% at defaults
 
     const maxSavingPct = Math.max(savA_pct, savB_pct, savC_pct);
     const riskScoreA = 2.1;
