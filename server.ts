@@ -12,7 +12,11 @@ const PORT = Number(process.env.PORT) || 3000;
 // Ollama exposes an OpenAI-compatible Chat Completions API, so the same
 // OpenAI SDK talks to a fully local, free, key-less LLM — nothing leaves
 // the machine and there's no API billing to manage during the demo.
-const OLLAMA_BASE_URL = process.env.OLLAMA_BASE_URL || "http://localhost:11434/v1";
+// Deliberately 127.0.0.1, not "localhost": Node's fetch/undici resolves
+// "localhost" to the IPv6 ::1 first, and Ollama only listens on IPv4 —
+// that mismatch causes a silent ECONNREFUSED on every request even
+// though `curl localhost:11434` works fine from the same machine.
+const OLLAMA_BASE_URL = process.env.OLLAMA_BASE_URL || "http://127.0.0.1:11434/v1";
 const OLLAMA_MODEL = process.env.OLLAMA_MODEL || "llama3.2:3b";
 
 app.use(express.json());
