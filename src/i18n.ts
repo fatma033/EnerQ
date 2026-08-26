@@ -200,6 +200,7 @@ export const translations = {
 
     digitalTwin: {
       title: "Facility Digital Twin — Physics & Energy Simulation",
+      processLabel: "Process:",
       estimatedBadge: "Digital Twin Simulation — Estimated",
       modelNote: "Virtual building thermal inertia & sub-circuit load model",
       simulating: "Simulating Thermal Model...",
@@ -583,6 +584,7 @@ export const translations = {
 
     digitalTwin: {
       title: "التوأم الرقمي للمنشأة — محاكاة الفيزياء والطاقة",
+      processLabel: "العملية:",
       estimatedBadge: "محاكاة التوأم الرقمي — تقديرية",
       modelNote: "نموذج القصور الحراري الافتراضي للمبنى وأحمال الدوائر الفرعية",
       simulating: "جارٍ محاكاة النموذج الحراري...",

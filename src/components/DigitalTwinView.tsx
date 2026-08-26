@@ -14,12 +14,17 @@ import {
   SlidersHorizontal,
   RotateCcw,
 } from "lucide-react";
-import { FacilityState, ProposedSolution } from "../types";
+import { AgentStage, FacilityState, ProposedSolution } from "../types";
 import { EnergyCalculationEngine } from "../simulation/engine";
 import { getTranslation } from "../i18n";
 
 const DEFAULT_CUTOFF_HOUR = 18;
 const DEFAULT_SETPOINT_OFFSET = 1.5;
+
+const STAGE_ORDER: AgentStage[] = [
+  "IDLE", "OBSERVE", "DETECT", "INVESTIGATE", "GENERATE_SOLUTIONS",
+  "SIMULATE", "COMPARE", "DECIDE", "RECOMMEND", "VERIFY", "COMPLETED",
+];
 
 interface DigitalTwinViewProps {
   facility: FacilityState;
@@ -30,6 +35,11 @@ interface DigitalTwinViewProps {
   isSimulating: boolean;
   isVerified?: boolean;
   t: ReturnType<typeof getTranslation>;
+  /** Drives the compact process strip at the top of the page -- the Digital
+   *  Twin leads its own process instead of sending the user elsewhere to
+   *  watch the pipeline advance. */
+  currentStage: AgentStage;
+  isRunningAutonomous: boolean;
 }
 
 export const DigitalTwinView: React.FC<DigitalTwinViewProps> = ({
@@ -41,6 +51,8 @@ export const DigitalTwinView: React.FC<DigitalTwinViewProps> = ({
   isSimulating,
   isVerified,
   t,
+  currentStage,
+  isRunningAutonomous,
 }) => {
   const [selectedFloor, setSelectedFloor] = useState<1 | 2 | 3>(2);
   const currencySymbol = facility.config.currency_symbol;
@@ -148,8 +160,51 @@ export const DigitalTwinView: React.FC<DigitalTwinViewProps> = ({
   const dailyCostSaving = Number((savingsKwh * rate).toFixed(2));
   const monthlyCostSaving = Number((savingsKwh * rate * 30).toFixed(2));
 
+  const currentStageIndex = STAGE_ORDER.indexOf(currentStage);
+  const isPipelineActive = isRunningAutonomous || isSimulating;
+
   return (
     <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-md">
+      {/* Compact Process Strip: the Digital Twin leads its own process --
+          shows the same 9-stage pipeline progress the Dashboard timeline
+          does, condensed to one row, so running a simulation here doesn't
+          require leaving the page to see it happening. */}
+      <div className={`mb-4 p-3 rounded-xl border flex items-center gap-3 transition-colors ${
+        isPipelineActive ? "bg-amber-950/30 border-amber-800/50" : "bg-slate-950/60 border-slate-800/80"
+      }`}>
+        <div className="flex items-center gap-1.5 shrink-0">
+          {isPipelineActive ? (
+            <RotateCw className="w-3.5 h-3.5 text-amber-400 animate-spin" />
+          ) : (
+            <span className={`w-2 h-2 rounded-full ${currentStage === "COMPLETED" ? "bg-emerald-400" : "bg-slate-600"}`} />
+          )}
+          <span className={`text-[11px] font-semibold uppercase tracking-wider ${isPipelineActive ? "text-amber-300" : "text-slate-400"}`}>
+            {dt.processLabel}
+          </span>
+        </div>
+        <div className="flex-1 flex items-center gap-1 min-w-0 overflow-x-auto scrollbar-none">
+          {STAGE_ORDER.slice(1, 10).map((stage, i) => {
+            const stepIndex = i + 1;
+            const done = currentStage === "COMPLETED" || currentStageIndex > stepIndex;
+            const active = currentStageIndex === stepIndex;
+            return (
+              <span
+                key={stage}
+                title={t.stages[stage as keyof typeof t.stages]?.label}
+                className={`h-1.5 rounded-full transition-all shrink-0 ${
+                  active ? "w-6 bg-amber-400" : done ? "w-3 bg-emerald-500" : "w-3 bg-slate-700"
+                }`}
+              />
+            );
+          })}
+        </div>
+        <span className="text-[11px] font-medium text-slate-300 shrink-0">
+          {currentStage === "COMPLETED"
+            ? t.workflowCompleted
+            : t.stages[currentStage as keyof typeof t.stages]?.label ?? currentStage}
+        </span>
+      </div>
+
       {/* Header with Title & Disclaimer */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-800">
         <div>

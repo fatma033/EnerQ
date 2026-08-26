@@ -135,12 +135,12 @@ export default function App() {
     }
   };
 
-  // Handler: Trigger Digital Twin Simulation manually. Also navigates to the
-  // Dashboard's timeline so the SIMULATE stage lighting up is actually
-  // visible, not just happening off-screen on the Twin page.
+  // Handler: Trigger Digital Twin Simulation manually. Stays on the Twin
+  // page -- it leads its own process and shows its own progress (see the
+  // compact stage strip in DigitalTwinView) rather than bouncing the user
+  // away to watch it happen somewhere else.
   const handleRunTwinSimulation = () => {
     setIsSimulatingTwin(true);
-    setPage("dashboard");
     setTimeout(() => {
       orchestrator.stepSimulate();
       setIsSimulatingTwin(false);
@@ -297,6 +297,8 @@ export default function App() {
             isSimulating={isSimulatingTwin}
             isVerified={isVerified}
             t={t}
+            currentStage={context.currentStage}
+            isRunningAutonomous={context.isRunningAutonomous}
           />
         </div>
 
