@@ -38,7 +38,7 @@ export interface SolutionNumbers {
 
 export const translations = {
   en: {
-    tagline: "AI Energy Agent",
+    tagline: "Multi-Agent AI Energy System",
     subtitle: "Autonomous Facility Energy Expert & Digital Twin",
     rate: "Rate",
     runAnalysis: "Run EnerQ Analysis",
@@ -54,7 +54,7 @@ export const translations = {
     langToggle: "العربية",
     liveSync: "Autonomous Facility State • Live Sync",
 
-    timelineTitle: "EnerQ AI Agent Workflow",
+    timelineTitle: "EnerQ Multi-Agent Workflow",
     timelineSubtitle: "Autonomous Decision & Verification Pipeline",
     reasoningActive: "Autonomous Reasoning Active",
     workflowCompleted: "Workflow Completed & Verified",
@@ -103,7 +103,7 @@ export const translations = {
 
     footer: {
       tagline: "Your Autonomous AI Energy Expert & Digital Twin",
-      note: "From Energy Data to Intelligent Action • Deterministic Energy Physics + Local Ollama RAG Reasoning",
+      note: "From Energy Data to Intelligent Action • 4 Coordinated Agents + Deterministic Physics + Local Ollama RAG Reasoning",
     },
 
     anomalyBanner: {
@@ -288,7 +288,7 @@ export const translations = {
     },
 
     agentLog: {
-      terminalTitle: "EnerQ Agent Activity Stream & Reasoning Log",
+      terminalTitle: "EnerQ Multi-Agent Activity Stream",
       thinking: "Thinking...",
       standingBy: 'Standing by. Click "Run EnerQ Analysis" or select a stage to start the autonomous pipeline.',
       rootCauseReasoning: "Agent Root-Cause Reasoning",
@@ -404,7 +404,7 @@ export const translations = {
     },
   },
   ar: {
-    tagline: "وكيل ذكاء اصطناعي للطاقة",
+    tagline: "نظام طاقة متعدد الوكلاء بالذكاء الاصطناعي",
     subtitle: "خبير طاقة مستقل للمنشأة وتوأم رقمي",
     rate: "التعرفة",
     runAnalysis: "تشغيل تحليل EnerQ",
@@ -420,7 +420,7 @@ export const translations = {
     langToggle: "English",
     liveSync: "حالة المنشأة المستقلة • مزامنة حية",
 
-    timelineTitle: "سير عمل وكيل EnerQ",
+    timelineTitle: "سير عمل EnerQ متعدد الوكلاء",
     timelineSubtitle: "خط أنابيب القرار والتحقق المستقل",
     reasoningActive: "الاستدلال المستقل نشط",
     workflowCompleted: "اكتملت العملية وتم التحقق",
@@ -469,7 +469,7 @@ export const translations = {
 
     footer: {
       tagline: "خبير الطاقة المستقل بالذكاء الاصطناعي والتوأم الرقمي الخاص بك",
-      note: "من بيانات الطاقة إلى إجراء ذكي • فيزياء طاقة حتمية + استدلال محلي عبر Ollama وقاعدة معرفة RAG",
+      note: "من بيانات الطاقة إلى إجراء ذكي • 4 وكلاء منسّقون + فيزياء طاقة حتمية + استدلال محلي عبر Ollama وقاعدة معرفة RAG",
     },
 
     anomalyBanner: {
@@ -654,7 +654,7 @@ export const translations = {
     },
 
     agentLog: {
-      terminalTitle: "سجل نشاط واستدلال وكيل EnerQ",
+      terminalTitle: "سجل نشاط وكلاء EnerQ المتعددين",
       thinking: "جارٍ التفكير...",
       standingBy: 'في وضع الاستعداد. اضغط "تشغيل تحليل EnerQ" أو اختر مرحلة لبدء خط الأنابيب المستقل.',
       rootCauseReasoning: "استدلال الوكيل حول السبب الجذري",
