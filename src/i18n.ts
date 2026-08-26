@@ -60,6 +60,13 @@ export const translations = {
     workflowCompleted: "Workflow Completed & Verified",
     stepOf: (n: number) => `Step ${n} of 9`,
 
+    agentNames: {
+      observer: "Observer Agent",
+      diagnostic: "Diagnostic Agent",
+      simulation: "Simulation Agent",
+      action: "Action Agent",
+    },
+
     stages: {
       OBSERVE: { label: "Observe", description: "Ingest meter telemetry & facility schedules" },
       DETECT: { label: "Detect", description: "Evaluate variance against baseline (+24%)" },
@@ -443,6 +450,13 @@ export const translations = {
     reasoningActive: "الاستدلال المستقل نشط",
     workflowCompleted: "اكتملت العملية وتم التحقق",
     stepOf: (n: number) => `الخطوة ${n} من 9`,
+
+    agentNames: {
+      observer: "وكيل المراقبة",
+      diagnostic: "وكيل التشخيص",
+      simulation: "وكيل المحاكاة",
+      action: "وكيل التنفيذ",
+    },
 
     stages: {
       OBSERVE: { label: "مراقبة", description: "استيعاب قراءات العدادات وجداول المنشأة" },
