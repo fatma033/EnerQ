@@ -112,7 +112,7 @@ function isSmallTalk(prompt: string): boolean {
 function smallTalkReply(prompt: string, lang: "en" | "ar"): string {
   const p = normalizeArabic(prompt.trim());
   if (/^\s*(السلام عليكم|سلام عليكم)/i.test(p)) {
-    return "وعليكم السلام ورحمة الله وبركاته! أنا EnerQ، وكيلك المستقل للطاقة. تفضّل، كيف أقدر أساعدك؟";
+    return "وعليكم السلام ورحمة الله وبركاته! تفضّل، كيف أقدر أساعدك اليوم؟";
   }
   if (THANKS_RE.test(p)) {
     return lang === "ar" ? "على الرحب! أخبرني إن احتجت أي شيء آخر." : "You're welcome! Let me know if there's anything else you'd like to dig into.";
@@ -123,7 +123,7 @@ function smallTalkReply(prompt: string, lang: "en" | "ar"): string {
       : "I'm doing well, thanks for asking! Right now I'm watching a +24% consumption anomaly on this facility, and I'm happy to walk you through any part of it. Where would you like to start?";
   }
   return lang === "ar"
-    ? "أهلاً بك! أنا وكيل EnerQ للطاقة. اسألني عن سبب ارتفاع الاستهلاك اليوم، أو عن أي من الحلول A وB وC، أو حتى عن كيفية عمل النظام نفسه."
+    ? "أهلاً بك! اسألني عن سبب ارتفاع الاستهلاك اليوم، أو عن أي من الحلول A وB وC، أو حتى عن كيفية عمل النظام نفسه."
     : "Hey there! I'm the EnerQ energy agent. Ask me why consumption spiked today, about Solutions A, B, or C, or even how this whole system works.";
 }
 
@@ -154,7 +154,9 @@ app.post("/api/agent/reason", async (req, res) => {
       lang === "ar"
         ? `Respond ONLY in Modern Standard Arabic (فصحى) — full, fluent Arabic sentences, not a mix of Arabic and English prose. The user's app is set to Arabic — every reply must be in Arabic regardless of what language the facility data or knowledge excerpts below are written in.
 
-The ONLY things allowed to stay in Latin script are: numbers, unit abbreviations (kWh, kW, °C, %), and the short zone/solution labels "Zone A/B/C" and "Solution A/B/C" exactly as written. Every other word — including technical and engineering terms like "anomaly", "idle load", "after-hours", "root cause" — MUST be translated into Arabic (e.g. شذوذ, حمل خامل, بعد ساعات الدوام, السبب الجذري). Do not leave an English phrase untranslated just because it sounds technical.`
+The ONLY things allowed to stay in Latin script are: numbers, unit abbreviations (kWh, kW, °C, %), and the short zone/solution labels "Zone A/B/C" and "Solution A/B/C" exactly as written. Every other word — including technical and engineering terms like "anomaly", "idle load", "after-hours", "root cause" — MUST be translated into Arabic (e.g. شذوذ, حمل خامل, بعد ساعات الدوام, السبب الجذري). Do not leave an English phrase untranslated just because it sounds technical.
+
+Do not write "EnerQ" in the middle of an Arabic sentence -- when text mixes a right-to-left Arabic sentence with a Latin word placed mid-sentence, that word renders in a visually confusing position once the line wraps. If you need to refer to yourself by name, put "EnerQ" as the very first word of the reply, or simply don't self-name at all (the chat header already shows who's speaking).`
         : `Respond in English.`;
 
     const systemInstruction = `You are EnerQ, an autonomous AI Energy Agent and Digital Energy Manager for a commercial facility.
@@ -334,7 +336,7 @@ function generateDeterministicAnalysis(stage: string, facility: any, userPrompt?
     }
     if (mentionsWhatIsEnerq) {
       return isAr
-        ? `أنا EnerQ، نظام طاقة متعدد الوكلاء بالذكاء الاصطناعي. أراقب استهلاك هذه المنشأة، أكتشف الشذوذ، أحقق في السبب، أحاكي الحلول في توأم رقمي، ثم أقرر وأتحقق من النتيجة — أربعة وكلاء متخصصون ينسّقون هذا المسار بدلاً من نص برمجي واحد.`
+        ? `EnerQ نظام طاقة متعدد الوكلاء بالذكاء الاصطناعي، وأنا وكيله الذي يراقب استهلاك هذه المنشأة، يكتشف الشذوذ، يحقق في السبب، يحاكي الحلول في توأم رقمي، ثم يقرر ويتحقق من النتيجة — أربعة وكلاء متخصصون ينسّقون هذا المسار بدلاً من نص برمجي واحد.`
         : `I'm EnerQ, a multi-agent AI energy system. I monitor this facility's consumption, detect anomalies, investigate root cause, simulate fixes in a Digital Twin, then decide and verify the result — four specialist agents coordinate that pipeline instead of one monolithic script.`;
     }
     if (mentionsMultiAgent) {
