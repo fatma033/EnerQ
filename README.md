@@ -37,7 +37,7 @@ If a recommendation is left unapproved, ActionAgent reminds and then escalates r
 
 - **Coordinator** (`src/agent/orchestrator.ts`): owns the shared facility state, the pub/sub that keeps the UI in sync, and pipeline timing. Delegates every stage's actual logic to one of the four agents above.
 - **Decision engine** (`src/simulation/engine.ts`): deterministic multi-criteria scoring (60% savings, 30% risk, 10% comfort) over each candidate solution. Auditable and reproducible — the same inputs always produce the same decision, and the ranking changes if the inputs do. Accepts an optional customization override (HVAC cutoff time, thermostat setpoint offset) so a candidate solution can be tuned to a specific building instead of the demo defaults.
-- **Reasoning layer**: a local LLM (Ollama, `llama3.2:3b` by default) generates the investigation, recommendation, and chat-assistant narrative, grounded by retrieval against a small energy-management knowledge base (`src/knowledge/`). Every generated explanation cites the source it drew from. No API key or external network call is required — reasoning runs entirely on-device via `src/agent/agents/reasoningClient.ts` calling the server's `/api/agent/reason` endpoint.
+- **Reasoning layer**: a local LLM (Ollama, `qwen2.5:3b-instruct` by default — chosen for its Arabic quality at a footprint safe for an 8GB-RAM, no-GPU laptop) generates the investigation, recommendation, and chat-assistant narrative, grounded by retrieval against a small, bilingual energy-management knowledge base (`src/knowledge/`). Every generated explanation cites the source it drew from. No API key or external network call is required — reasoning runs entirely on-device via `src/agent/agents/reasoningClient.ts` calling the server's `/api/agent/reason` endpoint.
 - **Deterministic fallback**: if the LLM is unavailable, the same pipeline — and the chat assistant — runs on templated reasoning with identical citations and UI, including keyword-matched answers to zone- and equipment-specific questions. The agents' decisions and outputs are never dependent on the LLM being reachable.
 - **Digital Twin**: a facility physics model (HVAC, lighting, plug loads, solar, 3 zones) used to simulate each candidate intervention before it's recommended, with live customizable parameters per scenario.
 
@@ -57,7 +57,7 @@ Runs fully out of the box on the deterministic reasoning engine — no configura
 For live LLM-generated reasoning:
 
 ```bash
-ollama pull llama3.2:3b
+ollama pull qwen2.5:3b-instruct
 cp .env.example .env   # defaults already point at a local Ollama instance
 npm run dev
 ```
