@@ -455,6 +455,35 @@ export const DigitalTwinView: React.FC<DigitalTwinViewProps> = ({
         </div>
       )}
 
+      {/* All-systems investigation status: the schematic below zooms into
+          the HVAC/AHU specifically since it's the single largest load, but
+          the investigation itself checks every sub-meter -- this strip
+          makes that explicit instead of leaving HVAC looking like the only
+          thing analyzed. Statuses come straight from facility.systems, the
+          same data the investigation stage actually reasoned over. */}
+      <div className="mt-4 bg-slate-950/80 border border-slate-800 rounded-xl p-3.5">
+        <div className="text-[11px] font-bold text-slate-300 uppercase tracking-wider mb-2.5">{dt.allSystemsTitle}</div>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+          {[
+            { icon: <Fan className="w-3.5 h-3.5" />, label: dt.connHvac, ok: facility.systems.hvac.status !== "abnormal" },
+            { icon: <Lightbulb className="w-3.5 h-3.5" />, label: dt.connLighting, ok: facility.systems.lighting.status !== "warning" },
+            { icon: <Cpu className="w-3.5 h-3.5" />, label: dt.connEquipment, ok: facility.systems.equipment.status !== "abnormal" },
+            { icon: <Sun className="w-3.5 h-3.5" />, label: dt.connSolar, ok: facility.systems.solar.status === "normal" },
+          ].map((sys) => (
+            <div
+              key={sys.label}
+              className={`flex items-center gap-2 px-2.5 py-2 rounded-lg border text-xs ${
+                sys.ok ? "bg-emerald-950/30 border-emerald-800/40 text-emerald-300" : "bg-red-950/30 border-red-800/40 text-red-300"
+              }`}
+            >
+              {sys.icon}
+              <span className="font-medium truncate">{sys.label}</span>
+              <span className="ml-auto text-[10px] font-bold uppercase shrink-0">{sys.ok ? dt.sysNormal : dt.sysFlagged}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
       {/* Industrial Digital-Twin Dashboard: annotated equipment schematic +
           operational parameters + risk assessment, matching the monitoring-
           dashboard convention (labeled equipment diagram, gauges, risk
