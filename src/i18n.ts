@@ -79,6 +79,19 @@ export const translations = {
       ANALYTICS: "24h Load Telemetry",
     },
 
+    nav: {
+      home: "Ask EnerQ",
+      dashboard: "Dashboard",
+      twin: "Digital Twin",
+      solutions: "Solutions",
+      analytics: "Analytics",
+    },
+
+    home: {
+      heading: "Ask EnerQ",
+      subheading: "Your autonomous AI energy agent — ask about the anomaly, the solutions, or how the system itself works.",
+    },
+
     facility: {
       name: "Sultan Qaboos Complex for Youth, Culture and Entertainment",
       type: "Youth, Culture & Entertainment Complex (3 Floors)",
@@ -315,6 +328,10 @@ export const translations = {
       fallbackReply: (kwh: number | string) => `Based on our physical Digital Twin simulation, Solution C eliminates ${kwh} kWh/day of after-hours HVAC runtime and workstation idle baseload while keeping working-hours comfort completely intact.`,
       networkErrorReply: "EnerQ Agent Telemetry Insight: Solution C recaptures 93 kWh/day (15.0% reduction) by cutting off HVAC at 18:00 and turning off 38 idle workstations.",
       showInTwin: (id: string) => `Show Solution ${id} in the Digital Twin`,
+      navDashboard: "Go to Dashboard",
+      navTwin: "Go to Digital Twin",
+      navSolutions: "Go to Solutions",
+      navAnalytics: "Go to Analytics",
     },
 
     auditReportModal: {
@@ -436,6 +453,19 @@ export const translations = {
       DECIDE: { label: "قرار", description: "اختيار أفضل تدخل آمن" },
       RECOMMEND: { label: "توصية", description: "تقديم خطة قابلة للتنفيذ مع العائد المالي" },
       VERIFY: { label: "تحقق", description: "محاكاة التنفيذ بعد الموافقة (-15%)" },
+    },
+
+    nav: {
+      home: "اسأل EnerQ",
+      dashboard: "لوحة التحكم",
+      twin: "التوأم الرقمي",
+      solutions: "الحلول",
+      analytics: "التحليلات",
+    },
+
+    home: {
+      heading: "اسأل EnerQ",
+      subheading: "وكيلك المستقل للطاقة بالذكاء الاصطناعي — اسأل عن الشذوذ، أو الحلول، أو كيفية عمل النظام نفسه.",
     },
 
     tabs: {
@@ -681,6 +711,10 @@ export const translations = {
       fallbackReply: (kwh: number | string) => `استنادًا إلى محاكاة التوأم الرقمي الفيزيائية، يزيل الحل C ${kwh} kWh يوميًا من تشغيل التكييف بعد الدوام وحمل الخمول لمحطات العمل مع الحفاظ الكامل على راحة ساعات العمل.`,
       networkErrorReply: "استدلال وكيل EnerQ: يسترد الحل C ما مقداره 93 kWh يوميًا (خفض 15.0%) عبر قطع التكييف عند 18:00 وإيقاف 38 محطة عمل خاملة.",
       showInTwin: (id: string) => `عرض الحل ${id} في التوأم الرقمي`,
+      navDashboard: "الذهاب إلى لوحة التحكم",
+      navTwin: "الذهاب إلى التوأم الرقمي",
+      navSolutions: "الذهاب إلى الحلول",
+      navAnalytics: "الذهاب إلى التحليلات",
     },
 
     auditReportModal: {

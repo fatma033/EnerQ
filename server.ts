@@ -69,16 +69,33 @@ function buildRetrievalQuery(stage: string | undefined, facilityData: any, userP
   }
 }
 
-const GREETING_RE = /^\s*(hi|hello|hey|good morning|good afternoon|good evening|thanks|thank you|how are you|what'?s up)\b|^\s*(مرحبا|مرحبًا|اهلا|أهلاً|السلام عليكم|صباح الخير|مساء الخير|شكرا|شكرًا|كيف حالك|كيفك|هلا)\b/i;
+const HOW_ARE_YOU_RE = /how are you|how'?s it going|what'?s up|كيف حالك|كيفك|شلونك|اخبارك|أخبارك/i;
+const THANKS_RE = /^\s*(thanks|thank you|شكرا|شكرًا)\b/i;
+const GREETING_RE = /^\s*(hi|hello|hey|good morning|good afternoon|good evening)\b|^\s*(مرحبا|مرحبًا|اهلا|أهلاً|السلام عليكم|صباح الخير|مساء الخير|هلا)\b/i;
 
 function isSmallTalk(prompt: string): boolean {
-  return GREETING_RE.test(prompt.trim());
+  const p = prompt.trim();
+  return GREETING_RE.test(p) || HOW_ARE_YOU_RE.test(p) || THANKS_RE.test(p);
 }
 
-function smallTalkReply(lang: "en" | "ar"): string {
+/**
+ * Talks like someone actually answering, not a canned bot line: acknowledges
+ * what was actually asked (a greeting vs. "how are you" vs. "thanks" get
+ * different replies) before pivoting to what it can help with.
+ */
+function smallTalkReply(prompt: string, lang: "en" | "ar"): string {
+  const p = prompt.trim();
+  if (THANKS_RE.test(p)) {
+    return lang === "ar" ? "على الرحب! أخبرني إن احتجت أي شيء آخر." : "You're welcome! Let me know if there's anything else you'd like to dig into.";
+  }
+  if (HOW_ARE_YOU_RE.test(p)) {
+    return lang === "ar"
+      ? "بخير، شكرًا لسؤالك! أراقب حاليًا شذوذًا بنسبة +24% في الاستهلاك، وأنا جاهز لأشرح لك أي جزء منه. بم تودّ أن أبدأ؟"
+      : "I'm doing well, thanks for asking! Right now I'm watching a +24% consumption anomaly on this facility, and I'm happy to walk you through any part of it. Where would you like to start?";
+  }
   return lang === "ar"
-    ? "أهلاً بك! أنا وكيل EnerQ للطاقة. اسألني عن سبب ارتفاع الاستهلاك اليوم، أو عن أي من الحلول A وB وC، أو عن كيفية عمل النظام نفسه — أنا جاهز."
-    : "Hello! I'm the EnerQ energy agent. Ask me why consumption spiked today, about Solutions A, B, or C, or how the system itself works — I'm ready.";
+    ? "أهلاً بك! أنا وكيل EnerQ للطاقة. اسألني عن سبب ارتفاع الاستهلاك اليوم، أو عن أي من الحلول A وB وC، أو حتى عن كيفية عمل النظام نفسه."
+    : "Hey there! I'm the EnerQ energy agent. Ask me why consumption spiked today, about Solutions A, B, or C, or even how this whole system works.";
 }
 
 // RAG-grounded, local Ollama-powered reasoning endpoint
@@ -93,7 +110,7 @@ app.post("/api/agent/reason", async (req, res) => {
     return res.json({
       success: true,
       source: "deterministic_fallback",
-      analysis: smallTalkReply(lang),
+      analysis: smallTalkReply(userPrompt, lang),
       citations: [],
     });
   }
