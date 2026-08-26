@@ -1,3 +1,5 @@
+<img src="public/logo-512.png" alt="EnerQ" width="72" />
+
 # EnerQ
 
 Autonomous AI energy agent for commercial facilities. EnerQ monitors consumption, detects and investigates waste, tests candidate interventions against a facility Digital Twin, decides on the best action, and follows up until the result is verified — rather than stopping at a dashboard alert.
