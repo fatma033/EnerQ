@@ -33,6 +33,17 @@ export default function App() {
   // Active view tab in workspace (Overview vs Digital Twin vs Solutions Lab)
   const [activeTab, setActiveTab] = useState<"ALL" | "TWIN" | "SOLUTIONS" | "ANALYTICS">("ALL");
 
+  // Theme: defaults to dark (the tested, primary experience), persisted across visits
+  const [theme, setTheme] = useState<"dark" | "light">(() => {
+    if (typeof window === "undefined") return "dark";
+    return (localStorage.getItem("enerq-theme") as "dark" | "light") || "dark";
+  });
+
+  useEffect(() => {
+    document.documentElement.setAttribute("data-theme", theme);
+    localStorage.setItem("enerq-theme", theme);
+  }, [theme]);
+
   useEffect(() => {
     const unsubscribe = orchestrator.subscribe((newContext) => {
       setContext(newContext);
@@ -160,6 +171,8 @@ export default function App() {
         onOpenReport={() => setIsReportOpen(true)}
         onToggleChat={() => setIsChatOpen(!isChatOpen)}
         onSetAutonomyMode={(mode) => orchestrator.setAutonomyMode(mode)}
+        theme={theme}
+        onToggleTheme={() => setTheme((t) => (t === "dark" ? "light" : "dark"))}
       />
 
       {/* Main Container */}

@@ -1,1 +1,46 @@
 @import "tailwindcss";
+
+/*
+ * Light theme override.
+ *
+ * Every Tailwind color utility (bg-slate-950, text-slate-400, border-slate-800/60,
+ * even opacity variants) compiles to a rule that reads a shared --color-{name}-{shade}
+ * custom property. Redefining just those ~10 slate variables under [data-theme="light"]
+ * re-themes the entire app -- every component -- without touching a single className.
+ *
+ * The slate scale is "flipped": shades that were dark backgrounds/borders in dark mode
+ * (950/900/800/700) become light ones, and shades used as light text (100/200/300/400)
+ * become dark text. --color-slate-950 is the one collision: it's used both for page
+ * background (bg-slate-950) and for dark text on bright accent buttons (text-slate-950,
+ * e.g. the emerald "Approve" button). We remap the variable for the background use case,
+ * then pin .text-slate-950 back to a dark color directly below so button contrast never
+ * regresses in light mode.
+ */
+[data-theme="light"] {
+  --color-slate-950: #f1f5f9;
+  --color-slate-900: #ffffff;
+  --color-slate-800: #e2e8f0;
+  --color-slate-700: #cbd5e1;
+  --color-slate-600: #94a3b8;
+  --color-slate-500: #64748b;
+  --color-slate-400: #475569;
+  --color-slate-300: #334155;
+  --color-slate-200: #1e293b;
+  --color-slate-100: #0f172a;
+  /* text-white is used throughout as "brightest/primary text" (headings, values),
+     never as an actual white surface (no bg-white/fill-white in this codebase) —
+     safe to flip the same way as slate-100. */
+  --color-white: #0f172a;
+}
+
+[data-theme="light"] .text-slate-950 {
+  color: #020617;
+}
+
+/* Inverse collision: white text set directly on a solid teal button/bubble needs to
+   stay white in light mode too (mid-tone teal keeps working as a button color in both
+   themes) even though --color-white above was flipped dark for use as heading/value text. */
+[data-theme="light"] .bg-teal-600.text-white,
+[data-theme="light"] .bg-teal-900.text-white {
+  color: #ffffff;
+}

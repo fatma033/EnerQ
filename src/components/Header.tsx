@@ -12,6 +12,8 @@ import {
   BrainCircuit,
   Handshake,
   Zap as ZapAuto,
+  Sun,
+  Moon,
 } from "lucide-react";
 import { AgentContext, AutonomyMode } from "../agent/orchestrator";
 
@@ -24,6 +26,8 @@ interface HeaderProps {
   onOpenReport: () => void;
   onToggleChat: () => void;
   onSetAutonomyMode: (mode: AutonomyMode) => void;
+  theme: "dark" | "light";
+  onToggleTheme: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -35,6 +39,8 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenReport,
   onToggleChat,
   onSetAutonomyMode,
+  theme,
+  onToggleTheme,
 }) => {
   const { facility, currentStage, isRunningAutonomous, autonomyMode } = context;
   const currencySymbol = facility.config.currency_symbol;
@@ -205,6 +211,16 @@ export const Header: React.FC<HeaderProps> = ({
             className="p-2 text-slate-400 hover:text-slate-200 bg-slate-800 hover:bg-slate-700/80 border border-slate-700/60 rounded-lg transition-colors"
           >
             <Sliders className="w-4 h-4" />
+          </button>
+
+          {/* Theme Toggle */}
+          <button
+            id="btn-toggle-theme"
+            onClick={onToggleTheme}
+            title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+            className="p-2 text-slate-400 hover:text-slate-200 bg-slate-800 hover:bg-slate-700/80 border border-slate-700/60 rounded-lg transition-colors"
+          >
+            {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
           </button>
         </div>
       </div>
