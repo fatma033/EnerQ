@@ -1,8 +1,9 @@
 import React, { useMemo, useState } from "react";
-import { X, Download, FileBarChart2, Info } from "lucide-react";
+import { X, Download, FileBarChart2, Info, Wind, Cpu } from "lucide-react";
 import { FacilityState, ProposedSolution } from "../types";
 import { ReportsAgent, ReportPeriod } from "../agent/agents/reportsAgent";
 import { getTranslation } from "../i18n";
+import { PeriodTrendChart } from "./PeriodTrendChart";
 
 interface ReportsAgentModalProps {
   isOpen: boolean;
@@ -178,9 +179,58 @@ export const ReportsAgentModal: React.FC<ReportsAgentModalProps> = ({
               <div className="text-xl font-extrabold text-white mt-1">{symbol}{report.totalCostSaved.toLocaleString()}</div>
               <div className="text-[10px] text-slate-500 mt-0.5">{r.annualizedNote(symbol, report.annualizedCostSaved)}</div>
             </div>
-            <div className="p-4 rounded-xl bg-slate-950 border border-slate-800 text-center">
-              <div className="text-[10px] uppercase tracking-wider text-slate-400 font-semibold">{r.totalCo2Offset}</div>
+            <div className="p-4 rounded-xl bg-amber-950/30 border border-amber-800/40 text-center">
+              <div className="text-[10px] uppercase tracking-wider text-amber-400 font-semibold">{r.totalCo2Offset}</div>
               <div className="text-xl font-extrabold text-white mt-1">{report.totalCo2SavedKg.toLocaleString()} <span className="text-xs font-normal text-slate-400">kg CO₂</span></div>
+            </div>
+          </div>
+
+          {/* Projected cumulative-savings graph -- the real "graph" the report was missing */}
+          <div>
+            <h5 className="text-[11px] font-bold text-slate-300 uppercase tracking-wider mb-0.5">{r.trendTitle}</h5>
+            <p className="text-[10px] text-slate-500 mb-2.5">{r.trendSubtitle}</p>
+            <PeriodTrendChart points={report.dailyTrend} symbol={symbol} dayLabel={r.trendDayLabel} />
+          </div>
+
+          {/* Root-cause breakdown: where the avoided energy actually comes from */}
+          <div>
+            <h5 className="text-[11px] font-bold text-slate-300 uppercase tracking-wider mb-0.5">{r.breakdownTitle}</h5>
+            <p className="text-[10px] text-slate-500 mb-2.5">{r.breakdownSubtitle}</p>
+            <div className="space-y-2.5">
+              {report.systemBreakdown.map((row) => {
+                const isHvac = row.system === "hvac";
+                const label = isHvac ? t.digitalTwin.connHvac : t.digitalTwin.connEquipment;
+                const Icon = isHvac ? Wind : Cpu;
+                return (
+                  <div
+                    key={row.system}
+                    className={`p-3 rounded-xl border flex items-center gap-3 ${
+                      isHvac ? "bg-sky-950/30 border-sky-800/40" : "bg-purple-950/30 border-purple-800/40"
+                    }`}
+                  >
+                    <div className={`p-2 rounded-lg shrink-0 ${isHvac ? "bg-sky-500/20 text-sky-300" : "bg-purple-500/20 text-purple-300"}`}>
+                      <Icon className="w-4 h-4" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between text-[11px] mb-1">
+                        <span className="text-slate-300 font-semibold">{label}</span>
+                        <span className="font-bold text-white tabular-nums">
+                          {row.avoidedKwh.toLocaleString()} kWh <span className="text-slate-500 font-normal">· {symbol}{row.costSaved.toLocaleString()}</span>
+                        </span>
+                      </div>
+                      <div className="h-2 rounded-full bg-slate-950 border border-slate-800/80 overflow-hidden">
+                        <div
+                          className={`h-full rounded-full ${isHvac ? "bg-sky-400" : "bg-purple-400"}`}
+                          style={{ width: `${Math.max(4, row.pct)}%` }}
+                        />
+                      </div>
+                    </div>
+                    <span className={`text-sm font-extrabold tabular-nums shrink-0 ${isHvac ? "text-sky-300" : "text-purple-300"}`}>
+                      {row.pct}%
+                    </span>
+                  </div>
+                );
+              })}
             </div>
           </div>
 

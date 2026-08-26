@@ -21,6 +21,23 @@ export interface PeriodReport {
   withoutEnerQTotalCost: number;
   withEnerQTotalCost: number;
   annualizedCostSaved: number;
+  // Where the avoided energy actually comes from, apportioned across the two
+  // real waste sources this facility's telemetry shows (same split logic
+  // DiagnosticAgent uses for InvestigationFinding: HVAC running past its
+  // normal schedule, and equipment left idle/unmanaged) -- grounds the total
+  // in the systems that produced it instead of leaving it as one flat number.
+  systemBreakdown: {
+    system: "hvac" | "equipment";
+    avoidedKwh: number;
+    costSaved: number;
+    pct: number;
+  }[];
+  // Projected cumulative savings across the period, sampled at a handful of
+  // points (never more than ~12) so the chart stays readable whether the
+  // period is a week or a year. A straight-line projection of the verified
+  // daily rate -- consistent with methodologyNote's disclosure that this is
+  // an extrapolation, not fabricated day-to-day variation.
+  dailyTrend: { dayIndex: number; cumulativeKwh: number; cumulativeCost: number }[];
 }
 
 /**
@@ -63,12 +80,49 @@ export class ReportsAgent {
 
     const withoutEnerQTotalKwh = Math.round(facility.current_kwh * days);
     const withEnerQTotalKwh = Math.round((facility.current_kwh - solution.estimated_saving_kwh) * days);
+    const totalKwhAvoided = Math.round(solution.estimated_saving_kwh * days);
+    const totalCostSaved = Number((solution.estimated_saving_kwh * rate * days).toFixed(2));
+
+    // Apportion the avoided total across the two real waste sources the
+    // facility's own telemetry reports: HVAC running beyond its scheduled
+    // hours, and equipment left idle/unmanaged. Same two sources
+    // DiagnosticAgent cites in InvestigationFinding, recomputed here directly
+    // from facility.systems so ReportsAgent doesn't need investigation state.
+    const hvacWasteKwh = Math.max(0, facility.systems.hvac.actual_kwh - facility.systems.hvac.base_kwh);
+    const equipWasteKwh = Math.max(0, facility.systems.equipment.idle_kwh);
+    const totalWasteKwh = hvacWasteKwh + equipWasteKwh || 1;
+    const hvacShare = hvacWasteKwh / totalWasteKwh;
+    const equipShare = equipWasteKwh / totalWasteKwh;
+    const systemBreakdown: PeriodReport["systemBreakdown"] = [
+      {
+        system: "hvac",
+        avoidedKwh: Math.round(totalKwhAvoided * hvacShare),
+        costSaved: Number((totalCostSaved * hvacShare).toFixed(2)),
+        pct: Math.round(hvacShare * 100),
+      },
+      {
+        system: "equipment",
+        avoidedKwh: Math.round(totalKwhAvoided * equipShare),
+        costSaved: Number((totalCostSaved * equipShare).toFixed(2)),
+        pct: Math.round(equipShare * 100),
+      },
+    ];
+
+    const pointCount = Math.max(2, Math.min(days, 12));
+    const dailyTrend: PeriodReport["dailyTrend"] = Array.from({ length: pointCount }, (_, i) => {
+      const dayIndex = Math.round(((i + 1) / pointCount) * days);
+      return {
+        dayIndex,
+        cumulativeKwh: Math.round(solution.estimated_saving_kwh * dayIndex),
+        cumulativeCost: Number((solution.estimated_saving_kwh * rate * dayIndex).toFixed(2)),
+      };
+    });
 
     return {
       period,
       days,
-      totalKwhAvoided: Math.round(solution.estimated_saving_kwh * days),
-      totalCostSaved: Number((solution.estimated_saving_kwh * rate * days).toFixed(2)),
+      totalKwhAvoided,
+      totalCostSaved,
       totalCo2SavedKg: Math.round(solution.estimated_saving_kwh * days * facility.config.co2_factor_kg_per_kwh),
       dailyReductionKwh: solution.estimated_saving_kwh,
       dailyReductionPct: solution.estimated_saving_pct,
@@ -78,6 +132,8 @@ export class ReportsAgent {
       withoutEnerQTotalCost: Number((withoutEnerQTotalKwh * rate).toFixed(2)),
       withEnerQTotalCost: Number((withEnerQTotalKwh * rate).toFixed(2)),
       annualizedCostSaved: Number((solution.estimated_saving_kwh * rate * 365).toFixed(2)),
+      systemBreakdown,
+      dailyTrend,
     };
   }
 }

@@ -100,6 +100,18 @@
  * version already shows it in the header bar that gets hidden here.
  */
 @media print {
+  /* Browsers drop background colors/gradients by default when printing
+     (an ink-saving default meant for real paper), which is exactly why a
+     "Save as PDF" export came out washed-out white instead of matching the
+     colored on-screen version -- progress bars, badges, and card fills all
+     silently lost their fill. Forcing exact color reproduction here is
+     correct for this use case: the destination is a PDF someone reads on
+     a screen, not a print head consuming toner. */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    color-adjust: exact !important;
+  }
   body * {
     visibility: hidden;
   }
@@ -114,6 +126,7 @@
     max-width: 100% !important;
     box-shadow: none !important;
     border: none !important;
+    background: #0f172a !important;
   }
   .audit-report-printable .no-print {
     display: none !important;

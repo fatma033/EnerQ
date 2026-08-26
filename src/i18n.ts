@@ -485,6 +485,11 @@ export const translations = {
       withLabel: "With EnerQ (Optimized)",
       vsWithout: "vs. unaddressed",
       annualizedNote: (symbol: string, amount: number) => `≈ ${symbol}${amount.toLocaleString()} / year if sustained`,
+      breakdownTitle: "Where the Savings Come From",
+      breakdownSubtitle: "Avoided energy apportioned by root cause, from live system telemetry",
+      trendTitle: "Projected Cumulative Savings",
+      trendSubtitle: "Extrapolated from the verified daily reduction rate",
+      trendDayLabel: (day: number) => `Day ${day}`,
       methodologyNote: (dailyKwh: number, dailyPct: number, days: number) =>
         `Projected by extrapolating the recommended solution's verified daily reduction (${dailyKwh} kWh, ${dailyPct}%) across ${days} days — not fabricated historical variation. Once the facility has real multi-day telemetry, this would report actual measured savings per IPMVP-style verification instead.`,
       footerNote: "EnerQ ReportsAgent • Same template as the Audit Report, scoped to a period",
@@ -940,6 +945,11 @@ export const translations = {
       withLabel: "مع EnerQ (محسّن)",
       vsWithout: "مقابل عدم المعالجة",
       annualizedNote: (symbol: string, amount: number) => `≈ ${symbol}${amount.toLocaleString()} سنويًا إذا استمر`,
+      breakdownTitle: "مصدر التوفير",
+      breakdownSubtitle: "الطاقة الموفرة موزعة حسب السبب الجذري، من بيانات النظام الحية",
+      trendTitle: "التوفير التراكمي المتوقع",
+      trendSubtitle: "مُستقرأ من معدل التخفيض اليومي المتحقق منه",
+      trendDayLabel: (day: number) => `اليوم ${day}`,
       methodologyNote: (dailyKwh: number, dailyPct: number, days: number) =>
         `تقدير مبني على مد التخفيض اليومي المتحقق منه للحل الموصى به (${dailyKwh} كيلوواط/ساعة، ${dailyPct}%) عبر ${days} يومًا — وليس تباينًا تاريخيًا مُختلقًا. عندما تتوفر للمنشأة قراءات فعلية متعددة الأيام، سيُبلّغ هذا عن التوفير المقاس فعليًا وفق بروتوكول تحقق على طراز IPMVP بدلاً من ذلك.`,
       footerNote: "وكيل التقارير EnerQ • نفس قالب تقرير التدقيق، مخصص لفترة زمنية",
