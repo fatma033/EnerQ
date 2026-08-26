@@ -2,16 +2,12 @@ import React from "react";
 import {
   X,
   FileText,
-  Printer,
   Download,
-  Building2,
-  Calendar,
-  CheckCircle2,
   TrendingDown,
-  ShieldCheck,
-  Zap,
+  ArrowRight,
 } from "lucide-react";
 import { AgentContext } from "../agent/orchestrator";
+import { EnergyCalculationEngine } from "../simulation/engine";
 import { getTranslation } from "../i18n";
 
 interface AuditReportModalProps {
@@ -30,10 +26,15 @@ export const AuditReportModal: React.FC<AuditReportModalProps> = ({
   if (!isOpen) return null;
 
   const ar = t.auditReportModal;
-  const { facility, anomalyReport, investigation, solutions, chosenSolution, verification } = context;
+  const { facility, anomalyReport, investigation, chosenSolution, verification } = context;
+  // The report is reachable from the header at any stage, even before the
+  // pipeline has generated solutions -- fall back to computing them directly
+  // (same pure, deterministic engine call the rest of the app uses) so the
+  // report is never showing an empty or misleadingly "0% saved" comparison.
+  const solutions = context.solutions ?? EnergyCalculationEngine.generateSolutions(facility);
   const config = facility.config;
   const symbol = config.currency_symbol;
-  const solC = solutions?.C;
+  const solC = solutions.C;
   const currentKwh = anomalyReport?.actual_kwh ?? facility.current_kwh;
   const baselineKwh = anomalyReport?.baseline_kwh ?? facility.baseline_kwh;
   const varianceKwh = anomalyReport?.variance_kwh ?? currentKwh - baselineKwh;
@@ -43,15 +44,24 @@ export const AuditReportModal: React.FC<AuditReportModalProps> = ({
     ? Math.round(solC.estimated_saving_kwh * 365 * config.co2_factor_kg_per_kwh)
     : null;
 
+  // Before/after comparison: once approved+verified, use the actual verified
+  // numbers; otherwise project using the chosen (or best-scoring) solution so
+  // the report is still meaningful before approval, clearly labeled as projected.
+  const projectedSolution = chosenSolution ?? solC;
+  const afterKwh = verification ? verification.verified_consumption_kwh : projectedSolution?.simulated_daily_kwh ?? currentKwh;
+  const afterReductionKwh = verification ? verification.actual_reduction_kwh : projectedSolution?.estimated_saving_kwh ?? 0;
+  const afterReductionPct = verification ? verification.actual_reduction_pct : projectedSolution?.estimated_saving_pct ?? 0;
+  const afterMonthlySaved = verification ? verification.monthly_cost_saved : projectedSolution?.monthly_cost_saving ?? 0;
+
   const handlePrint = () => {
     window.print();
   };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl max-w-3xl w-full max-h-[90vh] flex flex-col shadow-2xl overflow-hidden">
+      <div className="audit-report-printable bg-slate-900 border border-slate-800 rounded-2xl max-w-3xl w-full max-h-[90vh] flex flex-col shadow-2xl overflow-hidden">
         {/* Header */}
-        <div className="p-4 bg-slate-950 border-b border-slate-800 flex items-center justify-between">
+        <div className="no-print p-4 bg-slate-950 border-b border-slate-800 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <FileText className="w-5 h-5 text-emerald-400" />
             <div>
@@ -67,9 +77,10 @@ export const AuditReportModal: React.FC<AuditReportModalProps> = ({
           <div className="flex items-center gap-2">
             <button
               onClick={handlePrint}
+              title={ar.printTooltip}
               className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-300 transition-colors"
             >
-              <Printer className="w-3.5 h-3.5" />
+              <Download className="w-3.5 h-3.5" />
               <span>{ar.print}</span>
             </button>
             <button
@@ -83,6 +94,13 @@ export const AuditReportModal: React.FC<AuditReportModalProps> = ({
 
         {/* Printable / Viewable Report Body */}
         <div className="p-6 overflow-y-auto space-y-6 text-xs text-slate-300 font-sans leading-relaxed">
+          {/* Print-only masthead: buttons above are hidden when printing, so
+              the title still needs to appear somewhere in the printed output. */}
+          <div className="print-only hidden">
+            <h1 className="text-lg font-bold text-white">{ar.title}</h1>
+            <p className="text-slate-400">{ar.generatedBy(`ENERQ-${new Date().toISOString().slice(0, 7).replace("-", "")}`)}</p>
+          </div>
+
           {/* Facility Header Section */}
           <div className="p-4 rounded-xl bg-slate-950 border border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
@@ -115,6 +133,43 @@ export const AuditReportModal: React.FC<AuditReportModalProps> = ({
                 </span>
               </div>
             </div>
+          </div>
+
+          {/* Before / After Comparison — the headline visual of the report */}
+          <div>
+            <h5 className="text-xs font-bold text-white uppercase tracking-wider mb-2 text-slate-200 border-b border-slate-800 pb-1 flex items-center gap-2">
+              <TrendingDown className="w-3.5 h-3.5 text-emerald-400" />
+              {ar.comparisonTitle}
+              <span className={`ml-auto normal-case font-medium px-2 py-0.5 rounded-full text-[10px] tracking-normal ${
+                verification ? "bg-emerald-950 text-emerald-300 border border-emerald-700/60" : "bg-amber-950 text-amber-300 border border-amber-700/60"
+              }`}>
+                {verification ? ar.comparisonVerified : ar.comparisonProjected}
+              </span>
+            </h5>
+            <div className="grid grid-cols-1 sm:grid-cols-[1fr_auto_1fr] items-center gap-3">
+              <div className="p-3.5 rounded-xl bg-slate-950 border border-slate-800 text-center">
+                <div className="text-[10px] uppercase tracking-wider text-slate-400 font-medium">{ar.beforeLabel}</div>
+                <div className="text-2xl font-bold text-red-400 mt-0.5">
+                  {currentKwh} <span className="text-xs font-normal text-slate-400">kWh/d</span>
+                </div>
+                <div className="text-[11px] text-slate-500 mt-1">+{variancePct}% {ar.overBaseline}</div>
+              </div>
+
+              <ArrowRight className="w-5 h-5 text-slate-600 mx-auto rotate-90 sm:rotate-0" />
+
+              <div className="p-3.5 rounded-xl bg-emerald-950/50 border border-emerald-500/40 text-center">
+                <div className="text-[10px] uppercase tracking-wider text-emerald-400 font-semibold">{ar.afterLabel}</div>
+                <div className="text-2xl font-extrabold text-emerald-300 mt-0.5">
+                  {afterKwh} <span className="text-xs font-normal text-slate-400">kWh/d</span>
+                </div>
+                <div className="text-[11px] text-emerald-400 font-bold mt-1">
+                  -{afterReductionKwh} kWh (-{afterReductionPct}%)
+                </div>
+              </div>
+            </div>
+            <p className="text-[11px] text-slate-500 mt-2 text-center sm:text-left">
+              {ar.comparisonNote(symbol, afterMonthlySaved)}
+            </p>
           </div>
 
           {/* Section 1: Executive Summary */}

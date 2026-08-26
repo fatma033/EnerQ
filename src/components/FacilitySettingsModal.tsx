@@ -29,7 +29,7 @@ export const FacilitySettingsModal: React.FC<FacilitySettingsModalProps> = ({
     setCurrency(curr);
     if (curr === "OMR") {
       setSymbol("OMR ");
-      setRate(0.054);
+      setRate(0.025); // default to the government-sector preset below
     } else if (curr === "AED" || curr === "SAR") {
       setSymbol(curr + " ");
       setRate(0.38);
@@ -115,7 +115,28 @@ export const FacilitySettingsModal: React.FC<FacilitySettingsModalProps> = ({
                 className="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white font-mono text-sm focus:outline-none focus:border-teal-500"
               />
             </div>
-            <p className="text-[11px] text-slate-500 mt-1">
+
+            {currency === "OMR" && (
+              <div className="mt-2 flex flex-wrap gap-1.5">
+                {s.omanSectorPresets.map((preset) => (
+                  <button
+                    key={preset.label}
+                    type="button"
+                    onClick={() => setRate(preset.rate)}
+                    title={preset.note}
+                    className={`px-2 py-1 rounded-md text-[10px] font-medium border transition-colors ${
+                      Math.abs(rate - preset.rate) < 0.0005
+                        ? "bg-teal-950 border-teal-600 text-teal-300"
+                        : "bg-slate-950 border-slate-800 text-slate-400 hover:border-slate-700 hover:text-slate-300"
+                    }`}
+                  >
+                    {preset.label} · {preset.rate}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            <p className="text-[11px] text-slate-500 mt-1.5">
               {s.tariffNote}
             </p>
           </div>

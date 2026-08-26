@@ -86,3 +86,39 @@
 [data-theme="light"] .bg-teal-900.text-white {
   color: #ffffff;
 }
+
+/*
+ * Audit Report "Download PDF" -- routes through the browser's native print
+ * dialog (choose "Save as PDF" as the destination), so what matters is that
+ * only the report prints, not the rest of the app underneath the modal.
+ * .audit-report-printable marks the report card; everything else on the
+ * page is hidden, the card is unpinned from its fixed/scrolling layout so
+ * it flows across as many printed pages as the content needs, and .no-print
+ * elements (the Download/Close buttons) are dropped since they're not part
+ * of the document itself. .print-only is the inverse: content (the report
+ * title) that only needs to exist in the printed copy, because the on-screen
+ * version already shows it in the header bar that gets hidden here.
+ */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  .audit-report-printable,
+  .audit-report-printable * {
+    visibility: visible;
+  }
+  .audit-report-printable {
+    position: absolute;
+    inset: 0;
+    max-height: none !important;
+    max-width: 100% !important;
+    box-shadow: none !important;
+    border: none !important;
+  }
+  .audit-report-printable .no-print {
+    display: none !important;
+  }
+  .audit-report-printable .print-only {
+    display: block !important;
+  }
+}

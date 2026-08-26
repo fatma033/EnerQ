@@ -11,7 +11,12 @@ export const initialFacilityData: FacilityState = {
       start: "08:00",
       end: "18:00",
     },
-    electricity_rate: 0.054, // OMR 0.054 per kWh (Muscat Electricity Distribution Company rate)
+    // OMR 0.025/kWh: Oman's flat government-sector electricity tariff (25 baisas/kWh),
+    // effective 1 Jan 2025 per the Authority for Public Services Regulation (APSR).
+    // A public youth/culture facility like this one bills on the government tariff,
+    // not the residential or commercial bands -- see FacilitySettingsModal for the
+    // other sector presets (commercial, residential) if the actual host institute differs.
+    electricity_rate: 0.025,
     currency: "OMR",
     currency_symbol: "OMR ",
     co2_factor_kg_per_kwh: 0.42,
