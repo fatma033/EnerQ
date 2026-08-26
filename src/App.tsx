@@ -16,6 +16,7 @@ import { initialFacilityData } from "./data/mockFacility";
 import { EnergyCalculationEngine } from "./simulation/engine";
 import { AgentStage } from "./types";
 import { Sparkles, Layers, Cpu, TrendingUp, Info } from "lucide-react";
+import { Language, getTranslation } from "./i18n";
 
 export default function App() {
   // Initialize Orchestrator instance
@@ -43,6 +44,18 @@ export default function App() {
     document.documentElement.setAttribute("data-theme", theme);
     localStorage.setItem("enerq-theme", theme);
   }, [theme]);
+
+  // Language: chrome-only bilingual support (see src/i18n.ts for scope).
+  // Layout direction stays LTR in both languages — see i18n.ts comment.
+  const [language, setLanguage] = useState<Language>(() => {
+    if (typeof window === "undefined") return "en";
+    return (localStorage.getItem("enerq-lang") as Language) || "en";
+  });
+  const t = getTranslation(language);
+
+  useEffect(() => {
+    localStorage.setItem("enerq-lang", language);
+  }, [language]);
 
   useEffect(() => {
     const unsubscribe = orchestrator.subscribe((newContext) => {
@@ -172,7 +185,10 @@ export default function App() {
         onToggleChat={() => setIsChatOpen(!isChatOpen)}
         onSetAutonomyMode={(mode) => orchestrator.setAutonomyMode(mode)}
         theme={theme}
-        onToggleTheme={() => setTheme((t) => (t === "dark" ? "light" : "dark"))}
+        onToggleTheme={() => setTheme((prev) => (prev === "dark" ? "light" : "dark"))}
+        t={t}
+        language={language}
+        onToggleLanguage={() => setLanguage((prev) => (prev === "en" ? "ar" : "en"))}
       />
 
       {/* Main Container */}
@@ -183,6 +199,7 @@ export default function App() {
             currentStage={context.currentStage}
             onSelectStage={handleSelectStage}
             isRunning={context.isRunningAutonomous}
+            t={t}
           />
         </section>
 
@@ -230,7 +247,7 @@ export default function App() {
                   : "text-slate-400 hover:text-slate-200"
               }`}
             >
-              Unified Control View
+              {t.tabs.ALL}
             </button>
 
             <button
@@ -241,7 +258,7 @@ export default function App() {
                   : "text-slate-400 hover:text-slate-200"
               }`}
             >
-              Digital Twin Physics
+              {t.tabs.TWIN}
             </button>
 
             <button
@@ -252,7 +269,7 @@ export default function App() {
                   : "text-slate-400 hover:text-slate-200"
               }`}
             >
-              Solution Comparison Lab
+              {t.tabs.SOLUTIONS}
             </button>
 
             <button
@@ -263,7 +280,7 @@ export default function App() {
                   : "text-slate-400 hover:text-slate-200"
               }`}
             >
-              24h Load Telemetry
+              {t.tabs.ANALYTICS}
             </button>
           </div>
 

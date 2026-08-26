@@ -12,17 +12,18 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import { AgentStage } from "../types";
+import { getTranslation } from "../i18n";
 
 interface AgentStatusTimelineProps {
   currentStage: AgentStage;
   onSelectStage?: (stage: AgentStage) => void;
   isRunning: boolean;
+  t: ReturnType<typeof getTranslation>;
 }
 
 interface StepItem {
   key: AgentStage;
   label: string;
-  shortLabel: string;
   icon: React.ReactNode;
   description: string;
 }
@@ -31,71 +32,18 @@ export const AgentStatusTimeline: React.FC<AgentStatusTimelineProps> = ({
   currentStage,
   onSelectStage,
   isRunning,
+  t,
 }) => {
   const steps: StepItem[] = [
-    {
-      key: "OBSERVE",
-      label: "Observe",
-      shortLabel: "1. Observe",
-      icon: <Eye className="w-3.5 h-3.5" />,
-      description: "Ingest meter telemetry & facility schedules",
-    },
-    {
-      key: "DETECT",
-      label: "Detect",
-      shortLabel: "2. Detect",
-      icon: <ScanSearch className="w-3.5 h-3.5" />,
-      description: "Evaluate variance against baseline (+24%)",
-    },
-    {
-      key: "INVESTIGATE",
-      label: "Investigate",
-      shortLabel: "3. Investigate",
-      icon: <Microscope className="w-3.5 h-3.5" />,
-      description: "Isolate sub-system cause (HVAC 4h overtime)",
-    },
-    {
-      key: "GENERATE_SOLUTIONS",
-      label: "Generate",
-      shortLabel: "4. Generate",
-      icon: <Lightbulb className="w-3.5 h-3.5" />,
-      description: "Formulate candidate interventions (A, B, C)",
-    },
-    {
-      key: "SIMULATE",
-      label: "Simulate",
-      shortLabel: "5. Simulate",
-      icon: <Cpu className="w-3.5 h-3.5" />,
-      description: "Test scenarios in facility Digital Twin",
-    },
-    {
-      key: "COMPARE",
-      label: "Compare",
-      shortLabel: "6. Compare",
-      icon: <Scale className="w-3.5 h-3.5" />,
-      description: "Multi-criteria tradeoff evaluation",
-    },
-    {
-      key: "DECIDE",
-      label: "Decide",
-      shortLabel: "7. Decide",
-      icon: <BrainCircuit className="w-3.5 h-3.5" />,
-      description: "Select highest-value safe intervention",
-    },
-    {
-      key: "RECOMMEND",
-      label: "Recommend",
-      shortLabel: "8. Recommend",
-      icon: <Sparkles className="w-3.5 h-3.5" />,
-      description: "Present actionable plan with ROI breakdown",
-    },
-    {
-      key: "VERIFY",
-      label: "Verify",
-      shortLabel: "9. Verify",
-      icon: <ShieldCheck className="w-3.5 h-3.5" />,
-      description: "Simulate post-approval implementation (-15%)",
-    },
+    { key: "OBSERVE", icon: <Eye className="w-3.5 h-3.5" />, ...t.stages.OBSERVE },
+    { key: "DETECT", icon: <ScanSearch className="w-3.5 h-3.5" />, ...t.stages.DETECT },
+    { key: "INVESTIGATE", icon: <Microscope className="w-3.5 h-3.5" />, ...t.stages.INVESTIGATE },
+    { key: "GENERATE_SOLUTIONS", icon: <Lightbulb className="w-3.5 h-3.5" />, ...t.stages.GENERATE_SOLUTIONS },
+    { key: "SIMULATE", icon: <Cpu className="w-3.5 h-3.5" />, ...t.stages.SIMULATE },
+    { key: "COMPARE", icon: <Scale className="w-3.5 h-3.5" />, ...t.stages.COMPARE },
+    { key: "DECIDE", icon: <BrainCircuit className="w-3.5 h-3.5" />, ...t.stages.DECIDE },
+    { key: "RECOMMEND", icon: <Sparkles className="w-3.5 h-3.5" />, ...t.stages.RECOMMEND },
+    { key: "VERIFY", icon: <ShieldCheck className="w-3.5 h-3.5" />, ...t.stages.VERIFY },
   ];
 
   const stageOrder: AgentStage[] = [
@@ -128,10 +76,10 @@ export const AgentStatusTimeline: React.FC<AgentStatusTimelineProps> = ({
         <div className="flex items-center gap-2.5">
           <div className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
           <h2 className="text-sm font-semibold text-white tracking-wide uppercase">
-            EnerQ AI Agent Workflow
+            {t.timelineTitle}
           </h2>
           <span className="text-xs text-slate-400 font-normal hidden sm:inline">
-            Autonomous Decision & Verification Pipeline
+            {t.timelineSubtitle}
           </span>
         </div>
 
@@ -139,15 +87,15 @@ export const AgentStatusTimeline: React.FC<AgentStatusTimelineProps> = ({
           {isRunning ? (
             <span className="inline-flex items-center gap-1.5 text-amber-300 bg-amber-950/60 border border-amber-800/60 px-2.5 py-0.5 rounded-full font-medium">
               <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping" />
-              Autonomous Reasoning Active
+              {t.reasoningActive}
             </span>
           ) : currentStage === "COMPLETED" ? (
             <span className="inline-flex items-center gap-1 text-emerald-300 bg-emerald-950/60 border border-emerald-800/60 px-2.5 py-0.5 rounded-full font-medium">
               <CheckCircle className="w-3.5 h-3.5" />
-              Workflow Completed & Verified
+              {t.workflowCompleted}
             </span>
           ) : (
-            <span className="text-slate-400">Step {Math.max(1, Math.min(9, currentIndex))} of 9</span>
+            <span className="text-slate-400">{t.stepOf(Math.max(1, Math.min(9, currentIndex)))}</span>
           )}
         </div>
       </div>
