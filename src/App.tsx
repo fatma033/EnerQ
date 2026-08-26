@@ -298,6 +298,7 @@ export default function App() {
             onRunSimulation={handleRunTwinSimulation}
             isSimulating={isSimulatingTwin}
             isVerified={isVerified}
+            onApprove={handleApprove}
             t={t}
             language={language}
             currentStage={context.currentStage}

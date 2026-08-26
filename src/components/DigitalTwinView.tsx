@@ -13,6 +13,7 @@ import {
   Play,
   SlidersHorizontal,
   RotateCcw,
+  Radio,
 } from "lucide-react";
 import { AgentStage, FacilityState, ProposedSolution } from "../types";
 import { EnergyCalculationEngine } from "../simulation/engine";
@@ -20,6 +21,7 @@ import { getTranslation, getSolutionText } from "../i18n";
 import { RadialGauge } from "./digitalTwin/RadialGauge";
 import { MiniTrendChart } from "./digitalTwin/MiniTrendChart";
 import { EquipmentSchematic } from "./digitalTwin/EquipmentSchematic";
+import { SystemConnections } from "./digitalTwin/SystemConnections";
 
 const DEFAULT_CUTOFF_HOUR = 18;
 const DEFAULT_SETPOINT_OFFSET = 1.5;
@@ -37,6 +39,10 @@ interface DigitalTwinViewProps {
   onRunSimulation: () => void;
   isSimulating: boolean;
   isVerified?: boolean;
+  /** Sends the actual approval/verification command -- the same handler the
+   *  Dashboard's RecommendationCard uses. Wired here so Scenario C can be
+   *  commanded directly from the Twin, not just previewed. */
+  onApprove: () => void;
   t: ReturnType<typeof getTranslation>;
   language: "en" | "ar";
   /** Drives the compact process strip at the top of the page -- the Digital
@@ -54,11 +60,13 @@ export const DigitalTwinView: React.FC<DigitalTwinViewProps> = ({
   onRunSimulation,
   isSimulating,
   isVerified,
+  onApprove,
   t,
   language,
   currentStage,
   isRunningAutonomous,
 }) => {
+  const [commandState, setCommandState] = useState<"idle" | "sending" | "acknowledged">("idle");
   const [selectedFloor, setSelectedFloor] = useState<1 | 2 | 3>(2);
   const currencySymbol = facility.config.currency_symbol;
   const rate = facility.config.electricity_rate;
@@ -211,6 +219,22 @@ export const DigitalTwinView: React.FC<DigitalTwinViewProps> = ({
   // in the panel footnote below.
   const consumptionTrend = [500, 504, 498, 512, 545, 583, facility.current_kwh];
   const hvacRuntimeTrend = [10, 10, 10, 11, 12, 13, facility.systems.hvac.actual_hours];
+
+  // Real control, not just preview: Scenario C is the agent's actual
+  // recommendation (the only one that includes the HVAC schedule fix), so
+  // this reuses the exact same approve/verify path the Dashboard's
+  // RecommendationCard uses -- the Twin can genuinely command the live
+  // system, it isn't a separate simulated action.
+  const canSendCommand = activeScenario === "C" && !isVerified;
+  const handleSendCommand = () => {
+    if (!canSendCommand || commandState !== "idle") return;
+    setCommandState("sending");
+    setTimeout(() => {
+      setCommandState("acknowledged");
+      onApprove();
+      setTimeout(() => setCommandState("idle"), 1500);
+    }, 900);
+  };
 
   return (
     <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-md">
@@ -510,6 +534,58 @@ export const DigitalTwinView: React.FC<DigitalTwinViewProps> = ({
               </div>
             ))}
           </div>
+        </div>
+      </div>
+
+      {/* Live connection hub + real control action */}
+      <div className="mt-4 grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <SystemConnections
+          title={dt.connectionsTitle}
+          liveLabel={dt.connectionsLive}
+          nodes={[
+            { key: "hvac", label: dt.connHvac, icon: <Fan className="w-4 h-4" />, connected: true },
+            { key: "lighting", label: dt.connLighting, icon: <Lightbulb className="w-4 h-4" />, connected: true },
+            { key: "equipment", label: dt.connEquipment, icon: <Cpu className="w-4 h-4" />, connected: true },
+            { key: "solar", label: dt.connSolar, icon: <Sun className="w-4 h-4" />, connected: true },
+          ]}
+        />
+
+        <div className="bg-slate-950/80 border border-slate-800 rounded-xl p-4 flex flex-col">
+          <div className="text-[11px] font-bold text-slate-300 uppercase tracking-wider mb-1">{dt.controlTitle}</div>
+          <p className="text-[11px] text-slate-500 mb-4 flex-1">
+            {canSendCommand ? dt.controlReady : isVerified ? dt.controlAlreadyApplied : dt.controlNeedsC}
+          </p>
+          <button
+            id="btn-send-hvac-command"
+            onClick={handleSendCommand}
+            disabled={!canSendCommand || commandState !== "idle"}
+            className={`w-full py-3 rounded-xl text-sm font-bold flex items-center justify-center gap-2 transition-all ${
+              commandState === "acknowledged"
+                ? "bg-emerald-500 text-slate-950"
+                : commandState === "sending"
+                ? "bg-amber-500 text-slate-950 cursor-wait"
+                : canSendCommand
+                ? "bg-emerald-500 hover:bg-emerald-400 text-slate-950 cursor-pointer shadow-lg shadow-emerald-500/20"
+                : "bg-slate-800 text-slate-500 cursor-not-allowed"
+            }`}
+          >
+            {commandState === "sending" ? (
+              <>
+                <RotateCw className="w-4 h-4 animate-spin" />
+                {dt.controlSending}
+              </>
+            ) : commandState === "acknowledged" ? (
+              <>
+                <Radio className="w-4 h-4" />
+                {dt.controlAcknowledged}
+              </>
+            ) : (
+              <>
+                <Fan className="w-4 h-4" />
+                {dt.controlSend}
+              </>
+            )}
+          </button>
         </div>
       </div>
 
