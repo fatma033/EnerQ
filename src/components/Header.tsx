@@ -158,12 +158,12 @@ export const Header: React.FC<HeaderProps> = ({
             {/* Reasoning Engine Transparency Badge */}
             {engineStatus && (
               <div
-                title={engineStatus.hasApiKey ? "Live local Ollama reasoning, grounded in the RAG knowledge base" : "Deterministic reasoning engine (start Ollama locally for live LLM synthesis)"}
+                title={engineStatus.hasApiKey ? `Live ${engineStatus.provider} reasoning, grounded in the RAG knowledge base` : "Deterministic reasoning engine (no live LLM reachable right now)"}
                 className="hidden xl:flex items-center gap-1 px-2 py-1 rounded-md text-[10px] text-slate-500"
               >
                 <BrainCircuit className={`w-3 h-3 ${engineStatus.hasApiKey ? "text-emerald-500" : "text-slate-500"}`} />
                 <span className={engineStatus.hasApiKey ? "text-emerald-500" : "text-slate-500"}>
-                  {engineStatus.hasApiKey ? `Ollama ${engineStatus.model}` : "Deterministic"}
+                  {engineStatus.hasApiKey ? `${engineStatus.provider} ${engineStatus.model}` : "Deterministic"}
                 </span>
               </div>
             )}

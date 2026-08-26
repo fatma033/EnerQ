@@ -22,20 +22,42 @@ const OLLAMA_BASE_URL = process.env.OLLAMA_BASE_URL || "http://127.0.0.1:11434/v
 // Arabic quality and instruction-following -- the language this demo is
 // actually judged in. `ollama pull qwen2.5:3b-instruct` to get it locally.
 const OLLAMA_MODEL = process.env.OLLAMA_MODEL || "qwen2.5:3b-instruct";
+// Any OpenAI-compatible endpoint works here, not just Ollama -- on a
+// deployed server there's no local Ollama to reach, so pointing
+// OLLAMA_BASE_URL/OLLAMA_MODEL at a free hosted provider (e.g. Groq:
+// "https://api.groq.com/openai/v1", model "llama-3.1-8b-instant") plus a
+// real LLM_API_KEY gets genuine live reasoning in production instead of
+// falling back to the deterministic engine. Defaults to the literal string
+// "ollama" since a real local Ollama install ignores the key entirely and
+// just requires the SDK's non-empty-string requirement to be satisfied.
+const LLM_API_KEY = process.env.LLM_API_KEY || "ollama";
+// Purely cosmetic (the header's "live reasoning" badge) -- inferred from
+// the base URL so the UI names the actual provider instead of always
+// claiming "Ollama" once that URL points somewhere else.
+const LLM_PROVIDER_LABEL = /groq\.com/i.test(OLLAMA_BASE_URL)
+  ? "Groq"
+  : /127\.0\.0\.1|localhost/i.test(OLLAMA_BASE_URL)
+  ? "Ollama"
+  : "Cloud LLM";
 
 app.use(express.json());
 
-const aiClient = new OpenAI({ baseURL: OLLAMA_BASE_URL, apiKey: "ollama" }); // Ollama ignores the key; the SDK just requires a non-empty string
+const aiClient = new OpenAI({ baseURL: OLLAMA_BASE_URL, apiKey: LLM_API_KEY });
 
 /**
- * Cheap local reachability check so the UI can honestly report whether
- * Ollama is actually running, rather than only discovering it on the
- * first failed completion call.
+ * Cheap reachability check so the UI can honestly report whether live
+ * reasoning is actually available, rather than only discovering it on the
+ * first failed completion call. Uses the OpenAI-compatible /models list
+ * endpoint, which both Ollama and hosted providers like Groq expose, so
+ * the same check works whichever OLLAMA_BASE_URL points at.
  */
-async function isOllamaReachable(): Promise<boolean> {
+async function isLlmReachable(): Promise<boolean> {
   try {
-    const tagsUrl = OLLAMA_BASE_URL.replace(/\/v1\/?$/, "") + "/api/tags";
-    const resp = await fetch(tagsUrl, { signal: AbortSignal.timeout(1200) });
+    const modelsUrl = OLLAMA_BASE_URL.replace(/\/?$/, "") + "/models";
+    const resp = await fetch(modelsUrl, {
+      headers: { Authorization: `Bearer ${LLM_API_KEY}` },
+      signal: AbortSignal.timeout(1200),
+    });
     return resp.ok;
   } catch {
     return false;
@@ -44,13 +66,13 @@ async function isOllamaReachable(): Promise<boolean> {
 
 // API Routes
 app.get("/api/health", async (req, res) => {
-  const ollamaReachable = await isOllamaReachable();
+  const llmReachable = await isLlmReachable();
   res.json({
     status: "ok",
     service: "EnerQ AI Energy Agent Engine",
-    provider: "ollama",
+    provider: LLM_PROVIDER_LABEL,
     model: OLLAMA_MODEL,
-    hasApiKey: ollamaReachable, // kept for UI backward-compat: "is live reasoning available"
+    hasApiKey: llmReachable, // kept for UI backward-compat: "is live reasoning available"
     ragKnowledgeChunks: retrieveKnowledge("hvac plug load solar lighting decision verification", 999).length,
     timestamp: new Date().toISOString(),
   });
