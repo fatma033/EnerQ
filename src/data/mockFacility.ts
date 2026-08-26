@@ -3,9 +3,9 @@ import { FacilityState } from "../types";
 export const initialFacilityData: FacilityState = {
   config: {
     id: "fac-comm-092",
-    name: "Al-Noor Commercial Business Center",
-    type: "Commercial Office & Tech Hub (3 Floors)",
-    location: "Business District, Muscat / Regional Tech Park",
+    name: "Sultan Qaboos Complex for Youth, Culture and Entertainment",
+    type: "Youth, Culture & Entertainment Complex (3 Floors)",
+    location: "Muscat, Oman",
     area_sqm: 3200,
     working_hours: {
       start: "08:00",

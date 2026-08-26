@@ -80,9 +80,9 @@ export const translations = {
     },
 
     facility: {
-      name: "Al-Noor Commercial Business Center",
-      type: "Commercial Office & Tech Hub (3 Floors)",
-      location: "Business District, Muscat / Regional Tech Park",
+      name: "Sultan Qaboos Complex for Youth, Culture and Entertainment",
+      type: "Youth, Culture & Entertainment Complex (3 Floors)",
+      location: "Muscat, Oman",
     },
 
     systems: {
@@ -426,9 +426,9 @@ export const translations = {
     },
 
     facility: {
-      name: "مركز النور التجاري للأعمال",
-      type: "مركز مكتبي وتقني تجاري (3 طوابق)",
-      location: "الحي التجاري، مسقط / المجمع التقني الإقليمي",
+      name: "مجمع السلطان قابوس الشبابي للثقافة والترفيه",
+      type: "مجمع شبابي ثقافي وترفيهي (3 طوابق)",
+      location: "مسقط، عُمان",
     },
 
     systems: {
