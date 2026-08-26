@@ -11,6 +11,12 @@ import {
   FollowUpState,
 } from "../types";
 import { EnergyCalculationEngine } from "../simulation/engine";
+import { ObserverAgent } from "./agents/observerAgent";
+import { DiagnosticAgent } from "./agents/diagnosticAgent";
+import { SimulationAgent } from "./agents/simulationAgent";
+import { ActionAgent } from "./agents/actionAgent";
+import { fetchInsight } from "./agents/reasoningClient";
+import { AgentLogPayload } from "./agents/types";
 
 // Demo-compressed follow-up timing: in a real deployment these would be
 // hours/days, not seconds. Kept short and clearly labeled so the agent's
@@ -44,6 +50,25 @@ export interface AgentContext {
   autonomyMode: AutonomyMode;
 }
 
+/**
+ * EnerQAgentOrchestrator -- the coordinator, not a fifth agent.
+ *
+ * It owns the shared AgentContext (the one thing every specialist agent
+ * needs to read from and write into), the pub/sub that keeps the React
+ * UI in sync, and the timing/sequencing of a pipeline run. All of the
+ * actual domain reasoning for each of the 9 stages lives in one of four
+ * focused agents under ./agents/ -- each handles 2-3 stages:
+ *
+ *   ObserverAgent    -- OBSERVE, DETECT            (src/agent/agents/observerAgent.ts)
+ *   DiagnosticAgent  -- INVESTIGATE, GENERATE_SOLUTIONS (diagnosticAgent.ts)
+ *   SimulationAgent  -- SIMULATE, COMPARE, DECIDE   (simulationAgent.ts)
+ *   ActionAgent      -- RECOMMEND, VERIFY           (actionAgent.ts)
+ *
+ * Splitting it this way means each agent file is small enough to read
+ * end-to-end in a couple of minutes, and each one is independently
+ * swappable -- e.g. ObserverAgent is the one piece you'd replace to
+ * point at a real BMS/IoT feed instead of mock telemetry.
+ */
 export class EnerQAgentOrchestrator {
   private state: AgentContext;
   private listeners: ((context: AgentContext) => void)[] = [];
@@ -97,9 +122,9 @@ export class EnerQAgentOrchestrator {
   }
 
   /**
-   * Starts the agent's follow-up loop after a recommendation is issued.
+   * Starts ActionAgent's follow-up loop after a recommendation is issued.
    * This is what separates EnerQ from a one-shot recommendation system:
-   * if nobody acts, the agent reminds, then escalates — it doesn't just
+   * if nobody acts, the agent reminds, then escalates -- it doesn't just
    * post an alert and move on.
    */
   private startFollowUp() {
@@ -116,28 +141,14 @@ export class EnerQAgentOrchestrator {
       const symbol = this.state.facility.config.currency_symbol;
       const hourlyWaste = solC ? Number((solC.daily_cost_saving / 24).toFixed(2)) : null;
       this.state.followUp = { ...this.state.followUp, status: "reminded", reminderCount: this.state.followUp.reminderCount + 1 };
-      this.addLog(
-        "RECOMMEND",
-        "info",
-        "Follow-Up: Reminder Sent",
-        `Action still pending. ${hourlyWaste !== null ? `Continuing to generate approximately ${symbol}${hourlyWaste}/hour of unnecessary energy cost.` : "Estimated waste continues to accumulate."} Notified: ${this.state.followUp.responsibleTeam}.`,
-        [{ label: "Responsible", value: this.state.followUp.responsibleTeam }],
-        "Reminder 1"
-      );
+      this.pushLog("RECOMMEND", "info", ActionAgent.reminderLog(this.state.followUp.responsibleTeam, hourlyWaste, symbol));
       this.notify();
 
       this.escalationTimer = setTimeout(() => {
         if (this.state.currentStage === "COMPLETED") return;
         const dailyWaste = solC ? `${symbol}${solC.daily_cost_saving}/day` : "accumulating waste";
         this.state.followUp = { ...this.state.followUp, status: "escalated" };
-        this.addLog(
-          "RECOMMEND",
-          "info",
-          "Follow-Up: Escalated",
-          `This issue has remained unresolved. Estimated ongoing waste: ${dailyWaste}. Escalating to facility management for visibility.`,
-          [{ label: "Status", value: "Escalated to Management" }],
-          "Escalation"
-        );
+        this.pushLog("RECOMMEND", "info", ActionAgent.escalationLog(dailyWaste));
         this.notify();
       }, ESCALATION_DELAY_MS - REMINDER_DELAY_MS);
     }, REMINDER_DELAY_MS);
@@ -159,23 +170,17 @@ export class EnerQAgentOrchestrator {
     return { ...this.state };
   }
 
-  private addLog(
-    stage: AgentStage,
-    type: AgentLogMessage["type"],
-    title: string,
-    detail: string,
-    metrics?: { label: string; value: string }[],
-    badge?: string
-  ) {
+  /** Merges one agent's log payload into a full, displayable AgentLogMessage. */
+  private pushLog(stage: AgentStage, type: AgentLogMessage["type"], payload: AgentLogPayload) {
     const log: AgentLogMessage = {
       id: `log-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
       timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" }),
       stage,
       type,
-      title,
-      detail,
-      metrics,
-      badge,
+      title: payload.title,
+      detail: payload.detail,
+      metrics: payload.metrics,
+      badge: payload.badge,
     };
     this.state.logs = [log, ...this.state.logs];
   }
@@ -209,79 +214,42 @@ export class EnerQAgentOrchestrator {
     this.state.isRunningAutonomous = false;
     this.state.activeScenarioId = "CURRENT";
     this.state.logs = [];
-    this.addLog("IDLE", "info", "EnerQ Agent Initialized", "Standing by to observe facility energy state.");
+    this.pushLog("IDLE", "info", { title: "EnerQ Agent Initialized", detail: "Standing by to observe facility energy state." });
     this.notify();
   }
 
-  /**
-   * Run Stage 1: OBSERVE
-   */
+  /** Stage 1 -- delegates to ObserverAgent */
   public stepObserve(): void {
     this.state.currentStage = "OBSERVE";
     this.state.activeScenarioId = "CURRENT";
-    this.addLog(
-      "OBSERVE",
-      "observe",
-      "Stage 1: Ingesting Facility Telemetry",
-      `Observed ${this.state.facility.config.name}. Working hours ${this.state.facility.config.working_hours.start}–${this.state.facility.config.working_hours.end}. Reading live power meters.`,
-      [
-        { label: "30-Day Baseline", value: `${this.state.facility.baseline_kwh} kWh/day` },
-        { label: "Today's Consumption", value: `${this.state.facility.current_kwh} kWh/day` },
-      ],
-      "Telemetry Sync"
-    );
+    const { log } = ObserverAgent.observe(this.state.facility);
+    this.pushLog("OBSERVE", "observe", log);
     this.notify();
   }
 
-  /**
-   * Run Stage 2: DETECT
-   */
+  /** Stage 2 -- delegates to ObserverAgent */
   public stepDetect(): AnomalyReport {
     this.state.currentStage = "DETECT";
-    const report = EnergyCalculationEngine.detectAnomaly(this.state.facility);
+    const { report, log } = ObserverAgent.detect(this.state.facility);
     this.state.anomalyReport = report;
-    this.addLog(
-      "DETECT",
-      "detect",
-      "Stage 2: Anomaly Confirmed",
-      `Detected +${report.variance_pct}% (+${report.variance_kwh} kWh) deviation exceeding +10% alert threshold. Initiating root-cause diagnostic routine.`,
-      [
-        { label: "Variance", value: `+${report.variance_pct}%` },
-        { label: "Excess Energy", value: `${report.variance_kwh} kWh` },
-        { label: "Severity", value: report.severity.toUpperCase() },
-      ],
-      "Anomaly Triggered"
-    );
+    this.pushLog("DETECT", "detect", log);
     this.notify();
     return report;
   }
 
-  /**
-   * Run Stage 3: INVESTIGATE
-   */
+  /** Stage 3 -- delegates to DiagnosticAgent */
   public stepInvestigate(): InvestigationFinding {
     this.state.currentStage = "INVESTIGATE";
-    const finding = EnergyCalculationEngine.investigateAnomaly(this.state.facility);
+    const { finding, log } = DiagnosticAgent.investigate(this.state.facility);
     this.state.investigation = finding;
-    this.addLog(
-      "INVESTIGATE",
-      "investigate",
-      "Stage 3: Subsystem Root-Cause Isolated",
-      `HVAC AHU Chiller operated 4 continuous hours past 18:00 closing (+80 kWh waste). Workstation idle power contributed +13 kWh unmanaged load.`,
-      [
-        { label: "HVAC After-Hours", value: "+4.0 hours (80 kWh)" },
-        { label: "Idle Equipment", value: `${finding.equipment_idle_waste_kwh} kWh` },
-        { label: "Agent Confidence", value: `${finding.agent_confidence_pct}%` },
-      ],
-      "Investigation Complete"
-    );
+    this.pushLog("INVESTIGATE", "investigate", log);
     this.notify();
 
     // Fire a background RAG-grounded reasoning call so the agent's
     // root-cause narrative is traceable to the knowledge base, not
     // just deterministic template text. Non-blocking: the deterministic
     // finding above is already authoritative and displayed immediately.
-    this.fetchInsight("investigate", {
+    fetchInsight("investigate", {
       name: this.state.facility.config.name,
       baseline_kwh: this.state.facility.baseline_kwh,
       current_kwh: this.state.facility.current_kwh,
@@ -298,174 +266,71 @@ export class EnerQAgentOrchestrator {
     return finding;
   }
 
-  /**
-   * Calls the server-side RAG + Ollama reasoning endpoint for a given stage.
-   */
-  private async fetchInsight(
-    stage: string,
-    facilityData: Record<string, unknown>,
-    userPrompt?: string
-  ): Promise<{ text: string | null; citations: KnowledgeCitation[]; source: string | null }> {
-    try {
-      const resp = await fetch("/api/agent/reason", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ stage, facilityData, userPrompt }),
-      });
-      const data = await resp.json();
-      return {
-        text: data?.analysis ?? null,
-        citations: data?.citations ?? [],
-        source: data?.source ?? null,
-      };
-    } catch {
-      return { text: null, citations: [], source: null };
-    }
-  }
-
-  /**
-   * Run Stage 4: GENERATE_SOLUTIONS
-   */
+  /** Stage 4 -- delegates to DiagnosticAgent */
   public stepGenerateSolutions(): Record<"A" | "B" | "C", ProposedSolution> {
     this.state.currentStage = "GENERATE_SOLUTIONS";
-    const solutions = EnergyCalculationEngine.generateSolutions(this.state.facility);
+    const { solutions, log } = DiagnosticAgent.generateSolutions(this.state.facility);
     this.state.solutions = solutions;
-    this.addLog(
-      "GENERATE_SOLUTIONS",
-      "info",
-      "Stage 4: Generated 3 Candidate Interventions",
-      "Synthesized Solution A (HVAC Schedule), Solution B (HVAC Setpoint offset), and Solution C (Combined HVAC + Plug-Load Sleep).",
-      [
-        { label: "Solution A", value: "HVAC Schedule Cutoff (8.1% saving)" },
-        { label: "Solution B", value: "Setpoint +1.5°C (6.0% saving)" },
-        { label: "Solution C", value: "Combined Optimization (15.0% saving)" },
-      ],
-      "3 Solutions Formulated"
-    );
+    this.pushLog("GENERATE_SOLUTIONS", "info", log);
     this.notify();
     return solutions;
   }
 
-  /**
-   * Run Stage 5: SIMULATE (Digital Twin)
-   */
+  /** Stage 5 -- delegates to SimulationAgent */
   public stepSimulate(): DigitalTwinSimulation {
     this.state.currentStage = "SIMULATE";
-    const twin = EnergyCalculationEngine.runDigitalTwinSimulation(this.state.facility);
+    const { twin, log } = SimulationAgent.simulate(this.state.facility);
     this.state.digitalTwin = twin;
-    this.addLog(
-      "SIMULATE",
-      "simulate",
-      "Stage 5: Digital Twin Thermal & Power Physics Executed",
-      "Simulated building virtual twin across all 3 scenarios. Calculated energy curves, peak demand impacts, and thermal drift factors.",
-      [
-        { label: "Scenario A Outcome", value: `${twin.scenarios.A.simulated_daily_kwh} kWh (-${twin.scenarios.A.estimated_saving_kwh} kWh)` },
-        { label: "Scenario B Outcome", value: `${twin.scenarios.B.simulated_daily_kwh} kWh (-${twin.scenarios.B.estimated_saving_kwh} kWh)` },
-        { label: "Scenario C Outcome", value: `${twin.scenarios.C.simulated_daily_kwh} kWh (-${twin.scenarios.C.estimated_saving_kwh} kWh)` },
-      ],
-      "Digital Twin Validated"
-    );
+    this.pushLog("SIMULATE", "simulate", log);
     this.notify();
     return twin;
   }
 
-  /**
-   * Run Stage 6: COMPARE
-   */
+  /** Stage 6 -- delegates to SimulationAgent */
   public stepCompare(): void {
     this.state.currentStage = "COMPARE";
     if (!this.state.solutions) {
       this.stepGenerateSolutions();
     }
-    const { A, B, C } = this.state.solutions!;
-    const leader = [A, B, C].reduce((best, s) => (s.decision_score > best.decision_score ? s : best));
-    this.addLog(
-      "COMPARE",
-      "decide",
-      "Stage 6: Multi-Attribute Tradeoff Evaluation",
-      `Weighted scoring across energy savings (60%), operational risk (30%), and occupant comfort (10%). Solution ${leader.id} scores highest at ${leader.decision_score}/100.`,
-      [
-        { label: "Sol A Score", value: `${A.decision_score}/100${A.id === leader.id ? " (Leading)" : ""}` },
-        { label: "Sol B Score", value: `${B.decision_score}/100${B.id === leader.id ? " (Leading)" : ""}` },
-        { label: "Sol C Score", value: `${C.decision_score}/100${C.id === leader.id ? " (Leading)" : ""}` },
-      ],
-      "Decision Matrix Computed"
-    );
+    const { log } = SimulationAgent.compare(this.state.solutions!);
+    this.pushLog("COMPARE", "decide", log);
     this.notify();
   }
 
-  /**
-   * Run Stage 7: DECIDE
-   */
+  /** Stage 7 -- delegates to SimulationAgent */
   public stepDecide(): ProposedSolution {
     this.state.currentStage = "DECIDE";
     if (!this.state.solutions) {
       this.stepGenerateSolutions();
     }
-    const { A, B, C } = this.state.solutions!;
-    // Actually select the highest-scoring candidate — not hardcoded to any
-    // particular id — so the decision follows whatever the multi-criteria
-    // engine computed for the current facility/solution parameters.
-    const chosen = [A, B, C].reduce((best, s) => (s.decision_score > best.decision_score ? s : best));
+    const { chosen, log } = SimulationAgent.decide(this.state.solutions!);
     this.state.chosenSolution = chosen;
-    this.addLog(
-      "DECIDE",
-      "decide",
-      "Stage 7: Optimal Action Selected",
-      `Selected Solution ${chosen.id}: ${chosen.name}.`,
-      [
-        { label: "Selected Option", value: `Solution ${chosen.id} (${chosen.short_label})` },
-        { label: "Decision Confidence", value: `${chosen.decision_score} / 100` },
-      ],
-      "Decision Reached"
-    );
+    this.pushLog("DECIDE", "decide", log);
     this.notify();
     return chosen;
   }
 
-  /**
-   * Run Stage 8: RECOMMEND
-   */
+  /** Stage 8 -- delegates to ActionAgent */
   public async stepRecommend(): Promise<void> {
     this.state.currentStage = "RECOMMEND";
     if (!this.state.chosenSolution && this.state.solutions) {
       const { A, B, C } = this.state.solutions;
       this.state.chosenSolution = [A, B, C].reduce((best, s) => (s.decision_score > best.decision_score ? s : best));
     }
-    const chosen = this.state.chosenSolution;
+    const chosen = this.state.chosenSolution!;
     this.state.activeScenarioId = (chosen?.id as "A" | "B" | "C") ?? "C";
 
-    const symbol = this.state.facility.config.currency_symbol;
-
     const isAutonomous = this.state.autonomyMode === "autonomous";
-
-    this.addLog(
-      "RECOMMEND",
-      "recommend",
-      "Stage 8: Synthesized Actionable Recommendation",
-      `EnerQ recommends executing Solution ${chosen?.id}. Recaptures ${chosen?.estimated_saving_kwh} kWh/day (${chosen?.estimated_saving_pct}%), saving ${symbol}${chosen?.daily_cost_saving}/day (${symbol}${chosen?.monthly_cost_saving}/month) with zero disruption to business hours.`,
-      [
-        { label: "Expected Daily Saving", value: `${chosen?.estimated_saving_kwh} kWh (${chosen?.estimated_saving_pct}%)` },
-        { label: "Monthly Cost Recaptured", value: `${symbol}${chosen?.monthly_cost_saving}` },
-        { label: "Risk Rating", value: chosen?.risk_level ?? "—" },
-        { label: "Responsible", value: this.state.followUp.responsibleTeam },
-      ],
-      isAutonomous ? "Autonomous Execution Authorized" : "Awaiting User Approval"
+    const { log, autonomousLog } = ActionAgent.recommend(
+      chosen,
+      this.state.facility,
+      this.state.followUp.responsibleTeam,
+      isAutonomous
     );
+    this.pushLog("RECOMMEND", "recommend", log);
 
-    if (isAutonomous) {
-      // Level 3: for a low-risk, pre-authorized action, the agent proceeds
-      // without waiting on a human — this is the "insight -> decision ->
-      // action" jump the concept explicitly calls out as what separates
-      // an agent from a recommendation system. Still logged transparently.
-      this.addLog(
-        "RECOMMEND",
-        "info",
-        "Autonomous Action: No Manual Approval Required",
-        `Risk score ${chosen?.risk_score ?? "—"}/10 falls within the pre-authorized autonomous-action threshold. EnerQ will implement Solution ${chosen?.id} automatically in ${(AUTONOMOUS_EXECUTION_DELAY_MS / 1000).toFixed(1)}s.`,
-        [{ label: "Authorization Level", value: "Level 3 — Autonomous" }],
-        "Executing"
-      );
+    if (isAutonomous && autonomousLog) {
+      this.pushLog("RECOMMEND", "info", autonomousLog);
       this.autoExecuteTimer = setTimeout(() => {
         this.stepVerify();
       }, AUTONOMOUS_EXECUTION_DELAY_MS);
@@ -474,7 +339,7 @@ export class EnerQAgentOrchestrator {
     }
 
     // Call server-side RAG + Ollama reasoning for rich, source-grounded explainability
-    const { text, citations, source } = await this.fetchInsight("recommend", {
+    const { text, citations, source } = await fetchInsight("recommend", {
       name: this.state.facility.config.name,
       baseline_kwh: this.state.facility.baseline_kwh,
       current_kwh: this.state.facility.current_kwh,
@@ -491,83 +356,26 @@ export class EnerQAgentOrchestrator {
     this.notify();
   }
 
-  /**
-   * Run Stage 9: VERIFY (Triggered upon user approval)
-   */
+  /** Stage 9 -- delegates to ActionAgent (triggered on approval or autonomous execution) */
   public stepVerify(): VerificationResult {
     this.clearFollowUpTimers();
     this.state.followUp = { ...this.state.followUp, status: "resolved" };
     this.state.currentStage = "VERIFY";
-    const solC = this.state.chosenSolution || this.state.solutions?.C;
-    const rate = this.state.facility.config.electricity_rate;
-    const initialKwh = this.state.facility.current_kwh;
-    const reducedKwh = solC?.estimated_saving_kwh ?? 0;
-    const reducedPct = solC?.estimated_saving_pct ?? 0;
-    const verifiedKwh = initialKwh - reducedKwh;
-
-    const verification: VerificationResult = {
-      verified: true,
-      status_text: "Expected improvement verified in Digital Twin simulation.",
-      implemented_solution_id: solC?.id ?? "C",
-      initial_consumption_kwh: initialKwh,
-      verified_consumption_kwh: verifiedKwh,
-      actual_reduction_kwh: reducedKwh,
-      actual_reduction_pct: reducedPct,
-      daily_cost_saved: Number((reducedKwh * rate).toFixed(2)),
-      monthly_cost_saved: Number((reducedKwh * rate * 30).toFixed(2)),
-      annual_cost_saved: Number((reducedKwh * rate * 365).toFixed(2)),
-      annual_co2_kg_saved: Number((reducedKwh * 365 * this.state.facility.config.co2_factor_kg_per_kwh).toFixed(1)),
-      timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-      next_check_in: "Tomorrow, 18:05 EET (Automated Schedule Verification)",
-    };
+    const chosen = this.state.chosenSolution || this.state.solutions?.C;
+    const { verification, updatedFacility, log } = ActionAgent.verify(chosen, this.state.facility);
 
     this.state.verification = verification;
     this.state.currentStage = "COMPLETED";
-
-    // Update facility virtual state to optimized
-    this.state.facility = {
-      ...this.state.facility,
-      current_kwh: verifiedKwh,
-      systems: {
-        ...this.state.facility.systems,
-        hvac: {
-          ...this.state.facility.systems.hvac,
-          actual_hours: 10,
-          actual_kwh: 200,
-          status: "optimized",
-          alert: "Optimized 18:00 cutoff policy active",
-        },
-        equipment: {
-          ...this.state.facility.systems.equipment,
-          idle_kwh: 20,
-          total_kwh: 105,
-          status: "normal",
-          alert: "Smart power down script scheduled for 18:15",
-        },
-      },
-    };
-
-    const symbol = this.state.facility.config.currency_symbol;
-
-    this.addLog(
-      "VERIFY",
-      "verify",
-      "Stage 9: Implementation Verified in Simulation",
-      `Virtual facility updated. Daily consumption reduced from ${initialKwh} kWh → ${verifiedKwh} kWh (-${reducedKwh} kWh / -${reducedPct}%). Recapturing ${symbol}${verification.monthly_cost_saved}/month.`,
-      [
-        { label: "Optimized Load", value: `${verifiedKwh} kWh/day` },
-        { label: "Total Reduction", value: `-${reducedKwh} kWh (-${reducedPct}%)` },
-        { label: "Annual Recaptured", value: `${symbol}${verification.annual_cost_saved}` },
-      ],
-      "Improvement Verified"
-    );
+    this.state.facility = updatedFacility;
+    this.pushLog("VERIFY", "verify", log);
 
     this.notify();
     return verification;
   }
 
   /**
-   * Executes the complete autonomous 9-step pipeline with realistic timing
+   * Executes the complete autonomous 9-step pipeline with realistic timing,
+   * handing off to each specialist agent in turn.
    */
   public async runAutonomousPipeline(speedMs = 1200): Promise<void> {
     if (this.abortController) {
@@ -589,35 +397,27 @@ export class EnerQAgentOrchestrator {
       });
 
     try {
-      // Step 1: OBSERVE
+      // ObserverAgent
       this.stepObserve();
       await sleep(speedMs);
-
-      // Step 2: DETECT
       this.stepDetect();
       await sleep(speedMs);
 
-      // Step 3: INVESTIGATE
+      // DiagnosticAgent
       this.stepInvestigate();
       await sleep(speedMs * 1.1);
-
-      // Step 4: GENERATE SOLUTIONS
       this.stepGenerateSolutions();
       await sleep(speedMs);
 
-      // Step 5: SIMULATE (Digital Twin)
+      // SimulationAgent
       this.stepSimulate();
       await sleep(speedMs * 1.1);
-
-      // Step 6: COMPARE
       this.stepCompare();
       await sleep(speedMs * 0.9);
-
-      // Step 7: DECIDE
       this.stepDecide();
       await sleep(speedMs * 0.9);
 
-      // Step 8: RECOMMEND
+      // ActionAgent
       await this.stepRecommend();
       this.state.isRunningAutonomous = false;
       this.notify();
