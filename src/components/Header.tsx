@@ -4,7 +4,7 @@ import {
   RotateCcw,
   Sliders,
   FileText,
-  MessageSquare,
+  FileBarChart2,
   Sparkles,
   Building2,
   CheckCircle2,
@@ -26,7 +26,7 @@ interface HeaderProps {
   onReset: () => void;
   onOpenSettings: () => void;
   onOpenReport: () => void;
-  onToggleChat: () => void;
+  onOpenReportsAgent: () => void;
   onSetAutonomyMode: (mode: AutonomyMode) => void;
   theme: "dark" | "light";
   onToggleTheme: () => void;
@@ -42,7 +42,7 @@ export const Header: React.FC<HeaderProps> = ({
   onReset,
   onOpenSettings,
   onOpenReport,
-  onToggleChat,
+  onOpenReportsAgent,
   onSetAutonomyMode,
   theme,
   onToggleTheme,
@@ -192,13 +192,14 @@ export const Header: React.FC<HeaderProps> = ({
           </div>
 
           {/* Ask AI Agent Chat Drawer */}
+          {/* ReportsAgent — the 5th agent, period-based reports */}
           <button
-            id="btn-open-chat"
-            onClick={onToggleChat}
+            id="btn-open-reports-agent"
+            onClick={onOpenReportsAgent}
             className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700/80 border border-slate-700/60 rounded-lg transition-colors"
           >
-            <MessageSquare className="w-3.5 h-3.5 text-teal-400" />
-            <span className="hidden sm:inline">{t.askAgent}</span>
+            <FileBarChart2 className="w-3.5 h-3.5 text-purple-400" />
+            <span className="hidden sm:inline">{t.reportsAgent.agentName}</span>
           </button>
 
           {/* Executive Audit Report */}

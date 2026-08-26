@@ -12,6 +12,7 @@ import { AgentThoughtLog } from "./components/AgentThoughtLog";
 import { VerificationModal } from "./components/VerificationModal";
 import { FacilitySettingsModal } from "./components/FacilitySettingsModal";
 import { AuditReportModal } from "./components/AuditReportModal";
+import { ReportsAgentModal } from "./components/ReportsAgentModal";
 import { EnerQAgentOrchestrator, AgentContext } from "./agent/orchestrator";
 import { initialFacilityData } from "./data/mockFacility";
 import { EnergyCalculationEngine } from "./simulation/engine";
@@ -27,6 +28,7 @@ export default function App() {
   const [isVerificationOpen, setIsVerificationOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isReportOpen, setIsReportOpen] = useState(false);
+  const [isReportsAgentOpen, setIsReportsAgentOpen] = useState(false);
   const [isSimulatingTwin, setIsSimulatingTwin] = useState(false);
   const [engineStatus, setEngineStatus] = useState<{ provider: string; model: string; hasApiKey: boolean } | null>(null);
 
@@ -197,7 +199,7 @@ export default function App() {
         onReset={handleReset}
         onOpenSettings={() => setIsSettingsOpen(true)}
         onOpenReport={() => setIsReportOpen(true)}
-        onToggleChat={() => setPage("home")}
+        onOpenReportsAgent={() => setIsReportsAgentOpen(true)}
         onSetAutonomyMode={(mode) => orchestrator.setAutonomyMode(mode)}
         theme={theme}
         onToggleTheme={() => setTheme((prev) => (prev === "dark" ? "light" : "dark"))}
@@ -369,6 +371,14 @@ export default function App() {
         isOpen={isReportOpen}
         onClose={() => setIsReportOpen(false)}
         context={context}
+        t={t}
+      />
+
+      <ReportsAgentModal
+        isOpen={isReportsAgentOpen}
+        onClose={() => setIsReportsAgentOpen(false)}
+        facility={context.facility}
+        solution={chosenSolution}
         t={t}
       />
     </div>
