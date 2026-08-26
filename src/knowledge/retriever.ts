@@ -91,6 +91,20 @@ export function buildGroundingContext(chunks: RetrievedChunk[], lang: "en" | "ar
     .join("\n\n");
 }
 
-export function toCitations(chunks: RetrievedChunk[], lang: "en" | "ar" = "en"): { id: string; title: string }[] {
-  return chunks.map((c) => ({ id: c.id, title: lang === "ar" ? c.title_ar : c.title }));
+/** Truncates a snippet to a whole-word boundary near `max` chars instead of
+ *  mid-word, so a citation preview never ends on a chopped fragment. */
+function truncateSnippet(text: string, max = 170): string {
+  const clean = text.trim().replace(/\s+/g, " ");
+  if (clean.length <= max) return clean;
+  const cut = clean.slice(0, max);
+  const lastSpace = cut.lastIndexOf(" ");
+  return `${cut.slice(0, lastSpace > 40 ? lastSpace : max)}…`;
+}
+
+export function toCitations(chunks: RetrievedChunk[], lang: "en" | "ar" = "en"): { id: string; title: string; snippet: string }[] {
+  return chunks.map((c) => ({
+    id: c.id,
+    title: lang === "ar" ? c.title_ar : c.title,
+    snippet: truncateSnippet(lang === "ar" ? c.content_ar : c.content),
+  }));
 }

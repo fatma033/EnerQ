@@ -120,14 +120,14 @@ export const LoadCurveChart: React.FC<LoadCurveChartProps> = ({
                 y1={getY(kwh)}
                 x2={width - paddingX}
                 y2={getY(kwh)}
-                stroke="#1e293b"
+                stroke="#1d3a33"
                 strokeDasharray="4 4"
                 strokeWidth="1"
               />
               <text
                 x={paddingX - 8}
                 y={getY(kwh) + 3}
-                fill="#64748b"
+                fill="#65867e"
                 fontSize="10"
                 textAnchor="end"
                 fontFamily="monospace"
@@ -188,7 +188,7 @@ export const LoadCurveChart: React.FC<LoadCurveChartProps> = ({
           <path
             d={baselinePath}
             fill="none"
-            stroke="#64748b"
+            stroke="#65867e"
             strokeWidth="1.5"
             strokeDasharray="3 3"
           />
@@ -205,7 +205,7 @@ export const LoadCurveChart: React.FC<LoadCurveChartProps> = ({
           <path
             d={simPath}
             fill="none"
-            stroke="#34d399"
+            stroke="#4ade80"
             strokeWidth="2.5"
           />
 
@@ -233,7 +233,7 @@ export const LoadCurveChart: React.FC<LoadCurveChartProps> = ({
                 cx={getX(hoveredIndex)}
                 cy={getY(hourlyData[hoveredIndex].simulated_kwh)}
                 r="4.5"
-                fill="#10b981"
+                fill="#22c55e"
                 stroke="#ffffff"
                 strokeWidth="1.5"
               />
@@ -248,7 +248,7 @@ export const LoadCurveChart: React.FC<LoadCurveChartProps> = ({
                 key={i}
                 x={getX(i)}
                 y={height - 6}
-                fill={i >= 18 && i <= 22 ? "#f87171" : "#94a3b8"}
+                fill={i >= 18 && i <= 22 ? "#f87171" : "#97b4ad"}
                 fontSize="9"
                 textAnchor="middle"
                 fontWeight={i >= 18 && i <= 22 ? "bold" : "normal"}

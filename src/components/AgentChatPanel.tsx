@@ -24,7 +24,7 @@ interface ChatMessage {
   sender: "user" | "agent";
   text: string;
   timestamp: string;
-  citations?: { id: string; title: string }[];
+  citations?: { id: string; title: string; snippet: string }[];
   suggestedNav?: { page: ChatPageId; scenario?: "A" | "B" | "C" };
 }
 
@@ -71,6 +71,10 @@ export const AgentChatPanel: React.FC<AgentChatPanelProps> = ({
   ]);
   const [inputPrompt, setInputPrompt] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  // Which citation badge (by "<messageId>:<citationId>") currently has its
+  // source excerpt expanded open beneath the message -- badges looked like
+  // buttons but did nothing when clicked, so this is what clicking now does.
+  const [openCitation, setOpenCitation] = useState<string | null>(null);
 
   const quickQuestions = c.quickQuestions;
 
@@ -208,15 +212,40 @@ export const AgentChatPanel: React.FC<AgentChatPanelProps> = ({
                 </button>
               )}
               {msg.citations && msg.citations.length > 0 && (
-                <div className="mt-2 pt-2 border-t border-slate-800 flex flex-wrap gap-1.5">
-                  {msg.citations.map((cite) => (
-                    <span
-                      key={cite.id}
-                      className="text-[10px] px-1.5 py-0.5 rounded bg-teal-950/60 border border-teal-800/60 text-teal-300"
-                    >
-                      📚 {cite.title}
-                    </span>
-                  ))}
+                <div className="mt-2 pt-2 border-t border-slate-800 flex flex-col gap-1.5">
+                  <div className="flex flex-wrap gap-1.5">
+                    {msg.citations.map((cite) => {
+                      const key = `${msg.id}:${cite.id}`;
+                      const isOpen = openCitation === key;
+                      return (
+                        <button
+                          key={cite.id}
+                          type="button"
+                          onClick={() => setOpenCitation(isOpen ? null : key)}
+                          aria-expanded={isOpen}
+                          className={`text-[10px] px-1.5 py-0.5 rounded border transition-colors cursor-pointer ${
+                            isOpen
+                              ? "bg-teal-800/70 border-teal-600 text-teal-100"
+                              : "bg-teal-950/60 border-teal-800/60 text-teal-300 hover:bg-teal-900/70 hover:text-teal-200"
+                          }`}
+                        >
+                          📚 {cite.title}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  {msg.citations.map((cite) => {
+                    const key = `${msg.id}:${cite.id}`;
+                    if (openCitation !== key) return null;
+                    return (
+                      <div
+                        key={cite.id}
+                        className="text-[11px] text-slate-300 bg-teal-950/30 border border-teal-800/40 rounded-lg p-2 leading-relaxed"
+                      >
+                        {cite.snippet}
+                      </div>
+                    );
+                  })}
                 </div>
               )}
               <div

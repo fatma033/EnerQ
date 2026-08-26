@@ -41,8 +41,8 @@ export const PeriodTrendChart: React.FC<PeriodTrendChartProps> = ({ points, symb
       <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-auto overflow-visible">
         <defs>
           <linearGradient id="reportTrendFill" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#34d399" stopOpacity="0.35" />
-            <stop offset="100%" stopColor="#34d399" stopOpacity="0.02" />
+            <stop offset="0%" stopColor="#4ade80" stopOpacity="0.35" />
+            <stop offset="100%" stopColor="#4ade80" stopOpacity="0.02" />
           </linearGradient>
         </defs>
 
@@ -51,7 +51,7 @@ export const PeriodTrendChart: React.FC<PeriodTrendChartProps> = ({ points, symb
           const y = padT + innerH - g * innerH;
           return (
             <g key={g}>
-              <line x1={padL} y1={y} x2={width - padR} y2={y} stroke="#1e293b" strokeWidth={1} />
+              <line x1={padL} y1={y} x2={width - padR} y2={y} stroke="#1d3a33" strokeWidth={1} />
               <text x={padL - 8} y={y + 3} textAnchor="end" className="fill-slate-500" fontSize={9}>
                 {Math.round(maxKwh * g).toLocaleString()}
               </text>
@@ -61,11 +61,11 @@ export const PeriodTrendChart: React.FC<PeriodTrendChartProps> = ({ points, symb
 
         {/* Area + line */}
         <path d={areaPath} fill="url(#reportTrendFill)" />
-        <path d={linePath} fill="none" stroke="#34d399" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" />
+        <path d={linePath} fill="none" stroke="#4ade80" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" />
 
         {/* Points */}
         {points.map((p, i) => (
-          <circle key={i} cx={getX(i)} cy={getY(p.cumulativeKwh)} r={i === points.length - 1 ? 4 : 2.5} fill="#34d399" />
+          <circle key={i} cx={getX(i)} cy={getY(p.cumulativeKwh)} r={i === points.length - 1 ? 4 : 2.5} fill="#4ade80" />
         ))}
 
         {/* X-axis day labels: first / mid / last only, to stay readable */}

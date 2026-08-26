@@ -2,8 +2,8 @@
   <title>EnerQ</title>
   <defs>
     <linearGradient id="enerq-bg" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#10b981"/>
-      <stop offset="100%" stop-color="#0891a8"/>
+      <stop offset="0%" stop-color="#22c55e"/>
+      <stop offset="100%" stop-color="#0891b2"/>
     </linearGradient>
   </defs>
   <rect x="2" y="2" width="96" height="96" rx="22" fill="url(#enerq-bg)"/>

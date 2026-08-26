@@ -201,15 +201,30 @@ ${userPrompt || `Provide an autonomous agent assessment for the '${stage || "rec
 2. Why the combined optimization (HVAC schedule + idle equipment shutdown) represents the optimal balance of savings and low operational risk.
 3. Specific actionable guidance for the facility operations team.`}`;
 
-    const completion = await aiClient.chat.completions.create({
-      model: OLLAMA_MODEL,
-      temperature: 0.55, // a bit of variety turn-to-turn so repeated/similar questions don't come back byte-identical
-      max_tokens: lang === "ar" ? 260 : 160, // Arabic tokenizes to more tokens per word on this model — same ~80-word target needs more ceiling
-      messages: [
-        { role: "system", content: systemInstruction },
-        { role: "user", content: userContent },
-      ],
-    });
+    const completion = await aiClient.chat.completions.create(
+      {
+        model: OLLAMA_MODEL,
+        temperature: 0.55, // a bit of variety turn-to-turn so repeated/similar questions don't come back byte-identical
+        // Trimmed from 260/160: on a CPU-only laptop (no discrete GPU) decode
+        // time is roughly linear in token count, so this cap is the single
+        // biggest lever on how long a reply actually takes to finish — still
+        // comfortably above the 80-word/3-sentence limit already enforced
+        // by the system prompt, just without paying for unused headroom.
+        max_tokens: lang === "ar" ? 190 : 120,
+        messages: [
+          { role: "system", content: systemInstruction },
+          { role: "user", content: userContent },
+        ],
+      },
+      // Hard ceiling on how long the chat waits for local inference. Without
+      // this, a loaded/CPU-only machine has no upper bound at all — the SDK's
+      // own default timeout is 10 minutes — so a slow moment reads as the
+      // chat being "broken" rather than just slow. 9s is short enough to
+      // keep a demo snappy; a request that would take longer than that falls
+      // straight through to the (still-grounded, still-fast) deterministic
+      // reply below instead of leaving the user staring at a spinner.
+      { timeout: 9000 }
+    );
 
     const analysis = completion.choices[0]?.message?.content?.trim();
 
@@ -220,15 +235,23 @@ ${userPrompt || `Provide an autonomous agent assessment for the '${stage || "rec
       citations,
     });
   } catch (error: any) {
-    const reason = error?.cause?.code === "ECONNREFUSED" ? "Ollama not running locally" : error?.message || "unknown error";
+    const isTimeout = error?.name === "APIConnectionTimeoutError" || /timed? ?out/i.test(error?.message || "");
+    const reason = isTimeout
+      ? "Ollama exceeded the 9s response budget"
+      : error?.cause?.code === "ECONNREFUSED"
+      ? "Ollama not running locally"
+      : error?.message || "unknown error";
     console.warn(`Ollama unreachable (${reason}) — using deterministic fallback.`);
     // Ollama being unreachable fails almost instantly (ECONNREFUSED), so
     // without this the fallback would answer faster than a human could
     // finish reading the question -- an instant, always-fixed-latency reply
     // is itself a tell that it's a canned lookup, not real inference. A
     // short, slightly randomized pause is enough to read as "thinking"
-    // without meaningfully slowing down the demo.
-    await new Promise((resolve) => setTimeout(resolve, 550 + Math.random() * 500));
+    // without meaningfully slowing down the demo. Skipped when we actually
+    // timed out, since the user already waited the full 9s for that.
+    if (!isTimeout) {
+      await new Promise((resolve) => setTimeout(resolve, 550 + Math.random() * 500));
+    }
     return res.json({
       success: true,
       source: "deterministic_fallback",

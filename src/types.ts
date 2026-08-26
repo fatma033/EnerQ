@@ -178,6 +178,7 @@ export interface VerificationResult {
 export interface KnowledgeCitation {
   id: string;
   title: string;
+  snippet: string;
 }
 
 export interface AgentInsight {

@@ -38,7 +38,7 @@ export const VerificationModal: React.FC<VerificationModalProps> = ({
           particleCount: 80,
           spread: 70,
           origin: { y: 0.6 },
-          colors: ["#10b981", "#34d399", "#38bdf8", "#fbbf24"],
+          colors: ["#22c55e", "#4ade80", "#38bdf8", "#fbbf24"],
         });
       } catch {
         // Safe fallback

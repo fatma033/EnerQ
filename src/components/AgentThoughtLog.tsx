@@ -29,18 +29,34 @@ interface AgentThoughtLogProps {
 }
 
 const CitationRow: React.FC<{ citations?: KnowledgeCitation[]; label: string }> = ({ citations, label }) => {
+  const [openId, setOpenId] = useState<string | null>(null);
   if (!citations || citations.length === 0) return null;
+  const openCitation = citations.find((c) => c.id === openId);
   return (
-    <div className="mt-2 pt-2 border-t border-emerald-900/50 flex flex-wrap items-center gap-1.5">
-      <span className="text-[10px] text-slate-500 uppercase tracking-wider">{label}</span>
-      {citations.map((c) => (
-        <span
-          key={c.id}
-          className="text-[10px] px-1.5 py-0.5 rounded bg-teal-950/60 border border-teal-800/60 text-teal-300"
-        >
-          📚 {c.title}
-        </span>
-      ))}
+    <div className="mt-2 pt-2 border-t border-emerald-900/50">
+      <div className="flex flex-wrap items-center gap-1.5">
+        <span className="text-[10px] text-slate-500 uppercase tracking-wider">{label}</span>
+        {citations.map((c) => (
+          <button
+            key={c.id}
+            type="button"
+            onClick={() => setOpenId(openId === c.id ? null : c.id)}
+            aria-expanded={openId === c.id}
+            className={`text-[10px] px-1.5 py-0.5 rounded border transition-colors cursor-pointer ${
+              openId === c.id
+                ? "bg-teal-800/70 border-teal-600 text-teal-100"
+                : "bg-teal-950/60 border-teal-800/60 text-teal-300 hover:bg-teal-900/70 hover:text-teal-200"
+            }`}
+          >
+            📚 {c.title}
+          </button>
+        ))}
+      </div>
+      {openCitation && (
+        <div className="mt-1.5 text-[11px] text-slate-300 bg-teal-950/30 border border-teal-800/40 rounded-lg p-2 leading-relaxed">
+          {openCitation.snippet}
+        </div>
+      )}
     </div>
   );
 };

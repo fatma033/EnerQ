@@ -218,20 +218,25 @@ export default function App() {
 
       {/* 3. Pages — all mounted, toggled via CSS so state survives navigation */}
       <main className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8 flex flex-col min-h-0">
-        {/* Home: the chat, the star of the show */}
-        <div className={`${show("home")} flex flex-col flex-1 min-h-[70vh]`}>
-          <div className="mb-3">
-            <h1 className="text-lg font-bold text-white tracking-tight">{t.home.heading}</h1>
-            <p className="text-xs text-slate-400 mt-0.5">{t.home.subheading}</p>
+        {/* Home: the chat, the star of the show. Constrained to a centered
+            column (ChatGPT-style) instead of stretching edge-to-edge across
+            the full 7xl container -- reads as a focused conversation, not a
+            form filling the whole viewport width on a wide screen. */}
+        <div className={`${show("home")} flex flex-col flex-1 min-h-[70vh] items-center`}>
+          <div className="flex flex-col flex-1 w-full max-w-3xl min-h-0">
+            <div className="mb-3 text-center">
+              <h1 className="text-lg font-bold text-white tracking-tight">{t.home.heading}</h1>
+              <p className="text-xs text-slate-400 mt-0.5">{t.home.subheading}</p>
+            </div>
+            <AgentChatPanel
+              facility={context.facility}
+              solutions={solutions}
+              t={t}
+              language={language}
+              onNavigate={handleNavigate}
+              variant="page"
+            />
           </div>
-          <AgentChatPanel
-            facility={context.facility}
-            solutions={solutions}
-            t={t}
-            language={language}
-            onNavigate={handleNavigate}
-            variant="page"
-          />
         </div>
 
         {/* Dashboard: pipeline timeline, anomaly, recommendation, activity log */}

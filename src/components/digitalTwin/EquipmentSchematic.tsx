@@ -18,7 +18,7 @@ interface EquipmentSchematicProps {
 }
 
 const STATUS_COLOR: Record<Callout["status"], string> = {
-  ok: "#34d399",
+  ok: "#4ade80",
   warning: "#fbbf24",
   alert: "#f87171",
 };
@@ -79,8 +79,8 @@ export const EquipmentSchematic: React.FC<EquipmentSchematicProps> = ({ title, i
             <g key={i}>
               <line x1={ax} y1={ay} x2={bx} y2={by} stroke={STATUS_COLOR[c.status]} strokeWidth="1" strokeDasharray="2 2" opacity="0.7" />
               <circle cx={ax} cy={ay} r="3" fill={STATUS_COLOR[c.status]} />
-              <rect x={boxX} y={by - boxH / 2} width={boxW} height={boxH} rx="5" fill="#020617" fillOpacity="0.85" stroke={STATUS_COLOR[c.status]} strokeOpacity="0.5" strokeWidth="1" />
-              <text x={boxX + boxW / 2} y={by - 4} textAnchor="middle" fontSize="8" fill="#94a3b8" fontFamily="monospace">
+              <rect x={boxX} y={by - boxH / 2} width={boxW} height={boxH} rx="5" fill="#01130f" fillOpacity="0.85" stroke={STATUS_COLOR[c.status]} strokeOpacity="0.5" strokeWidth="1" />
+              <text x={boxX + boxW / 2} y={by - 4} textAnchor="middle" fontSize="8" fill="#97b4ad" fontFamily="monospace">
                 {c.label}
               </text>
               <text x={boxX + boxW / 2} y={by + 10} textAnchor="middle" fontSize="10" fontWeight="bold" fill={STATUS_COLOR[c.status]} fontFamily="monospace">

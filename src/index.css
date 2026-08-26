@@ -1,4 +1,72 @@
+/* Must precede @import "tailwindcss" -- Tailwind's own import expands into
+   @layer rules, and a CSS @import is only valid while it's still the very
+   first rule in the file; placed after that expansion it gets silently
+   dropped instead of fetched. */
+@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap");
 @import "tailwindcss";
+
+/* IBM Plex Sans first so Latin text gets its purpose-cut glyphs; Arabic
+   characters (absent from Plex Sans) fall through per-character to Plex
+   Sans Arabic, the matched companion cut for the same typeface family --
+   one deliberate pairing instead of the browser's default UI font. */
+body {
+  font-family: "IBM Plex Sans", "IBM Plex Sans Arabic", ui-sans-serif, system-ui, sans-serif;
+}
+
+/*
+ * Brand palette -- dark theme (default).
+ *
+ * Same mechanism as the light-theme override below: every Tailwind color
+ * utility reads a shared --color-{name}-{shade} custom property, so
+ * redefining the ~30 variables here re-themes every page (Home, Dashboard,
+ * Digital Twin, Solutions, Analytics, both report modals) without touching
+ * a single component file.
+ *
+ * Grounded in the facility's real setting -- Dhofar's khareef monsoon,
+ * the one season that turns this part of Arabia green, and the coast it
+ * sits on -- rather than the stock Tailwind slate-950 + emerald pairing
+ * (a look distinctive enough by now to be recognizable on sight as an
+ * unmodified AI-scaffolded UI). Neutral ("slate") is shifted to a
+ * teal-charcoal with an ocean-mist cast; the primary accent ("emerald")
+ * moves from Tailwind's minty stock hue to a deeper moss/jade green
+ * (Tailwind's "green" ramp); the secondary accent ("teal") moves to a
+ * lagoon cyan (Tailwind's "cyan" ramp). Every shade keeps its source
+ * ramp's original lightness value, so contrast relationships that were
+ * already accessible stay accessible -- only hue changes.
+ */
+[data-theme="dark"] {
+  --color-slate-950: #01130f;
+  --color-slate-900: #0f2923;
+  --color-slate-800: #1d3a33;
+  --color-slate-700: #34564d;
+  --color-slate-600: #486a62;
+  --color-slate-500: #65867e;
+  --color-slate-400: #97b4ad;
+  --color-slate-300: #cbe1dc;
+  --color-slate-200: #e1efec;
+  --color-slate-100: #f1f9f7;
+
+  --color-emerald-950: #052e16;
+  --color-emerald-900: #14532d;
+  --color-emerald-800: #166534;
+  --color-emerald-700: #15803d;
+  --color-emerald-600: #16a34a;
+  --color-emerald-500: #22c55e;
+  --color-emerald-400: #4ade80;
+  --color-emerald-300: #86efac;
+  --color-emerald-200: #bbf7d0;
+  --color-emerald-100: #dcfce7;
+
+  --color-teal-950: #083344;
+  --color-teal-900: #164e63;
+  --color-teal-800: #155e75;
+  --color-teal-700: #0e7490;
+  --color-teal-600: #0891b2;
+  --color-teal-500: #06b6d4;
+  --color-teal-400: #22d3ee;
+  --color-teal-300: #67e8f9;
+  --color-teal-200: #a5f3fc;
+}
 
 /*
  * Light theme override.
@@ -17,24 +85,24 @@
  * regresses in light mode.
  */
 [data-theme="light"] {
-  --color-slate-950: #f1f5f9;
+  --color-slate-950: #f1f9f7;
   --color-slate-900: #ffffff;
-  --color-slate-800: #e2e8f0;
-  --color-slate-700: #cbd5e1;
-  --color-slate-600: #94a3b8;
-  --color-slate-500: #64748b;
-  --color-slate-400: #475569;
-  --color-slate-300: #334155;
-  --color-slate-200: #1e293b;
-  --color-slate-100: #0f172a;
+  --color-slate-800: #e1efec;
+  --color-slate-700: #cbe1dc;
+  --color-slate-600: #97b4ad;
+  --color-slate-500: #65867e;
+  --color-slate-400: #486a62;
+  --color-slate-300: #34564d;
+  --color-slate-200: #1d3a33;
+  --color-slate-100: #0f2923;
   /* text-white is used throughout as "brightest/primary text" (headings, values),
      never as an actual white surface (no bg-white/fill-white in this codebase) —
      safe to flip the same way as slate-100. */
-  --color-white: #0f172a;
+  --color-white: #0f2923;
 }
 
 [data-theme="light"] .text-slate-950 {
-  color: #020617;
+  color: #01130f;
 }
 
 /*
@@ -49,17 +117,17 @@
  * all -950s) are confirmed badge-role by grep before being included below.
  */
 [data-theme="light"] {
-  --color-emerald-950: #ecfdf5;
-  --color-emerald-900: #d1fae5;
-  --color-emerald-800: #6ee7b7;
-  --color-emerald-400: #059669;
-  --color-emerald-300: #047857;
-  --color-emerald-200: #065f46;
+  --color-emerald-950: #f0fdf4;
+  --color-emerald-900: #dcfce7;
+  --color-emerald-800: #86efac;
+  --color-emerald-400: #16a34a;
+  --color-emerald-300: #15803d;
+  --color-emerald-200: #166534;
 
-  --color-teal-950: #f0fdfa;
-  --color-teal-800: #5eead4;
-  --color-teal-400: #0d9488;
-  --color-teal-300: #0f766e;
+  --color-teal-950: #ecfeff;
+  --color-teal-800: #67e8f9;
+  --color-teal-400: #0891b2;
+  --color-teal-300: #0e7490;
 
   --color-amber-950: #fffbeb;
   --color-amber-900: #fef3c7;
@@ -126,7 +194,7 @@
     max-width: 100% !important;
     box-shadow: none !important;
     border: none !important;
-    background: #0f172a !important;
+    background: #0f2923 !important;
   }
   .audit-report-printable .no-print {
     display: none !important;
