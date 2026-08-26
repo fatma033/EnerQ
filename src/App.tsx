@@ -408,6 +408,7 @@ export default function App() {
         facility={context.facility}
         solutions={solutions}
         t={t}
+        onNavigateToScenario={(id) => handleSelectScenario(id, { reveal: true })}
       />
 
       <AuditReportModal

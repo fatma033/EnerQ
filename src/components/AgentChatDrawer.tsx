@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { X, Send, Bot, User, Sparkles, MessageSquare, RotateCcw } from "lucide-react";
+import { X, Send, Bot, User, ArrowRight } from "lucide-react";
 import { FacilityState, ProposedSolution } from "../types";
 import { getTranslation } from "../i18n";
 
@@ -9,6 +9,10 @@ interface AgentChatDrawerProps {
   facility: FacilityState;
   solutions: Record<"A" | "B" | "C", ProposedSolution> | null;
   t: ReturnType<typeof getTranslation>;
+  /** Reveals the given scenario in the Digital Twin and scrolls to it — the
+   *  same handler wired to the Solutions comparison cards, so acting on a
+   *  chat suggestion behaves identically to picking that option there. */
+  onNavigateToScenario: (id: "A" | "B" | "C") => void;
 }
 
 interface ChatMessage {
@@ -17,6 +21,19 @@ interface ChatMessage {
   text: string;
   timestamp: string;
   citations?: { id: string; title: string }[];
+  /** Set when the exchange named a specific solution (e.g. "Solution C") --
+   *  lets the message offer a one-click "show me" action instead of leaving
+   *  the user to go find it themselves. */
+  suggestedScenario?: "A" | "B" | "C";
+}
+
+/** Matches "Solution C" / "Option A" / "الحل C" etc. regardless of language --
+ *  the solution letters themselves stay Latin A/B/C in both. Deliberately
+ *  requires the solution/option word next to the letter so a question like
+ *  "problem in zone A" doesn't get misread as naming Option A. */
+function detectScenarioMention(text: string): "A" | "B" | "C" | null {
+  const m = text.match(/(solution|option|scenario|الحل|الخيار|السيناريو)\s*[:\-]?\s*([abc])\b/i);
+  return m ? (m[2].toUpperCase() as "A" | "B" | "C") : null;
 }
 
 export const AgentChatDrawer: React.FC<AgentChatDrawerProps> = ({
@@ -25,6 +42,7 @@ export const AgentChatDrawer: React.FC<AgentChatDrawerProps> = ({
   facility,
   solutions,
   t,
+  onNavigateToScenario,
 }) => {
   const c = t.chat;
   const [messages, setMessages] = useState<ChatMessage[]>([
@@ -69,13 +87,16 @@ export const AgentChatDrawer: React.FC<AgentChatDrawerProps> = ({
             current_kwh: facility.current_kwh,
             variance_pct: Number((((facility.current_kwh - facility.baseline_kwh) / facility.baseline_kwh) * 100).toFixed(1)),
             hvac: facility.systems.hvac,
+            working_hours: facility.config.working_hours,
+            solution_a_saving_pct: solutions?.A.estimated_saving_pct,
+            solution_b_saving_pct: solutions?.B.estimated_saving_pct,
             solution_c_saving_pct: solutions?.C.estimated_saving_pct,
           },
         }),
       });
 
       const data = await resp.json();
-      const agentText =
+      const agentText: string =
         data?.analysis ||
         c.fallbackReply(solutions?.C.estimated_saving_kwh ?? "—");
 
@@ -85,6 +106,7 @@ export const AgentChatDrawer: React.FC<AgentChatDrawerProps> = ({
         text: agentText,
         timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
         citations: data?.citations || [],
+        suggestedScenario: detectScenarioMention(query) || detectScenarioMention(agentText) || undefined,
       };
 
       setMessages((prev) => [...prev, agentMsg]);
@@ -99,6 +121,11 @@ export const AgentChatDrawer: React.FC<AgentChatDrawerProps> = ({
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleActOnSuggestion = (id: "A" | "B" | "C") => {
+    onNavigateToScenario(id);
+    onClose();
   };
 
   return (
@@ -161,6 +188,15 @@ export const AgentChatDrawer: React.FC<AgentChatDrawerProps> = ({
                 }`}
               >
                 <div className="whitespace-pre-line">{msg.text}</div>
+                {msg.suggestedScenario && (
+                  <button
+                    onClick={() => handleActOnSuggestion(msg.suggestedScenario!)}
+                    className="mt-2 flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-semibold bg-emerald-500 hover:bg-emerald-400 text-slate-950 transition-colors cursor-pointer"
+                  >
+                    <span>{c.showInTwin(msg.suggestedScenario)}</span>
+                    <ArrowRight className="w-3 h-3" />
+                  </button>
+                )}
                 {msg.citations && msg.citations.length > 0 && (
                   <div className="mt-2 pt-2 border-t border-slate-800 flex flex-wrap gap-1.5">
                     {msg.citations.map((c) => (

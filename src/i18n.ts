@@ -306,7 +306,7 @@ export const translations = {
       justNow: "Just now",
       quickQuestions: [
         "Why was Solution C chosen over Solution B?",
-        "How does the 87% confidence score work?",
+        "Is Zone A's problem related to the PCs?",
         "What is the occupant comfort impact?",
         "How much money is saved per month?",
       ],
@@ -314,6 +314,7 @@ export const translations = {
       placeholder: "Ask EnerQ about energy waste, solutions, or payback...",
       fallbackReply: (kwh: number | string) => `Based on our physical Digital Twin simulation, Solution C eliminates ${kwh} kWh/day of after-hours HVAC runtime and workstation idle baseload while keeping working-hours comfort completely intact.`,
       networkErrorReply: "EnerQ Agent Telemetry Insight: Solution C recaptures 93 kWh/day (15.0% reduction) by cutting off HVAC at 18:00 and turning off 38 idle workstations.",
+      showInTwin: (id: string) => `Show Solution ${id} in the Digital Twin`,
     },
 
     auditReportModal: {
@@ -671,7 +672,7 @@ export const translations = {
       justNow: "الآن",
       quickQuestions: [
         "لماذا تم اختيار الحل C بدلًا من الحل B؟",
-        "كيف تُحسب درجة الثقة 87%؟",
+        "هل مشكلة المنطقة A متعلقة بأجهزة الحاسوب؟",
         "ما هو تأثير ذلك على راحة الشاغلين؟",
         "كم يبلغ التوفير المالي شهريًا؟",
       ],
@@ -679,6 +680,7 @@ export const translations = {
       placeholder: "اسأل EnerQ عن هدر الطاقة أو الحلول أو مدة الاسترداد...",
       fallbackReply: (kwh: number | string) => `استنادًا إلى محاكاة التوأم الرقمي الفيزيائية، يزيل الحل C ${kwh} kWh يوميًا من تشغيل التكييف بعد الدوام وحمل الخمول لمحطات العمل مع الحفاظ الكامل على راحة ساعات العمل.`,
       networkErrorReply: "استدلال وكيل EnerQ: يسترد الحل C ما مقداره 93 kWh يوميًا (خفض 15.0%) عبر قطع التكييف عند 18:00 وإيقاف 38 محطة عمل خاملة.",
+      showInTwin: (id: string) => `عرض الحل ${id} في التوأم الرقمي`,
     },
 
     auditReportModal: {
