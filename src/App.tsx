@@ -90,13 +90,18 @@ export default function App() {
     }
   }, [context.currentStage]);
 
-  // Handler: Run full autonomous 9-step pipeline
+  // Handler: Run full autonomous 9-step pipeline. Navigates to Dashboard
+  // first -- these are header buttons reachable from every page, and
+  // triggering the pipeline while looking at, say, Solutions would run it
+  // invisibly with nothing on screen to show for it.
   const handleRunFullAnalysis = () => {
+    setPage("dashboard");
     orchestrator.runAutonomousPipeline(1100);
   };
 
   // Handler: Reset agent state
   const handleReset = () => {
+    setPage("dashboard");
     orchestrator.reset(initialFacilityData);
     orchestrator.stepObserve();
     orchestrator.stepDetect();

@@ -57,7 +57,7 @@ export const Header: React.FC<HeaderProps> = ({
     <header className="bg-slate-900 border-b border-slate-800 sticky top-0 z-40 px-4 lg:px-8 py-3.5 shadow-md">
       <div className="max-w-7xl mx-auto flex flex-col md:flex-row md:items-center md:justify-between gap-3">
         {/* Left: Brand & Facility Context */}
-        <div className="flex items-center gap-3.5">
+        <div className="flex items-center gap-3.5 min-w-0 flex-1">
           <div className="relative flex items-center justify-center w-10 h-10 shrink-0">
             <img src="/logo.svg" alt="EnerQ" className="w-10 h-10 rounded-xl shadow-lg shadow-emerald-500/20" />
             <span className="absolute -top-1 -right-1 flex h-3 w-3">
@@ -66,27 +66,30 @@ export const Header: React.FC<HeaderProps> = ({
             </span>
           </div>
 
-          <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-xl font-bold tracking-tight text-white flex items-center gap-1.5">
-                EnerQ <span className="text-emerald-400 font-semibold text-xs px-2 py-0.5 rounded-full bg-emerald-950/80 border border-emerald-800/60 uppercase tracking-wider">{t.tagline}</span>
+          <div className="min-w-0">
+            <div className="flex items-center gap-2 min-w-0">
+              <h1 className="text-xl font-bold tracking-tight text-white flex items-center gap-1.5 shrink-0">
+                EnerQ <span className="text-emerald-400 font-semibold text-[10px] px-2 py-0.5 rounded-full bg-emerald-950/80 border border-emerald-800/60 uppercase tracking-wider whitespace-nowrap">{t.tagline}</span>
               </h1>
-              <span className="text-slate-500 text-xs hidden sm:inline">•</span>
-              <span className="text-slate-400 text-xs font-medium hidden sm:inline flex items-center gap-1">
-                <Building2 className="w-3.5 h-3.5 text-slate-400" />
-                {t.facility.name}
+              <span className="text-slate-500 text-xs hidden sm:inline shrink-0">•</span>
+              <span
+                className="text-slate-400 text-xs font-medium hidden sm:flex items-center gap-1 min-w-0 truncate"
+                title={t.facility.name}
+              >
+                <Building2 className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                <span className="truncate">{t.facility.name}</span>
               </span>
             </div>
             <p className="text-xs text-slate-400 flex items-center gap-2 mt-0.5">
               <span>{t.subtitle}</span>
               <span className="text-slate-600 hidden sm:inline">|</span>
-              <span className="text-slate-400 hidden sm:inline">{t.rate}: {currencySymbol}{facility.config.electricity_rate}/kWh</span>
+              <span className="text-slate-400 hidden sm:inline whitespace-nowrap">{t.rate}: {currencySymbol}{facility.config.electricity_rate}/kWh</span>
             </p>
           </div>
         </div>
 
         {/* Right: Actions & Agent Controls */}
-        <div className="flex items-center flex-wrap gap-2 sm:gap-3">
+        <div className="flex items-center flex-wrap gap-2 sm:gap-3 md:shrink-0 md:justify-end">
           {/* Run Autonomous Analysis Button — the primary action, first and brightest */}
           <button
             id="btn-run-analysis"

@@ -38,7 +38,7 @@ export interface SolutionNumbers {
 
 export const translations = {
   en: {
-    tagline: "Multi-Agent AI Energy System",
+    tagline: "Multi-Agent AI",
     subtitle: "Autonomous Facility Energy Expert & Digital Twin",
     rate: "Rate",
     runAnalysis: "Run EnerQ Analysis",
@@ -490,7 +490,7 @@ export const translations = {
     },
   },
   ar: {
-    tagline: "نظام طاقة متعدد الوكلاء بالذكاء الاصطناعي",
+    tagline: "متعدد الوكلاء بالذكاء الاصطناعي",
     subtitle: "خبير طاقة مستقل للمنشأة وتوأم رقمي",
     rate: "التعرفة",
     runAnalysis: "تشغيل تحليل EnerQ",
