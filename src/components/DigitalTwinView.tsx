@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { AnimatedNumber } from "./AnimatedNumber";
 import {
   Cpu,
   Layers,
@@ -242,19 +243,26 @@ export const DigitalTwinView: React.FC<DigitalTwinViewProps> = ({
               <div className="flex items-center gap-2">
                 <Sun className="w-4 h-4 text-amber-400 animate-spin" />
                 <div>
-                  <div className="font-semibold text-slate-200 text-[11px]">Rooftop Bi-Facial PV Array (15 kWp)</div>
+                  <div className="font-semibold text-slate-200 text-[11px] flex items-center gap-1.5">
+                    Rooftop Bi-Facial PV Array (15 kWp)
+                    <span className="text-[9px] font-normal text-teal-400 bg-teal-950 px-1.5 py-0.1 rounded border border-teal-800/60">📍 Rooftop</span>
+                  </div>
                   <div className="text-[10px] text-teal-300">Generating +50.0 kWh/day • Peak 12.4 kW</div>
                 </div>
               </div>
               <span className="text-[10px] font-bold text-emerald-400 bg-emerald-950 px-1.5 py-0.5 rounded">Active Solar</span>
             </div>
 
-            {/* Middle: Floor Zones with Dynamic State Indicator */}
+            {/* Middle: Floor Zones with Dynamic State Indicator — highlights to match the Floor Zone selector above */}
             <div className="grid grid-cols-3 gap-2 my-2">
-              {/* Zone A: Open Workstations */}
-              <div className="p-2.5 rounded-lg bg-slate-900/90 border border-slate-800 text-left">
+              {/* Zone A: Open Workstations — Floor 1 */}
+              <div
+                className={`p-2.5 rounded-lg bg-slate-900/90 border text-left transition-transform duration-200 ${
+                  selectedFloor === 1 ? "border-teal-500 ring-1 ring-teal-500/50 scale-[1.03]" : "border-slate-800"
+                }`}
+              >
                 <div className="flex items-center justify-between text-[11px] font-semibold text-slate-300">
-                  <span>Zone A: Open Office</span>
+                  <span>Zone A: Open Office <span className="text-slate-600 font-normal">· L1</span></span>
                   <span className="text-emerald-400 font-bold text-[10px]">{simulatedZoneTemp}°C</span>
                 </div>
                 <div className="text-[10px] text-slate-400 mt-1 flex items-center gap-1">
@@ -266,10 +274,14 @@ export const DigitalTwinView: React.FC<DigitalTwinViewProps> = ({
                 </div>
               </div>
 
-              {/* Zone B: Tech Lab & Servers */}
-              <div className="p-2.5 rounded-lg bg-slate-900/90 border border-slate-800 text-left">
+              {/* Zone B: Tech Lab & Servers — Floor 2 */}
+              <div
+                className={`p-2.5 rounded-lg bg-slate-900/90 border text-left transition-transform duration-200 ${
+                  selectedFloor === 2 ? "border-teal-500 ring-1 ring-teal-500/50 scale-[1.03]" : "border-slate-800"
+                }`}
+              >
                 <div className="flex items-center justify-between text-[11px] font-semibold text-slate-300">
-                  <span>Zone B: Tech Lab</span>
+                  <span>Zone B: Tech Lab <span className="text-slate-600 font-normal">· L2</span></span>
                   <span className="text-teal-400 font-bold text-[10px]">21.5°C</span>
                 </div>
                 <div className="text-[10px] text-slate-400 mt-1">
@@ -280,10 +292,14 @@ export const DigitalTwinView: React.FC<DigitalTwinViewProps> = ({
                 </div>
               </div>
 
-              {/* Zone C: Executive Suites */}
-              <div className="p-2.5 rounded-lg bg-slate-900/90 border border-slate-800 text-left">
+              {/* Zone C: Executive Suites — Floor 3 */}
+              <div
+                className={`p-2.5 rounded-lg bg-slate-900/90 border text-left transition-transform duration-200 ${
+                  selectedFloor === 3 ? "border-teal-500 ring-1 ring-teal-500/50 scale-[1.03]" : "border-slate-800"
+                }`}
+              >
                 <div className="flex items-center justify-between text-[11px] font-semibold text-slate-300">
-                  <span>Zone C: Exec Rooms</span>
+                  <span>Zone C: Exec Rooms <span className="text-slate-600 font-normal">· L3</span></span>
                   <span className="text-emerald-400 font-bold text-[10px]">{simulatedZoneTemp}°C</span>
                 </div>
                 <div className="text-[10px] text-slate-400 mt-1">
@@ -296,19 +312,22 @@ export const DigitalTwinView: React.FC<DigitalTwinViewProps> = ({
             </div>
 
             {/* Bottom: Central HVAC AHU Plant Loop */}
-            <div className={`flex items-center justify-between p-2 rounded-lg text-xs border ${
-              hvacHours > 10
-                ? "bg-red-950/40 border-red-800/60 text-red-300"
-                : "bg-emerald-950/40 border-emerald-800/60 text-emerald-300"
-            }`}>
+            <div
+              className={`flex items-center justify-between p-2 rounded-lg text-xs border transition-colors duration-300 ${
+                hvacHours > 10
+                  ? "bg-red-950/40 border-red-800/60 text-red-300 animate-pulse"
+                  : "bg-emerald-950/40 border-emerald-800/60 text-emerald-300"
+              }`}
+            >
               <div className="flex items-center gap-2">
                 <Fan className={`w-4 h-4 ${hvacHours > 10 ? "text-red-400 animate-spin" : "text-emerald-400"}`} />
                 <div>
-                  <div className="font-semibold text-white text-[11px]">
-                    Central Rooftop AHU & Chilled Water Loop (20 kW)
+                  <div className="font-semibold text-white text-[11px] flex items-center gap-1.5">
+                    Central Chilled Water AHU (20 kW)
+                    <span className="text-[9px] font-normal text-slate-300 bg-slate-900/80 px-1.5 py-0.1 rounded border border-slate-700/60">📍 Rooftop Plant Room</span>
                   </div>
                   <div className="text-[10px]">
-                    Runtime Mode: {hvacHours > 10 ? "Extended Overtime (until 22:00)" : "Scheduled 18:00 Night Standby"}
+                    Serves: Zones A, B, C · Runtime: {hvacHours > 10 ? "Extended Overtime (until 22:00)" : "Scheduled 18:00 Night Standby"}
                   </div>
                 </div>
               </div>
@@ -337,7 +356,7 @@ export const DigitalTwinView: React.FC<DigitalTwinViewProps> = ({
               Simulated Daily Consumption
             </div>
             <div className="flex items-baseline gap-2 mt-1">
-              <span className="text-3xl font-extrabold text-white">{simulatedKwh}</span>
+              <AnimatedNumber value={simulatedKwh} className="text-3xl font-extrabold text-white tabular-nums" />
               <span className="text-sm font-semibold text-slate-400">kWh / day</span>
             </div>
 
@@ -363,30 +382,30 @@ export const DigitalTwinView: React.FC<DigitalTwinViewProps> = ({
 
             <div className="flex items-center justify-between">
               <span className="text-slate-400 flex items-center gap-1.5">
-                <Fan className="w-3.5 h-3.5 text-teal-400" /> HVAC System:
+                <Fan className="w-3.5 h-3.5 text-teal-400" /> HVAC System <span className="text-slate-600">(Rooftop):</span>
               </span>
-              <span className="font-semibold text-slate-200">{simulatedHvacKwh} kWh/day</span>
+              <span className="font-semibold text-slate-200 tabular-nums"><AnimatedNumber value={simulatedHvacKwh} /> kWh/day</span>
             </div>
 
             <div className="flex items-center justify-between">
               <span className="text-slate-400 flex items-center gap-1.5">
-                <Lightbulb className="w-3.5 h-3.5 text-amber-400" /> Lighting:
+                <Lightbulb className="w-3.5 h-3.5 text-amber-400" /> Lighting <span className="text-slate-600">(All floors):</span>
               </span>
-              <span className="font-semibold text-slate-200">{facility.systems.lighting.daily_kwh} kWh/day</span>
+              <span className="font-semibold text-slate-200 tabular-nums"><AnimatedNumber value={facility.systems.lighting.daily_kwh} /> kWh/day</span>
             </div>
 
             <div className="flex items-center justify-between">
               <span className="text-slate-400 flex items-center gap-1.5">
-                <Cpu className="w-3.5 h-3.5 text-purple-400" /> Equipment & Plug Loads:
+                <Cpu className="w-3.5 h-3.5 text-purple-400" /> Equipment <span className="text-slate-600">(Zone B):</span>
               </span>
-              <span className="font-semibold text-slate-200">{simulatedEquipKwh} kWh/day</span>
+              <span className="font-semibold text-slate-200 tabular-nums"><AnimatedNumber value={simulatedEquipKwh} /> kWh/day</span>
             </div>
 
             <div className="flex items-center justify-between text-teal-400">
               <span className="flex items-center gap-1.5">
-                <Sun className="w-3.5 h-3.5 text-amber-400" /> Solar Generation:
+                <Sun className="w-3.5 h-3.5 text-amber-400" /> Solar <span className="text-slate-600">(Rooftop array):</span>
               </span>
-              <span className="font-semibold">-{facility.systems.solar.daily_generation_kwh} kWh/day</span>
+              <span className="font-semibold tabular-nums">-<AnimatedNumber value={facility.systems.solar.daily_generation_kwh} /> kWh/day</span>
             </div>
           </div>
 

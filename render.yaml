@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: enerq
+    runtime: node
+    plan: free
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      # No OLLAMA_BASE_URL is set here on purpose: this host has no local
+      # Ollama instance, so the app automatically runs on its deterministic
+      # reasoning engine — same UI, same citations, fully functional demo,
+      # just without live-generated LLM text. See README for details.
