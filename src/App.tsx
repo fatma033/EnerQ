@@ -299,6 +299,7 @@ export default function App() {
             isSimulating={isSimulatingTwin}
             isVerified={isVerified}
             t={t}
+            language={language}
             currentStage={context.currentStage}
             isRunningAutonomous={context.isRunningAutonomous}
           />

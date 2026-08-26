@@ -16,7 +16,10 @@ import {
 } from "lucide-react";
 import { AgentStage, FacilityState, ProposedSolution } from "../types";
 import { EnergyCalculationEngine } from "../simulation/engine";
-import { getTranslation } from "../i18n";
+import { getTranslation, getSolutionText } from "../i18n";
+import { RadialGauge } from "./digitalTwin/RadialGauge";
+import { MiniTrendChart } from "./digitalTwin/MiniTrendChart";
+import { EquipmentSchematic } from "./digitalTwin/EquipmentSchematic";
 
 const DEFAULT_CUTOFF_HOUR = 18;
 const DEFAULT_SETPOINT_OFFSET = 1.5;
@@ -35,6 +38,7 @@ interface DigitalTwinViewProps {
   isSimulating: boolean;
   isVerified?: boolean;
   t: ReturnType<typeof getTranslation>;
+  language: "en" | "ar";
   /** Drives the compact process strip at the top of the page -- the Digital
    *  Twin leads its own process instead of sending the user elsewhere to
    *  watch the pipeline advance. */
@@ -51,6 +55,7 @@ export const DigitalTwinView: React.FC<DigitalTwinViewProps> = ({
   isSimulating,
   isVerified,
   t,
+  language,
   currentStage,
   isRunningAutonomous,
 }) => {
@@ -162,6 +167,50 @@ export const DigitalTwinView: React.FC<DigitalTwinViewProps> = ({
 
   const currentStageIndex = STAGE_ORDER.indexOf(currentStage);
   const isPipelineActive = isRunningAutonomous || isSimulating;
+
+  // Industrial dashboard metrics: efficiency (how close to the ideal
+  // baseline this scenario runs) and health score (the same decision score
+  // driving the agent's own recommendation when a solution is active, or a
+  // fixed diagnostic-confidence figure otherwise).
+  const efficiencyPct = Math.min(100, Math.round((facility.baseline_kwh / simulatedKwh) * 100));
+  const activeSolutionScore =
+    (activeScenario === "A" || activeScenario === "B" || activeScenario === "C") && effectiveSolutions
+      ? effectiveSolutions[activeScenario].decision_score
+      : activeScenario === "BASELINE"
+      ? 100
+      : 76;
+
+  const tempDeviation = Math.abs(simulatedZoneTemp - 22.0);
+  const riskRows: { label: string; value: string; status: "ok" | "warning" | "alert" }[] = [
+    {
+      label: dt.riskHvacOvertime,
+      value: `${hvacHours}h/day`,
+      status: hvacHours <= 10 ? "ok" : hvacHours <= 12 ? "warning" : "alert",
+    },
+    {
+      label: dt.riskIdleEquipment,
+      value: activeScenario === "C" && customIdleSleep ? dt.riskManaged : activeScenario === "BASELINE" ? dt.riskManaged : dt.riskUnmanaged,
+      status: (activeScenario === "C" && customIdleSleep) || activeScenario === "BASELINE" ? "ok" : activeScenario === "A" || activeScenario === "B" ? "warning" : "alert",
+    },
+    {
+      label: dt.riskComfort,
+      value: `${simulatedZoneTemp.toFixed(1)}°C`,
+      status: tempDeviation <= 0.3 ? "ok" : tempDeviation <= 1.0 ? "warning" : "alert",
+    },
+    {
+      label: dt.riskConfidence,
+      value: `${activeSolutionScore}/100`,
+      status: activeSolutionScore >= 80 ? "ok" : activeSolutionScore >= 60 ? "warning" : "alert",
+    },
+  ];
+
+  // 7-day illustrative trend: this demo has one day of real telemetry, not
+  // a week of it, so these are a plausible gradual build-up to today's
+  // actual measured numbers (the last point is always the real value) --
+  // not fabricated as if they were measured, and labeled as illustrative
+  // in the panel footnote below.
+  const consumptionTrend = [500, 504, 498, 512, 545, 583, facility.current_kwh];
+  const hvacRuntimeTrend = [10, 10, 10, 11, 12, 13, facility.systems.hvac.actual_hours];
 
   return (
     <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-md">
@@ -381,6 +430,127 @@ export const DigitalTwinView: React.FC<DigitalTwinViewProps> = ({
           )}
         </div>
       )}
+
+      {/* Industrial Digital-Twin Dashboard: annotated equipment schematic +
+          operational parameters + risk assessment, matching the monitoring-
+          dashboard convention (labeled equipment diagram, gauges, risk
+          table, trend charts) rather than a walkthrough render. */}
+      <div className="mt-4 grid grid-cols-1 lg:grid-cols-[1.3fr_1fr_1fr] gap-4">
+        <EquipmentSchematic
+          title={dt.schematicTitle}
+          isRunning={hvacHours > 10}
+          callouts={[
+            {
+              label: "DISCHARGE TEMP",
+              value: `${simulatedZoneTemp.toFixed(1)}°C`,
+              status: tempDeviation <= 0.3 ? "ok" : tempDeviation <= 1.0 ? "warning" : "alert",
+              anchor: [155, 65],
+              box: [15, 25],
+              align: "right",
+            },
+            {
+              label: "RUNTIME",
+              value: `${hvacHours}h/day`,
+              status: hvacHours <= 10 ? "ok" : hvacHours <= 12 ? "warning" : "alert",
+              anchor: [245, 65],
+              box: [385, 25],
+              align: "left",
+            },
+            {
+              label: "POWER DRAW",
+              value: `${Math.round(simulatedHvacKwh)} kWh`,
+              status: "ok",
+              anchor: [155, 155],
+              box: [15, 195],
+              align: "right",
+            },
+            {
+              label: "STATUS",
+              value: hvacHours > 10 ? "OVERRUN" : "NORMAL",
+              status: hvacHours > 10 ? "alert" : "ok",
+              anchor: [245, 155],
+              box: [385, 195],
+              align: "left",
+            },
+          ]}
+        />
+
+        <div className="bg-slate-950/80 border border-slate-800 rounded-xl p-4">
+          <div className="text-[11px] font-bold text-slate-300 uppercase tracking-wider mb-3">{dt.paramsTitle}</div>
+          <div className="space-y-2.5 text-xs">
+            <div className="flex items-center justify-between">
+              <span className="text-slate-400">{dt.operatingHours}</span>
+              <span className="font-semibold text-white tabular-nums">{(hvacHours * 365).toLocaleString()} {dt.hoursPerYear}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-slate-400">{dt.periodCost}</span>
+              <span className="font-semibold text-white tabular-nums">{currencySymbol}{(dailyCost * 365).toLocaleString()}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-slate-400">{dt.co2Factor}</span>
+              <span className="font-semibold text-white tabular-nums">{facility.config.co2_factor_kg_per_kwh} {dt.kgPerKwh}</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-slate-950/80 border border-slate-800 rounded-xl p-4">
+          <div className="text-[11px] font-bold text-slate-300 uppercase tracking-wider mb-3">{dt.riskTitle}</div>
+          <div className="space-y-2.5 text-xs">
+            {riskRows.map((row) => (
+              <div key={row.label} className="flex items-center justify-between">
+                <span className="text-slate-400 flex items-center gap-1.5">
+                  <span
+                    className={`w-2 h-2 rounded-full ${
+                      row.status === "ok" ? "bg-emerald-400" : row.status === "warning" ? "bg-amber-400" : "bg-red-400"
+                    }`}
+                  />
+                  {row.label}
+                </span>
+                <span className="font-semibold text-white tabular-nums">{row.value}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Gauges */}
+      <div className="mt-4 grid grid-cols-2 gap-4">
+        <div className="bg-slate-950/80 border border-slate-800 rounded-xl p-4 flex justify-center">
+          <RadialGauge value={efficiencyPct} label={dt.efficiencyLabel} colorClass="stroke-teal-400" />
+        </div>
+        <div className="bg-slate-950/80 border border-slate-800 rounded-xl p-4 flex justify-center">
+          <RadialGauge value={activeSolutionScore} label={dt.healthScoreLabel} colorClass="stroke-emerald-400" />
+        </div>
+      </div>
+
+      {/* Trend charts + Recommendations */}
+      <div className="mt-4 grid grid-cols-1 lg:grid-cols-[1fr_1fr] gap-4">
+        <div>
+          <div className="text-[11px] font-bold text-slate-300 uppercase tracking-wider mb-2.5">{dt.trendsTitle}</div>
+          <div className="grid grid-cols-2 gap-3">
+            <MiniTrendChart label={dt.trendConsumption} points={consumptionTrend} unit="kWh" colorClass="stroke-amber-400" dotColorClass="fill-amber-400" />
+            <MiniTrendChart label={dt.trendHvacRuntime} points={hvacRuntimeTrend} unit="h" colorClass="stroke-red-400" dotColorClass="fill-red-400" />
+          </div>
+          <p className="text-[10px] text-slate-500 mt-2 flex items-start gap-1">
+            <Info className="w-3 h-3 mt-0.5 shrink-0" />
+            {dt.trendNote}
+          </p>
+        </div>
+
+        <div className="bg-slate-950/80 border border-slate-800 rounded-xl p-4">
+          <div className="text-[11px] font-bold text-slate-300 uppercase tracking-wider mb-2.5">{dt.recommendationsTitle}</div>
+          {effectiveSolutions && (
+            <ul className="space-y-1.5 text-xs text-slate-300">
+              {getSolutionText(language, effectiveSolutions.C, currencySymbol).pros.map((pro, i) => (
+                <li key={i} className="flex items-start gap-1.5">
+                  <Sparkles className="w-3 h-3 text-emerald-400 mt-0.5 shrink-0" />
+                  <span>{pro}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      </div>
 
       {/* Main Digital Twin Grid: Visual Schematic + Real-time Calculated Twin Telemetry */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 mt-4">
