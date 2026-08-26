@@ -215,6 +215,7 @@ export default function App() {
             }}
             onSimulate={handleRunTwinSimulation}
             isVerified={isVerified}
+            t={t}
           />
         </section>
 
@@ -232,6 +233,8 @@ export default function App() {
               onApprove={handleApprove}
               onReviewAlternatives={() => setActiveTab("SOLUTIONS")}
               isVerified={isVerified}
+              t={t}
+              language={language}
             />
           </section>
         )}
@@ -285,7 +288,7 @@ export default function App() {
           </div>
 
           <span className="text-[11px] text-slate-500 hidden sm:inline">
-            Autonomous Facility State • Live Sync
+            {t.liveSync}
           </span>
         </div>
 
@@ -300,6 +303,7 @@ export default function App() {
               onRunSimulation={handleRunTwinSimulation}
               isSimulating={isSimulatingTwin}
               isVerified={isVerified}
+              t={t}
             />
           </section>
         )}
@@ -310,13 +314,14 @@ export default function App() {
               hourlyData={hourlyData}
               activeScenarioName={
                 context.activeScenarioId === "C"
-                  ? "Scenario C: Recommended (-15%)"
+                  ? t.loadCurve.scenarioNames.C
                   : context.activeScenarioId === "A"
-                  ? "Scenario A: 18:00 Cutoff (-8%)"
+                  ? t.loadCurve.scenarioNames.A
                   : context.activeScenarioId === "B"
-                  ? "Scenario B: Setpoint Offset (-6%)"
-                  : "Baseline Target"
+                  ? t.loadCurve.scenarioNames.B
+                  : t.loadCurve.scenarioNames.baseline
               }
+              t={t}
             />
           </section>
         )}
@@ -330,6 +335,8 @@ export default function App() {
                 orchestrator.setActiveScenario(id);
               }}
               currencySymbol={context.facility.config.currency_symbol}
+              t={t}
+              language={language}
             />
           </section>
         )}
@@ -346,6 +353,7 @@ export default function App() {
             investigationInsight={context.investigationInsight}
             investigationCitations={context.investigationCitations}
             investigationSource={context.investigationSource}
+            t={t}
           />
         </section>
       </main>
@@ -356,10 +364,10 @@ export default function App() {
           <div className="flex items-center gap-2">
             <span className="font-semibold text-slate-400">EnerQ</span>
             <span>•</span>
-            <span>Your Autonomous AI Energy Expert & Digital Twin</span>
+            <span>{t.footer.tagline}</span>
           </div>
           <div>
-            From Energy Data to Intelligent Action • Deterministic Energy Physics + Local Ollama RAG Reasoning
+            {t.footer.note}
           </div>
         </div>
       </footer>
@@ -370,6 +378,7 @@ export default function App() {
         onClose={() => setIsVerificationOpen(false)}
         verification={context.verification}
         config={context.facility.config}
+        t={t}
       />
 
       <FacilitySettingsModal
@@ -379,6 +388,7 @@ export default function App() {
         onSave={(rate, currency, symbol) => {
           orchestrator.updateConfig(rate, currency, symbol);
         }}
+        t={t}
       />
 
       <AgentChatDrawer
@@ -386,12 +396,14 @@ export default function App() {
         onClose={() => setIsChatOpen(false)}
         facility={context.facility}
         solutions={solutions}
+        t={t}
       />
 
       <AuditReportModal
         isOpen={isReportOpen}
         onClose={() => setIsReportOpen(false)}
         context={context}
+        t={t}
       />
     </div>
   );

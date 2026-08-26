@@ -74,7 +74,7 @@ export const Header: React.FC<HeaderProps> = ({
               <span className="text-slate-500 text-xs hidden sm:inline">•</span>
               <span className="text-slate-400 text-xs font-medium hidden sm:inline flex items-center gap-1">
                 <Building2 className="w-3.5 h-3.5 text-slate-400" />
-                {facility.config.name}
+                {t.facility.name}
               </span>
             </div>
             <p className="text-xs text-slate-400 flex items-center gap-2 mt-0.5">

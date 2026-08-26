@@ -1,12 +1,14 @@
 import React, { useState } from "react";
 import { X, Sliders, DollarSign, Clock, Building, Save, RotateCcw } from "lucide-react";
 import { FacilityState } from "../types";
+import { getTranslation } from "../i18n";
 
 interface FacilitySettingsModalProps {
   isOpen: boolean;
   onClose: () => void;
   facility: FacilityState;
   onSave: (rate: number, currency: string, symbol: string) => void;
+  t: ReturnType<typeof getTranslation>;
 }
 
 export const FacilitySettingsModal: React.FC<FacilitySettingsModalProps> = ({
@@ -14,7 +16,9 @@ export const FacilitySettingsModal: React.FC<FacilitySettingsModalProps> = ({
   onClose,
   facility,
   onSave,
+  t,
 }) => {
+  const s = t.settings;
   const [rate, setRate] = useState<number>(facility.config.electricity_rate);
   const [currency, setCurrency] = useState<string>(facility.config.currency);
   const [symbol, setSymbol] = useState<string>(facility.config.currency_symbol);
@@ -59,24 +63,24 @@ export const FacilitySettingsModal: React.FC<FacilitySettingsModalProps> = ({
 
         <div className="flex items-center gap-2.5 mb-5 pb-3 border-b border-slate-800">
           <Sliders className="w-5 h-5 text-teal-400" />
-          <h3 className="text-base font-bold text-white">Facility Tariff & Model Parameters</h3>
+          <h3 className="text-base font-bold text-white">{s.title}</h3>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4 text-xs">
           {/* Facility Name (Read only) */}
           <div>
-            <label className="block text-slate-400 mb-1 font-medium">Facility Profile</label>
+            <label className="block text-slate-400 mb-1 font-medium">{s.facilityProfile}</label>
             <input
               type="text"
               disabled
-              value={facility.config.name}
+              value={t.facility.name}
               className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-slate-300 text-xs opacity-75"
             />
           </div>
 
           {/* Currency Selector */}
           <div>
-            <label className="block text-slate-400 mb-1 font-medium">Tariff Currency</label>
+            <label className="block text-slate-400 mb-1 font-medium">{s.tariffCurrency}</label>
             <div className="grid grid-cols-4 gap-2">
               {["USD", "OMR", "AED", "EUR"].map((curr) => (
                 <button
@@ -98,7 +102,7 @@ export const FacilitySettingsModal: React.FC<FacilitySettingsModalProps> = ({
           {/* Electricity Rate */}
           <div>
             <label className="block text-slate-400 mb-1 font-medium">
-              Electricity Tariff ({symbol}/kWh)
+              {s.electricityTariff(symbol)}
             </label>
             <div className="relative">
               <input
@@ -112,7 +116,7 @@ export const FacilitySettingsModal: React.FC<FacilitySettingsModalProps> = ({
               />
             </div>
             <p className="text-[11px] text-slate-500 mt-1">
-              Modifying tariff recalculates daily, monthly, and annual ROI across all simulated scenarios in real time.
+              {s.tariffNote}
             </p>
           </div>
 
@@ -120,14 +124,14 @@ export const FacilitySettingsModal: React.FC<FacilitySettingsModalProps> = ({
           <div className="p-3 rounded-xl bg-slate-950 border border-slate-800/80 space-y-1.5 text-[11px] text-slate-400">
             <div className="flex items-center justify-between text-slate-300">
               <span className="flex items-center gap-1">
-                <Clock className="w-3.5 h-3.5 text-teal-400" /> Working Schedule:
+                <Clock className="w-3.5 h-3.5 text-teal-400" /> {s.workingSchedule}
               </span>
               <span className="font-semibold text-white">
-                {facility.config.working_hours.start} – {facility.config.working_hours.end} (10 hrs)
+                {s.workingHoursValue(facility.config.working_hours.start, facility.config.working_hours.end)}
               </span>
             </div>
             <div className="flex items-center justify-between">
-              <span>Expected Daily Baseline:</span>
+              <span>{s.expectedBaseline}</span>
               <span className="font-semibold text-slate-200">{facility.baseline_kwh} kWh/day</span>
             </div>
           </div>
@@ -139,14 +143,14 @@ export const FacilitySettingsModal: React.FC<FacilitySettingsModalProps> = ({
               onClick={onClose}
               className="flex-1 py-2.5 rounded-xl text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-300 transition-colors"
             >
-              Cancel
+              {s.cancel}
             </button>
             <button
               type="submit"
               className="flex-1 py-2.5 rounded-xl text-xs font-bold bg-emerald-500 hover:bg-emerald-400 text-slate-950 flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
             >
               <Save className="w-3.5 h-3.5" />
-              <span>Apply Parameters</span>
+              <span>{s.applyParameters}</span>
             </button>
           </div>
         </form>

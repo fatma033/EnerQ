@@ -13,6 +13,7 @@ import {
   Microscope,
 } from "lucide-react";
 import { AgentLogMessage, AgentStage, KnowledgeCitation } from "../types";
+import { getTranslation } from "../i18n";
 
 interface AgentThoughtLogProps {
   logs: AgentLogMessage[];
@@ -24,13 +25,14 @@ interface AgentThoughtLogProps {
   investigationInsight?: string | null;
   investigationCitations?: KnowledgeCitation[];
   investigationSource?: string | null;
+  t: ReturnType<typeof getTranslation>;
 }
 
-const CitationRow: React.FC<{ citations?: KnowledgeCitation[] }> = ({ citations }) => {
+const CitationRow: React.FC<{ citations?: KnowledgeCitation[]; label: string }> = ({ citations, label }) => {
   if (!citations || citations.length === 0) return null;
   return (
     <div className="mt-2 pt-2 border-t border-emerald-900/50 flex flex-wrap items-center gap-1.5">
-      <span className="text-[10px] text-slate-500 uppercase tracking-wider">Grounded in:</span>
+      <span className="text-[10px] text-slate-500 uppercase tracking-wider">{label}</span>
       {citations.map((c) => (
         <span
           key={c.id}
@@ -43,7 +45,7 @@ const CitationRow: React.FC<{ citations?: KnowledgeCitation[] }> = ({ citations 
   );
 };
 
-const SourceBadge: React.FC<{ source?: string | null }> = ({ source }) => {
+const SourceBadge: React.FC<{ source?: string | null; t: ReturnType<typeof getTranslation> }> = ({ source, t }) => {
   if (!source) return null;
   const isLive = source.startsWith("ollama:");
   return (
@@ -54,7 +56,7 @@ const SourceBadge: React.FC<{ source?: string | null }> = ({ source }) => {
           : "text-slate-400 bg-slate-800/80 border-slate-700/60"
       }`}
     >
-      {isLive ? source.replace("ollama:", "Ollama · ") : "Deterministic Engine"}
+      {isLive ? source.replace("ollama:", t.agentLog.liveOllama) : t.agentLog.deterministicEngine}
     </span>
   );
 };
@@ -69,7 +71,9 @@ export const AgentThoughtLog: React.FC<AgentThoughtLogProps> = ({
   investigationInsight,
   investigationCitations,
   investigationSource,
+  t,
 }) => {
+  const al = t.agentLog;
   const [isExpanded, setIsExpanded] = useState(true);
   const [filterStage, setFilterStage] = useState<string>("ALL");
 
@@ -111,7 +115,7 @@ export const AgentThoughtLog: React.FC<AgentThoughtLogProps> = ({
           <span className="text-slate-600 font-mono text-xs">|</span>
           <div className="flex items-center gap-1.5 text-xs font-mono font-semibold text-slate-200">
             <Terminal className="w-3.5 h-3.5 text-emerald-400" />
-            <span>EnerQ Agent Activity Stream & Reasoning Log</span>
+            <span>{al.terminalTitle}</span>
           </div>
         </div>
 
@@ -119,7 +123,7 @@ export const AgentThoughtLog: React.FC<AgentThoughtLogProps> = ({
           {isRunning && (
             <span className="text-[11px] font-mono text-amber-300 flex items-center gap-1 bg-amber-950/60 border border-amber-800/60 px-2 py-0.5 rounded">
               <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping" />
-              Thinking...
+              {al.thinking}
             </span>
           )}
           <button
@@ -140,14 +144,14 @@ export const AgentThoughtLog: React.FC<AgentThoughtLogProps> = ({
               <div className="flex items-center justify-between gap-2 mb-1.5">
                 <div className="flex items-center gap-2 font-semibold text-purple-300">
                   <BrainCircuit className="w-4 h-4" />
-                  <span>Agent Root-Cause Reasoning</span>
+                  <span>{al.rootCauseReasoning}</span>
                 </div>
-                <SourceBadge source={investigationSource} />
+                <SourceBadge source={investigationSource} t={t} />
               </div>
               <div className="text-slate-300 leading-relaxed whitespace-pre-line font-sans text-xs">
                 {investigationInsight}
               </div>
-              <CitationRow citations={investigationCitations} />
+              <CitationRow citations={investigationCitations} label={al.groundedIn} />
             </div>
           )}
 
@@ -157,14 +161,14 @@ export const AgentThoughtLog: React.FC<AgentThoughtLogProps> = ({
               <div className="flex items-center justify-between gap-2 mb-1.5">
                 <div className="flex items-center gap-2 font-semibold text-emerald-400">
                   <BrainCircuit className="w-4 h-4" />
-                  <span>Autonomous Agent Synthesis & Executive Reasoning</span>
+                  <span>{al.synthesisReasoning}</span>
                 </div>
-                <SourceBadge source={aiSource} />
+                <SourceBadge source={aiSource} t={t} />
               </div>
               <div className="text-slate-300 leading-relaxed whitespace-pre-line font-sans text-xs">
                 {aiExplanation}
               </div>
-              <CitationRow citations={aiCitations} />
+              <CitationRow citations={aiCitations} label={al.groundedIn} />
             </div>
           )}
 
@@ -172,7 +176,7 @@ export const AgentThoughtLog: React.FC<AgentThoughtLogProps> = ({
           <div className="space-y-2.5 max-h-72 overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-slate-800">
             {filteredLogs.length === 0 ? (
               <div className="text-xs text-slate-500 font-mono py-4 text-center">
-                Standing by. Click "Run EnerQ Analysis" or select a stage to start the autonomous pipeline.
+                {al.standingBy}
               </div>
             ) : (
               filteredLogs.map((log) => (

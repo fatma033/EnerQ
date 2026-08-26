@@ -12,6 +12,7 @@ import {
   Fan,
 } from "lucide-react";
 import { FacilityState, AnomalyReport, ProposedSolution, VerificationResult } from "../types";
+import { getTranslation } from "../i18n";
 
 interface AnomalyBannerProps {
   facility: FacilityState;
@@ -21,6 +22,7 @@ interface AnomalyBannerProps {
   onInvestigate: () => void;
   onSimulate: () => void;
   isVerified?: boolean;
+  t: ReturnType<typeof getTranslation>;
 }
 
 export const AnomalyBanner: React.FC<AnomalyBannerProps> = ({
@@ -31,6 +33,7 @@ export const AnomalyBanner: React.FC<AnomalyBannerProps> = ({
   onInvestigate,
   onSimulate,
   isVerified,
+  t,
 }) => {
   const currentKwh = facility.current_kwh;
   const baselineKwh = facility.baseline_kwh;
@@ -53,26 +56,26 @@ export const AnomalyBanner: React.FC<AnomalyBannerProps> = ({
             <div>
               <div className="flex items-center gap-2">
                 <span className="px-2 py-0.5 rounded text-[11px] font-bold uppercase tracking-wider bg-emerald-900/80 text-emerald-300 border border-emerald-700/60">
-                  Simulated Action Verified
+                  {t.anomalyBanner.verifiedBadge}
                 </span>
-                <span className="text-xs text-slate-400">Digital Twin State: Optimized</span>
+                <span className="text-xs text-slate-400">{t.anomalyBanner.verifiedTwinState}</span>
               </div>
               <h3 className="text-lg font-bold text-white mt-1">
-                HVAC Schedule & Idle Shutdown Policy Active
+                {t.anomalyBanner.verifiedTitle}
               </h3>
               <p className="text-sm text-slate-300 mt-0.5">
-                Facility consumption reduced from <span className="font-semibold text-slate-100 line-through">{verification.initial_consumption_kwh} kWh</span> to <span className="font-bold text-emerald-400">{verification.verified_consumption_kwh} kWh/day</span> (-{verification.actual_reduction_pct}%). Recapturing approximately <span className="font-semibold text-emerald-300">{currencySymbol}{verification.monthly_cost_saved}/month</span>.
+                {t.anomalyBanner.verifiedSummary(verification.initial_consumption_kwh, verification.verified_consumption_kwh, verification.actual_reduction_pct, currencySymbol, verification.monthly_cost_saved)}
               </p>
             </div>
           </div>
 
           <div className="flex items-center gap-3">
             <div className="bg-slate-900/90 border border-emerald-800/60 rounded-xl px-4 py-2.5 text-center">
-              <div className="text-[10px] uppercase tracking-wider text-slate-400 font-medium">Daily Reduction</div>
+              <div className="text-[10px] uppercase tracking-wider text-slate-400 font-medium">{t.anomalyBanner.dailyReduction}</div>
               <div className="text-lg font-bold text-emerald-400">-{verification.actual_reduction_kwh} kWh</div>
             </div>
             <div className="bg-slate-900/90 border border-emerald-800/60 rounded-xl px-4 py-2.5 text-center">
-              <div className="text-[10px] uppercase tracking-wider text-slate-400 font-medium">Net Efficiency</div>
+              <div className="text-[10px] uppercase tracking-wider text-slate-400 font-medium">{t.anomalyBanner.netEfficiency}</div>
               <div className="text-lg font-bold text-emerald-400">+{verification.actual_reduction_pct}%</div>
             </div>
           </div>
@@ -99,19 +102,19 @@ export const AnomalyBanner: React.FC<AnomalyBannerProps> = ({
               <div className="flex flex-wrap items-center gap-2 mb-1">
                 <span className="px-2.5 py-0.5 rounded text-[11px] font-bold uppercase tracking-wider bg-amber-900/80 text-amber-300 border border-amber-700/60 flex items-center gap-1">
                   <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
-                  Autonomous Anomaly Detected
+                  {t.anomalyBanner.detectedBadge}
                 </span>
                 <span className="text-xs text-slate-400">
-                  Exceeds baseline threshold by +{variancePct}%
+                  {t.anomalyBanner.exceedsThreshold(variancePct)}
                 </span>
               </div>
 
               <h2 className="text-xl font-bold text-white tracking-tight">
-                Daily Energy Spike: +{varianceKwh} kWh Over Expected Baseline
+                {t.anomalyBanner.spikeTitle(varianceKwh)}
               </h2>
 
               <p className="text-sm text-slate-300 mt-1 max-w-2xl leading-relaxed">
-                Autonomous telemetry scan detected abnormal consumption. Primary driver identified: <strong className="text-amber-300 font-semibold">Central HVAC continued operating 4 hours after working hours</strong> (18:00–22:00) alongside unmanaged workstation idle plug loads.
+                {t.anomalyBanner.spikeSummaryPrefix} <strong className="text-amber-300 font-semibold">{t.anomalyBanner.spikeDriver}</strong> {t.anomalyBanner.spikeSummarySuffix}
               </p>
             </div>
           </div>
@@ -120,7 +123,7 @@ export const AnomalyBanner: React.FC<AnomalyBannerProps> = ({
           <div className="flex flex-wrap sm:flex-nowrap items-center gap-3 shrink-0">
             {/* Measured vs Expected Mini KPIs */}
             <div className="bg-slate-900/90 border border-slate-800 rounded-xl p-3 min-w-[110px] text-center">
-              <div className="text-[10px] uppercase tracking-wider text-slate-400 font-medium">Actual Today</div>
+              <div className="text-[10px] uppercase tracking-wider text-slate-400 font-medium">{t.anomalyBanner.actualToday}</div>
               <div className="text-xl font-bold text-amber-400">{currentKwh} <span className="text-xs font-normal text-slate-400">kWh</span></div>
               <div className="text-[10px] text-red-400 font-medium flex items-center justify-center gap-0.5 mt-0.5">
                 <TrendingUp className="w-3 h-3" /> +{variancePct}%
@@ -128,15 +131,15 @@ export const AnomalyBanner: React.FC<AnomalyBannerProps> = ({
             </div>
 
             <div className="bg-slate-900/90 border border-slate-800 rounded-xl p-3 min-w-[110px] text-center">
-              <div className="text-[10px] uppercase tracking-wider text-slate-400 font-medium">Expected Baseline</div>
+              <div className="text-[10px] uppercase tracking-wider text-slate-400 font-medium">{t.anomalyBanner.expectedBaseline}</div>
               <div className="text-xl font-bold text-slate-200">{baselineKwh} <span className="text-xs font-normal text-slate-400">kWh</span></div>
-              <div className="text-[10px] text-slate-400 mt-0.5">30-day Avg</div>
+              <div className="text-[10px] text-slate-400 mt-0.5">{t.anomalyBanner.thirtyDayAvg}</div>
             </div>
 
             <div className="bg-emerald-950/40 border border-emerald-800/50 rounded-xl p-3 min-w-[120px] text-center">
-              <div className="text-[10px] uppercase tracking-wider text-emerald-400 font-semibold">Recoverable</div>
+              <div className="text-[10px] uppercase tracking-wider text-emerald-400 font-semibold">{t.anomalyBanner.recoverable}</div>
               <div className="text-xl font-bold text-emerald-300">{potentialSavingsKwh} <span className="text-xs font-normal text-slate-400">kWh</span></div>
-              <div className="text-[10px] text-emerald-400 font-medium mt-0.5">-{potentialSavingsPct}% Target</div>
+              <div className="text-[10px] text-emerald-400 font-medium mt-0.5">-{potentialSavingsPct}% {t.anomalyBanner.target}</div>
             </div>
 
             {/* Action Buttons */}
@@ -147,7 +150,7 @@ export const AnomalyBanner: React.FC<AnomalyBannerProps> = ({
                 className="flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-amber-500 hover:bg-amber-400 text-slate-950 shadow-md shadow-amber-500/20 transition-all cursor-pointer"
               >
                 <Search className="w-3.5 h-3.5" />
-                <span>Investigate Cause</span>
+                <span>{t.anomalyBanner.investigateCause}</span>
               </button>
 
               <button
@@ -156,7 +159,7 @@ export const AnomalyBanner: React.FC<AnomalyBannerProps> = ({
                 className="flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition-colors"
               >
                 <Cpu className="w-3.5 h-3.5 text-teal-400" />
-                <span>Run Digital Twin</span>
+                <span>{t.anomalyBanner.runDigitalTwin}</span>
               </button>
             </div>
           </div>
@@ -172,16 +175,16 @@ export const AnomalyBanner: React.FC<AnomalyBannerProps> = ({
           </div>
           <div className="min-w-0">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold text-white">HVAC AHU Chiller</span>
+              <span className="text-xs font-semibold text-white">{t.anomalyBanner.hvacChiller}</span>
               <span className="text-[10px] font-bold text-red-400 bg-red-950 px-1.5 py-0.2 rounded border border-red-800/60">
-                ⚠ Abnormal (+4h)
+                ⚠ {t.anomalyBanner.hvacAbnormal}
               </span>
             </div>
             <p className="text-xs text-slate-400 mt-1">
-              Active: <span className="text-red-300 font-semibold">{facility.systems.hvac.actual_hours}h</span> (normal {facility.systems.hvac.normal_hours}h) • {facility.systems.hvac.actual_kwh} kWh
+              {t.anomalyBanner.hvacActive(facility.systems.hvac.actual_hours, facility.systems.hvac.normal_hours, facility.systems.hvac.actual_kwh)}
             </p>
             <p className="text-[11px] text-red-400/90 font-medium truncate mt-0.5">
-              Operating post-18:00 closing
+              {t.anomalyBanner.hvacPost18}
             </p>
           </div>
         </div>
@@ -193,16 +196,16 @@ export const AnomalyBanner: React.FC<AnomalyBannerProps> = ({
           </div>
           <div className="min-w-0">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold text-white">Plug Loads & Gear</span>
+              <span className="text-xs font-semibold text-white">{t.anomalyBanner.plugLoads}</span>
               <span className="text-[10px] font-bold text-amber-400 bg-amber-950 px-1.5 py-0.2 rounded border border-amber-800/60">
-                ⚠ Idle Load (+15 kWh)
+                ⚠ {t.anomalyBanner.idleLoadBadge}
               </span>
             </div>
             <p className="text-xs text-slate-400 mt-1">
-              Draw: <span className="text-amber-300 font-semibold">{facility.systems.equipment.total_kwh} kWh</span> (normal 100 kWh)
+              {t.anomalyBanner.draw(facility.systems.equipment.total_kwh)}
             </p>
             <p className="text-[11px] text-amber-400/90 font-medium truncate mt-0.5">
-              38 workstations drawing idle power
+              {t.anomalyBanner.workstationsIdle}
             </p>
           </div>
         </div>
@@ -214,16 +217,16 @@ export const AnomalyBanner: React.FC<AnomalyBannerProps> = ({
           </div>
           <div className="min-w-0">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold text-white">LED Lighting Grid</span>
+              <span className="text-xs font-semibold text-white">{t.anomalyBanner.ledLighting}</span>
               <span className="text-[10px] font-bold text-emerald-400 bg-emerald-950 px-1.5 py-0.2 rounded border border-emerald-800/60">
-                ✓ Normal
+                ✓ {t.anomalyBanner.normal}
               </span>
             </div>
             <p className="text-xs text-slate-400 mt-1">
-              Daily: <span className="text-slate-200 font-medium">{facility.systems.lighting.daily_kwh} kWh</span> (140 fixtures)
+              {t.anomalyBanner.daily(facility.systems.lighting.daily_kwh)}
             </p>
             <p className="text-[11px] text-emerald-400/90 font-medium truncate mt-0.5">
-              Automated photocell timer adhered
+              {t.anomalyBanner.photocellAdhered}
             </p>
           </div>
         </div>
@@ -235,16 +238,16 @@ export const AnomalyBanner: React.FC<AnomalyBannerProps> = ({
           </div>
           <div className="min-w-0">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold text-white">Rooftop Solar PV</span>
+              <span className="text-xs font-semibold text-white">{t.anomalyBanner.rooftopSolar}</span>
               <span className="text-[10px] font-bold text-teal-400 bg-teal-950 px-1.5 py-0.2 rounded border border-teal-800/60">
-                ✓ Normal (50 kWh)
+                ✓ {t.anomalyBanner.normalSolar}
               </span>
             </div>
             <p className="text-xs text-slate-400 mt-1">
-              Peak: <span className="text-slate-200 font-medium">{facility.systems.solar.peak_output_kw} kW</span> (15 kW array)
+              {t.anomalyBanner.peak(facility.systems.solar.peak_output_kw)}
             </p>
             <p className="text-[11px] text-teal-400/90 font-medium truncate mt-0.5">
-              Clean solar generation nominal
+              {t.anomalyBanner.solarNominal}
             </p>
           </div>
         </div>

@@ -1,12 +1,14 @@
 import React, { useState } from "react";
 import { X, Send, Bot, User, Sparkles, MessageSquare, RotateCcw } from "lucide-react";
 import { FacilityState, ProposedSolution } from "../types";
+import { getTranslation } from "../i18n";
 
 interface AgentChatDrawerProps {
   isOpen: boolean;
   onClose: () => void;
   facility: FacilityState;
   solutions: Record<"A" | "B" | "C", ProposedSolution> | null;
+  t: ReturnType<typeof getTranslation>;
 }
 
 interface ChatMessage {
@@ -22,13 +24,15 @@ export const AgentChatDrawer: React.FC<AgentChatDrawerProps> = ({
   onClose,
   facility,
   solutions,
+  t,
 }) => {
+  const c = t.chat;
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       id: "m-1",
       sender: "agent",
-      text: "Hello! I am EnerQ, your autonomous AI Energy Agent. I have completed the investigation of today's 620 kWh consumption spike (+24%), grounding my reasoning in a facility energy-management knowledge base. Ask me anything about the root causes, the Digital Twin simulation, or the trade-offs between Solutions A, B, and C.",
-      timestamp: "Just now",
+      text: c.greeting,
+      timestamp: c.justNow,
     },
   ]);
   const [inputPrompt, setInputPrompt] = useState("");
@@ -36,12 +40,7 @@ export const AgentChatDrawer: React.FC<AgentChatDrawerProps> = ({
 
   if (!isOpen) return null;
 
-  const quickQuestions = [
-    "Why was Solution C chosen over Solution B?",
-    "How does the 87% confidence score work?",
-    "What is the occupant comfort impact?",
-    "How much money is saved per month?",
-  ];
+  const quickQuestions = c.quickQuestions;
 
   const handleSendMessage = async (textToSend?: string) => {
     const query = textToSend || inputPrompt.trim();
@@ -78,7 +77,7 @@ export const AgentChatDrawer: React.FC<AgentChatDrawerProps> = ({
       const data = await resp.json();
       const agentText =
         data?.analysis ||
-        `Based on our physical Digital Twin simulation, Solution C eliminates ${solutions?.C.estimated_saving_kwh ?? "—"} kWh/day of after-hours HVAC runtime and workstation idle baseload while keeping working-hours comfort completely intact.`;
+        c.fallbackReply(solutions?.C.estimated_saving_kwh ?? "—");
 
       const agentMsg: ChatMessage = {
         id: `a-${Date.now()}`,
@@ -93,7 +92,7 @@ export const AgentChatDrawer: React.FC<AgentChatDrawerProps> = ({
       const fallbackMsg: ChatMessage = {
         id: `a-${Date.now()}`,
         sender: "agent",
-        text: "EnerQ Agent Telemetry Insight: Solution C recaptures 93 kWh/day (15.0% reduction) by cutting off HVAC at 18:00 and turning off 38 idle workstations.",
+        text: c.networkErrorReply,
         timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
       };
       setMessages((prev) => [...prev, fallbackMsg]);
@@ -113,9 +112,9 @@ export const AgentChatDrawer: React.FC<AgentChatDrawerProps> = ({
             </div>
             <div>
               <h3 className="text-sm font-bold text-white flex items-center gap-1.5">
-                EnerQ Assistant <span className="text-[10px] text-emerald-400 font-mono bg-emerald-950 px-1.5 py-0.2 rounded border border-emerald-800">Online</span>
+                {c.title} <span className="text-[10px] text-emerald-400 font-mono bg-emerald-950 px-1.5 py-0.2 rounded border border-emerald-800">{c.online}</span>
               </h3>
-              <p className="text-[11px] text-slate-400">Autonomous Facility Reasoning & Digital Twin Q&A</p>
+              <p className="text-[11px] text-slate-400">{c.subtitle}</p>
             </div>
           </div>
 
@@ -198,7 +197,7 @@ export const AgentChatDrawer: React.FC<AgentChatDrawerProps> = ({
               </div>
               <div className="p-2.5 rounded-xl bg-slate-950 border border-slate-800 flex items-center gap-2">
                 <div className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
-                <span>EnerQ is formulating engineering reasoning...</span>
+                <span>{c.thinkingReply}</span>
               </div>
             </div>
           )}
@@ -215,7 +214,7 @@ export const AgentChatDrawer: React.FC<AgentChatDrawerProps> = ({
           >
             <input
               type="text"
-              placeholder="Ask EnerQ about energy waste, solutions, or payback..."
+              placeholder={c.placeholder}
               value={inputPrompt}
               onChange={(e) => setInputPrompt(e.target.value)}
               className="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-teal-500"

@@ -1,19 +1,40 @@
 /**
- * Bilingual chrome text (EN/AR). Scoped deliberately: this covers the app's
- * static shell — header, timeline stage names, tab labels, key buttons —
- * not the deep dynamic content (agent reasoning log, LLM-generated text,
- * chat replies), which stays English regardless of language since
- * maintaining parallel Arabic versions of every generated sentence isn't
- * reliably achievable without either a second LLM prompt path or hand-
- * translating template strings that would drift out of sync over time.
+ * Bilingual text (EN/AR) for the entire EnerQ UI.
  *
- * Layout direction is intentionally left LTR in both languages — Arabic
+ * Scope: every static label, button, heading, badge, and piece of
+ * demo-facility content (solution names/descriptions, system names,
+ * zone labels, facility identity) is translated here and looked up by
+ * component/data key -- nothing in the visible UI is hardcoded English
+ * once a component is wired to `t`.
+ *
+ * Deliberately left English regardless of language: (1) live/deterministic
+ * AI reasoning paragraphs returned by /api/agent/reason and the chat
+ * assistant's replies -- free-form generated text, not something this
+ * static dictionary can cover without a second generation path; (2) the
+ * Agent Activity Stream's log detail sentences, which are timestamped
+ * facts generated once at pipeline-run time. Everything a user sees on
+ * first load, and everything generated after a language switch, renders
+ * in the selected language.
+ *
+ * Layout direction is intentionally left LTR in both languages -- Arabic
  * script renders correctly right-to-left within its own text nodes via
  * the browser's normal bidi handling, without needing to mirror the whole
  * page layout, which is where i18n effort-to-risk ratio gets expensive.
  */
 
 export type Language = "en" | "ar";
+
+// ---------------------------------------------------------------------------
+// Minimal shape needed from a ProposedSolution to localize its display text.
+// Kept decoupled from src/types.ts on purpose -- i18n has no business
+// depending on domain types, it just needs the numbers to interpolate.
+// ---------------------------------------------------------------------------
+export interface SolutionNumbers {
+  id: "A" | "B" | "C";
+  estimated_saving_kwh: number;
+  estimated_saving_pct: number;
+  monthly_cost_saving: number;
+}
 
 export const translations = {
   en: {
@@ -31,6 +52,7 @@ export const translations = {
     themeToLight: "Switch to light mode",
     themeToDark: "Switch to dark mode",
     langToggle: "العربية",
+    liveSync: "Autonomous Facility State • Live Sync",
 
     timelineTitle: "EnerQ AI Agent Workflow",
     timelineSubtitle: "Autonomous Decision & Verification Pipeline",
@@ -56,6 +78,310 @@ export const translations = {
       SOLUTIONS: "Solution Comparison Lab",
       ANALYTICS: "24h Load Telemetry",
     },
+
+    facility: {
+      name: "Al-Noor Commercial Business Center",
+      type: "Commercial Office & Tech Hub (3 Floors)",
+      location: "Business District, Muscat / Regional Tech Park",
+    },
+
+    systems: {
+      hvac: "Central Chilled Water Rooftop AHU & VAV",
+      lighting: "Intelligent Scheduled LED Grid",
+      equipment: "Plug Loads, Workstations & Auxiliary Gear",
+      solar: "Rooftop Bi-facial Solar PV Array",
+    },
+
+    riskLevel: {
+      Low: "Low",
+      "Low / Medium": "Low / Medium",
+      Medium: "Medium",
+      High: "High",
+    },
+
+    severity: { critical: "CRITICAL", warning: "WARNING", info: "INFO" },
+
+    footer: {
+      tagline: "Your Autonomous AI Energy Expert & Digital Twin",
+      note: "From Energy Data to Intelligent Action • Deterministic Energy Physics + Local Ollama RAG Reasoning",
+    },
+
+    anomalyBanner: {
+      verifiedBadge: "Simulated Action Verified",
+      verifiedTwinState: "Digital Twin State: Optimized",
+      verifiedTitle: "HVAC Schedule & Idle Shutdown Policy Active",
+      verifiedSummary: (before: number, after: number, pct: number, symbol: string, monthly: number) =>
+        `Facility consumption reduced from ${before} kWh to ${after} kWh/day (-${pct}%). Recapturing approximately ${symbol}${monthly}/month.`,
+      dailyReduction: "Daily Reduction",
+      netEfficiency: "Net Efficiency",
+      detectedBadge: "Autonomous Anomaly Detected",
+      exceedsThreshold: (pct: number) => `Exceeds baseline threshold by +${pct}%`,
+      spikeTitle: (kwh: number) => `Daily Energy Spike: +${kwh} kWh Over Expected Baseline`,
+      spikeSummaryPrefix: "Autonomous telemetry scan detected abnormal consumption. Primary driver identified:",
+      spikeSummarySuffix: "(18:00–22:00) alongside unmanaged workstation idle plug loads.",
+      spikeDriver: "Central HVAC continued operating 4 hours after working hours",
+      actualToday: "Actual Today",
+      expectedBaseline: "Expected Baseline",
+      thirtyDayAvg: "30-day Avg",
+      recoverable: "Recoverable",
+      target: "Target",
+      investigateCause: "Investigate Cause",
+      runDigitalTwin: "Run Digital Twin",
+      hvacChiller: "HVAC AHU Chiller",
+      hvacAbnormal: "Abnormal (+4h)",
+      hvacActive: (actual: number, normal: number, kwh: number) => `Active: ${actual}h (normal ${normal}h) • ${kwh} kWh`,
+      hvacPost18: "Operating post-18:00 closing",
+      plugLoads: "Plug Loads & Gear",
+      idleLoadBadge: "Idle Load (+15 kWh)",
+      draw: (kwh: number) => `Draw: ${kwh} kWh (normal 100 kWh)`,
+      workstationsIdle: "38 workstations drawing idle power",
+      ledLighting: "LED Lighting Grid",
+      normal: "Normal",
+      daily: (kwh: number) => `Daily: ${kwh} kWh (140 fixtures)`,
+      photocellAdhered: "Automated photocell timer adhered",
+      rooftopSolar: "Rooftop Solar PV",
+      normalSolar: "Normal (50 kWh)",
+      peak: (kw: number) => `Peak: ${kw} kW (15 kW array)`,
+      solarNominal: "Clean solar generation nominal",
+    },
+
+    recommendation: {
+      badge: "EnerQ AI Recommendation",
+      scoreLabel: (score: number) => `Multi-Criteria Decision Engine Score: ${score}/100`,
+      responsibleTeamName: "Facilities & Operations Team",
+      notified: (team: string) => `Notified: ${team}`,
+      reminderSent: "Reminder Sent — Action Still Pending",
+      escalated: "Escalated to Management",
+      whyTitle: "Why does EnerQ recommend this action?",
+      whyBody1: (pct: number, kwh: number) => `Digital Twin simulation proved this intervention achieves the highest energy reduction (${pct}% / ${kwh} kWh/day) by addressing both the after-hours HVAC overtime and unmanaged workstation idle draw identified during investigation.`,
+      whyBody2: "Occupant comfort during standard working hours (08:00–18:00) is 100% preserved with zero thermal drift penalty.",
+      dailyReduction: "Daily Reduction",
+      monthlySavings: "Monthly Savings",
+      annualRecaptured: "Annual Recaptured",
+      carbonOffset: "Carbon Offset",
+      implementedTitle: "Recommendation Implemented",
+      implementedBody: (kwh: number) => `Virtual facility verified at ${kwh} kWh/day.`,
+      executingAutonomously: "Executing Autonomously",
+      autonomousBody: "Level 3 authorization — no manual approval required. Implementing now.",
+      approve: "Approve Recommendation",
+      reviewAlternatives: "Review Alternatives",
+      approveFootnote: "Approval triggers simulated virtual facility implementation and automatic verification.",
+    },
+
+    solutionsComparison: {
+      title: "Candidate Interventions & Multi-Criteria Decision Matrix",
+      subtitle: "EnerQ evaluated 3 physics-simulated scenarios balancing energy savings, occupant comfort, and operational risk",
+      deterministicOutput: "Deterministic Simulation Output",
+      option: (id: string) => `Option ${id}`,
+      bestPick: "EnerQ Best Pick",
+      alternative: "Alternative",
+      energyReduction: "Energy Reduction:",
+      monthlyCostRecapture: "Monthly Cost Recapture:",
+      operationalRisk: "Operational Risk:",
+      score: (score: number) => `Score ${score}/10`,
+      decisionScore: "Decision Score:",
+      keyTradeOffs: "Key Trade-Offs:",
+      activeInTwin: "Active in Digital Twin",
+      simulateInTwin: "Simulate in Digital Twin",
+    },
+
+    digitalTwin: {
+      title: "Facility Digital Twin — Physics & Energy Simulation",
+      estimatedBadge: "Digital Twin Simulation — Estimated",
+      modelNote: "Virtual building thermal inertia & sub-circuit load model",
+      simulating: "Simulating Thermal Model...",
+      runSimulation: "Run Digital Twin Simulation",
+      currentAnomaly: (kwh: number) => `Current Anomaly (${kwh} kWh)`,
+      scenarioACutoff: (kwh: number | string) => `Scenario A: 18:00 Cutoff (${kwh} kWh)`,
+      scenarioBSetpoint: (kwh: number | string) => `Scenario B: Setpoint +1.5°C (${kwh} kWh)`,
+      scenarioCRecommended: (kwh: number | string) => `Scenario C: Recommended (${kwh} kWh)`,
+      baselineReference: (kwh: number) => `Baseline Reference (${kwh} kWh)`,
+      floorZoneModel: "3-Floor Zone Model",
+      floorZone: "Floor Zone:",
+      pvArray: "Rooftop Bi-Facial PV Array (15 kWp)",
+      rooftopBadge: "📍 Rooftop",
+      generating: "Generating +50.0 kWh/day • Peak 12.4 kW",
+      activeSolar: "Active Solar",
+      zoneAName: "Zone A: Open Office",
+      zoneBName: "Zone B: Tech Lab",
+      zoneCName: "Zone C: Exec Rooms",
+      setpoint: (temp: string) => `Setpoint: ${temp}`,
+      occupancy: "Occupancy:",
+      occupancyValue: "08:00–18:00 (Vacant Now)",
+      plugLoad: "Plug Load:",
+      sleepEnabled: "Sleep Enabled",
+      activeCount: "38 Active",
+      criticalServers: "Critical Servers:",
+      protected: "100% Protected",
+      lighting: "Lighting:",
+      lightingOff: "Off (Photocell)",
+      vavDamper: "VAV Damper:",
+      damperOpen: "Open (Active)",
+      damperClosed: "Closed (Night)",
+      ahu: "Central Chilled Water AHU (20 kW)",
+      plantRoomBadge: "📍 Rooftop Plant Room",
+      serves: (hours: number, runtime: string) => `Serves: Zones A, B, C · Runtime: ${runtime}`,
+      overtimeRuntime: "Extended Overtime (until 22:00)",
+      standbyRuntime: "Scheduled 18:00 Night Standby",
+      hoursPerDay: (h: number) => `${h} Hours / Day`,
+      floorArea: (sqm: number) => `Building Floor Area: ${sqm} m² • Thermal Time Constant τ = 4.2h`,
+      simulatedConsumption: "Simulated Daily Consumption",
+      kwhPerDay: "kWh / day",
+      varianceVsCurrent: (kwh: number) => `Variance vs Current (${kwh} kWh):`,
+      overBaseline: (kwh: number) => `+${kwh} kWh over baseline`,
+      subCircuitBreakdown: "Sub-Circuit Breakdown",
+      simulatedMode: "Simulated Mode",
+      hvacSystem: "HVAC System",
+      rooftopParen: "(Rooftop):",
+      lightingBreakdown: "Lighting",
+      allFloorsParen: "(All floors):",
+      equipment: "Equipment",
+      zoneBParen: "(Zone B):",
+      solar: "Solar",
+      rooftopArrayParen: "(Rooftop array):",
+      projectedMonthlySavings: "Projected Monthly Savings",
+      perMonth: "/ mo",
+      operationalRisk: "Operational Risk",
+      risk: {
+        current: "High (Waste)",
+        A: "Low",
+        B: "Medium",
+        C: "Low / Medium",
+      },
+      scenarioLabels: {
+        current: "Current Uncontrolled Anomaly (HVAC 08:00–22:00)",
+        baseline: "Historical Baseline Target (Ideal Schedule)",
+        A: "Scenario A: Enforced 18:00 HVAC Cutoff",
+        B: (from: string, to: string) => `Scenario B: Thermostat Offset +1.5°C (${from}°C → ${to}°C)`,
+        C: "Scenario C: Recommended Combined (18:00 Cutoff + Idle Sleep)",
+      },
+    },
+
+    loadCurve: {
+      title: "24-Hour Load Profile & After-Hours Waste Analysis",
+      subtitle: "Hourly consumption telemetry showing after-hours HVAC run vs baseline and simulated optimization",
+      baseline: "Baseline (500 kWh)",
+      actualAnomaly: "Actual Anomaly (620 kWh)",
+      simulated: (scenario: string) => `Simulated (${scenario})`,
+      workingHours: "WORKING HOURS (08:00 – 18:00)",
+      afterHoursWaste: "⚠ AFTER-HOURS WASTE (+80 kWh)",
+      snapshot: (time: string) => `${time} Snapshot`,
+      overtimeActive: "⚠ After-Hours Overtime Active (+20 kW Draw)",
+      normalBusinessHours: "Normal Business Hours",
+      nightStandby: "Night Standby Mode",
+      measuredLoad: "Measured Load:",
+      baselineLabel: "Baseline:",
+      simulatedLabel: "Simulated:",
+      savings: (kw: string) => `Savings: -${kw} kW`,
+      scenarioNames: {
+        C: "Scenario C: Recommended (-15%)",
+        A: "Scenario A: 18:00 Cutoff (-8%)",
+        B: "Scenario B: Setpoint Offset (-6%)",
+        baseline: "Baseline Target",
+      },
+    },
+
+    agentLog: {
+      terminalTitle: "EnerQ Agent Activity Stream & Reasoning Log",
+      thinking: "Thinking...",
+      standingBy: 'Standing by. Click "Run EnerQ Analysis" or select a stage to start the autonomous pipeline.',
+      rootCauseReasoning: "Agent Root-Cause Reasoning",
+      synthesisReasoning: "Autonomous Agent Synthesis & Executive Reasoning",
+      groundedIn: "Grounded in:",
+      liveOllama: "Ollama · ",
+      deterministicEngine: "Deterministic Engine",
+    },
+
+    chat: {
+      title: "EnerQ Assistant",
+      online: "Online",
+      subtitle: "Autonomous Facility Reasoning & Digital Twin Q&A",
+      greeting: "Hello! I am EnerQ, your autonomous AI Energy Agent. I have completed the investigation of today's 620 kWh consumption spike (+24%), grounding my reasoning in a facility energy-management knowledge base. Ask me anything about the root causes, the Digital Twin simulation, or the trade-offs between Solutions A, B, and C.",
+      justNow: "Just now",
+      quickQuestions: [
+        "Why was Solution C chosen over Solution B?",
+        "How does the 87% confidence score work?",
+        "What is the occupant comfort impact?",
+        "How much money is saved per month?",
+      ],
+      thinkingReply: "EnerQ is formulating engineering reasoning...",
+      placeholder: "Ask EnerQ about energy waste, solutions, or payback...",
+      fallbackReply: (kwh: number | string) => `Based on our physical Digital Twin simulation, Solution C eliminates ${kwh} kWh/day of after-hours HVAC runtime and workstation idle baseload while keeping working-hours comfort completely intact.`,
+      networkErrorReply: "EnerQ Agent Telemetry Insight: Solution C recaptures 93 kWh/day (15.0% reduction) by cutting off HVAC at 18:00 and turning off 38 idle workstations.",
+    },
+
+    auditReportModal: {
+      title: "Executive Energy Audit & Digital Twin Verification Brief",
+      generatedBy: (ref: string) => `Generated by EnerQ AI Energy Agent • Audit Reference: ${ref}`,
+      print: "Print / PDF",
+      targetFacility: "Target Facility",
+      area: "Area:",
+      workingHoursLabel: "Working Hours:",
+      tariffRate: "Tariff Rate:",
+      status: "Status:",
+      verifiedOptimized: "Verified Optimized",
+      anomalyIdentified: "Autonomous Anomaly Identified",
+      section1Title: "1. Executive Summary & Diagnostic Finding",
+      section1Body1: (kwh: number, pct: number, variance: number, baseline: number) =>
+        `EnerQ autonomously observed daily consumption of ${kwh} kWh/day, representing a +${pct}% anomaly (+${variance} kWh excess) over the seasonal baseline of ${baseline} kWh/day.`,
+      section1Body2: "Sub-meter telemetry pinpointed that the 20 kW Central HVAC AHU chiller system operated 4 continuous hours past the 18:00 facility closing schedule (18:00–22:00), accounting for 80 kWh of direct energy waste. Concurrently, 38 unmanaged workstation circuits drew 13-15 kWh of idle power outside working hours.",
+      section2Title: "2. Digital Twin Simulated Solutions Matrix",
+      tableOption: "Option",
+      tableIntervention: "Intervention",
+      tableDailyKwh: "Daily kWh",
+      tableReduction: "Reduction",
+      tableMonthlyRecapture: "Monthly Recapture",
+      tableRiskScore: "Risk / Score",
+      interventionA: "HVAC 18:00 Schedule Cutoff",
+      interventionB: "Thermostat Offset (+1.5°C)",
+      interventionC: "Combined HVAC Cutoff + Idle Sleep",
+      best: "Best",
+      section3Title: "3. Recommended Implementation Roadmap",
+      roadmap: [
+        { title: "BMS Calendar Override", body: "Update central chiller schedule to automatically switch to night setback at 18:00 Monday–Friday." },
+        { title: "Smart PDU Relay Automation", body: "Schedule workstation non-critical plug load sleep policy for 18:15." },
+        { title: "Occupancy Motion Fallback", body: "Allow manual 1-hour push-button cooling overrides for authenticated overtime workers." },
+        { title: "Autonomous Verification", body: "EnerQ Agent continuously verifies 24-hour load profile daily at 18:05 EET." },
+      ],
+      section4Title: "Total Annual Value Recaptured",
+      annualEnergyAvoided: "Annual Energy Avoided",
+      co2Offset: "CO₂ Emissions Offset",
+      perYear: "/ year",
+      footerNote: "EnerQ Autonomous Energy Agent Platform • Zero Unsolicited Feature Scope",
+      close: "Close Brief",
+    },
+
+    settings: {
+      title: "Facility Tariff & Model Parameters",
+      facilityProfile: "Facility Profile",
+      tariffCurrency: "Tariff Currency",
+      electricityTariff: (symbol: string) => `Electricity Tariff (${symbol}/kWh)`,
+      tariffNote: "Modifying tariff recalculates daily, monthly, and annual ROI across all simulated scenarios in real time.",
+      workingSchedule: "Working Schedule:",
+      workingHoursValue: (start: string, end: string) => `${start} – ${end} (10 hrs)`,
+      expectedBaseline: "Expected Daily Baseline:",
+      cancel: "Cancel",
+      applyParameters: "Apply Parameters",
+    },
+
+    verification: {
+      actionImplemented: "Action Implemented — Simulation",
+      title: "Simulated Improvement Verified",
+      statement: "The virtual facility has been updated with the approved policy:",
+      statementPolicy: "Automated 18:00 HVAC Cutoff + Workstation Idle Sleep",
+      verifiedLine: (pct: number) => `Expected ${pct}% energy reduction successfully verified.`,
+      beforeImplementation: "Before Implementation",
+      uncontrolledOvertime: "Uncontrolled Overtime",
+      afterImplementation: "After Implementation",
+      monthlyRecaptured: "Monthly Recaptured Value:",
+      annualRecaptured: "Annual Recaptured Value:",
+      annualCo2: "Annual CO₂ Offset:",
+      nextAudit: "Next Autonomous Audit:",
+      disclaimer: "Note: This is a verified Digital Twin simulation outcome based on the facility energy model.",
+      done: "Done & Return to Live Agent Center",
+      perMonth: "/ month",
+      perYear: "/ year",
+    },
   },
   ar: {
     tagline: "وكيل ذكاء اصطناعي للطاقة",
@@ -72,6 +398,7 @@ export const translations = {
     themeToLight: "التبديل إلى الوضع الفاتح",
     themeToDark: "التبديل إلى الوضع الداكن",
     langToggle: "English",
+    liveSync: "حالة المنشأة المستقلة • مزامنة حية",
 
     timelineTitle: "سير عمل وكيل EnerQ",
     timelineSubtitle: "خط أنابيب القرار والتحقق المستقل",
@@ -97,9 +424,409 @@ export const translations = {
       SOLUTIONS: "مختبر مقارنة الحلول",
       ANALYTICS: "قياسات الحمل 24 ساعة",
     },
+
+    facility: {
+      name: "مركز النور التجاري للأعمال",
+      type: "مركز مكتبي وتقني تجاري (3 طوابق)",
+      location: "الحي التجاري، مسقط / المجمع التقني الإقليمي",
+    },
+
+    systems: {
+      hvac: "وحدة تكييف المياه المبردة المركزية (السطح)",
+      lighting: "شبكة إضاءة LED مجدولة ذكية",
+      equipment: "أحمال المقابس ومحطات العمل والتجهيزات المساندة",
+      solar: "منظومة الألواح الشمسية الثنائية الوجه على السطح",
+    },
+
+    riskLevel: {
+      Low: "منخفضة",
+      "Low / Medium": "منخفضة إلى متوسطة",
+      Medium: "متوسطة",
+      High: "مرتفعة",
+    },
+
+    severity: { critical: "حرجة", warning: "تحذير", info: "معلومة" },
+
+    footer: {
+      tagline: "خبير الطاقة المستقل بالذكاء الاصطناعي والتوأم الرقمي الخاص بك",
+      note: "من بيانات الطاقة إلى إجراء ذكي • فيزياء طاقة حتمية + استدلال محلي عبر Ollama وقاعدة معرفة RAG",
+    },
+
+    anomalyBanner: {
+      verifiedBadge: "تم التحقق من الإجراء المحاكى",
+      verifiedTwinState: "حالة التوأم الرقمي: مُحسّنة",
+      verifiedTitle: "سياسة جدولة التكييف وإيقاف الخمول نشطة",
+      verifiedSummary: (before: number, after: number, pct: number, symbol: string, monthly: number) =>
+        `انخفض استهلاك المنشأة من ${before} kWh إلى ${after} kWh يوميًا (-${pct}%). استرداد يُقدَّر بـ ${symbol}${monthly} شهريًا.`,
+      dailyReduction: "الخفض اليومي",
+      netEfficiency: "صافي الكفاءة",
+      detectedBadge: "تم اكتشاف شذوذ ذاتيًا",
+      exceedsThreshold: (pct: number) => `يتجاوز عتبة خط الأساس بنسبة +${pct}%`,
+      spikeTitle: (kwh: number) => `ارتفاع طاقة يومي: +${kwh} kWh فوق خط الأساس المتوقع`,
+      spikeSummaryPrefix: "رصد المسح الذاتي للقراءات استهلاكًا غير طبيعي. المُسبب الرئيسي:",
+      spikeSummarySuffix: "(18:00–22:00) إلى جانب أحمال مقابس خاملة غير مُدارة لمحطات العمل.",
+      spikeDriver: "استمرار تشغيل التكييف المركزي 4 ساعات بعد نهاية الدوام",
+      actualToday: "الفعلي اليوم",
+      expectedBaseline: "خط الأساس المتوقع",
+      thirtyDayAvg: "متوسط 30 يومًا",
+      recoverable: "قابل للاسترداد",
+      target: "الهدف",
+      investigateCause: "التحقيق في السبب",
+      runDigitalTwin: "تشغيل التوأم الرقمي",
+      hvacChiller: "وحدة تكييف الهواء (المبرد)",
+      hvacAbnormal: "غير طبيعي (+4 س)",
+      hvacActive: (actual: number, normal: number, kwh: number) => `التشغيل: ${actual} س (الطبيعي ${normal} س) • ${kwh} kWh`,
+      hvacPost18: "يعمل بعد إغلاق الساعة 18:00",
+      plugLoads: "أحمال المقابس والتجهيزات",
+      idleLoadBadge: "حمل خامل (+15 kWh)",
+      draw: (kwh: number) => `الاستهلاك: ${kwh} kWh (الطبيعي 100 kWh)`,
+      workstationsIdle: "38 محطة عمل تستهلك طاقة أثناء الخمول",
+      ledLighting: "شبكة إضاءة LED",
+      normal: "طبيعي",
+      daily: (kwh: number) => `يوميًا: ${kwh} kWh (140 وحدة إنارة)`,
+      photocellAdhered: "مؤقّت الخلية الضوئية الآلي يعمل بانتظام",
+      rooftopSolar: "الألواح الشمسية على السطح",
+      normalSolar: "طبيعي (50 kWh)",
+      peak: (kw: number) => `الذروة: ${kw} kW (منظومة 15 kW)`,
+      solarNominal: "توليد شمسي نظيف ضمن المعدل الطبيعي",
+    },
+
+    recommendation: {
+      badge: "توصية وكيل EnerQ الذكي",
+      scoreLabel: (score: number) => `درجة محرك القرار متعدد المعايير: ${score}/100`,
+      responsibleTeamName: "فريق المرافق والعمليات",
+      notified: (team: string) => `تم إشعار: ${team}`,
+      reminderSent: "تم إرسال تذكير — الإجراء لا يزال معلقًا",
+      escalated: "تم التصعيد إلى الإدارة",
+      whyTitle: "لماذا يوصي EnerQ بهذا الإجراء؟",
+      whyBody1: (pct: number, kwh: number) => `أثبتت محاكاة التوأم الرقمي أن هذا التدخل يحقق أعلى خفض للطاقة (${pct}% / ${kwh} kWh يوميًا) من خلال معالجة كل من ساعات التكييف الإضافية بعد الدوام وحمل الخمول غير المُدار لمحطات العمل الذي تم رصده أثناء التحقيق.`,
+      whyBody2: "راحة الشاغلين خلال ساعات العمل الرسمية (08:00–18:00) محفوظة بنسبة 100% دون أي انجراف حراري.",
+      dailyReduction: "الخفض اليومي",
+      monthlySavings: "التوفير الشهري",
+      annualRecaptured: "المسترد سنويًا",
+      carbonOffset: "خفض الكربون",
+      implementedTitle: "تم تنفيذ التوصية",
+      implementedBody: (kwh: number) => `تم التحقق من المنشأة الافتراضية عند ${kwh} kWh يوميًا.`,
+      executingAutonomously: "قيد التنفيذ الذاتي",
+      autonomousBody: "تفويض المستوى 3 — لا حاجة لموافقة يدوية. يجري التنفيذ الآن.",
+      approve: "الموافقة على التوصية",
+      reviewAlternatives: "مراجعة البدائل",
+      approveFootnote: "الموافقة تُفعّل تنفيذًا محاكى في المنشأة الافتراضية والتحقق التلقائي منه.",
+    },
+
+    solutionsComparison: {
+      title: "التدخلات المرشحة ومصفوفة القرار متعددة المعايير",
+      subtitle: "قيّم EnerQ 3 سيناريوهات محاكاة فيزيائية توازن بين توفير الطاقة وراحة الشاغلين والمخاطر التشغيلية",
+      deterministicOutput: "مخرجات محاكاة حتمية",
+      option: (id: string) => `الخيار ${id}`,
+      bestPick: "الاختيار الأفضل من EnerQ",
+      alternative: "بديل",
+      energyReduction: "خفض الطاقة:",
+      monthlyCostRecapture: "الاسترداد الشهري للتكلفة:",
+      operationalRisk: "المخاطر التشغيلية:",
+      score: (score: number) => `الدرجة ${score}/10`,
+      decisionScore: "درجة القرار:",
+      keyTradeOffs: "أبرز المفاضلات:",
+      activeInTwin: "نشط في التوأم الرقمي",
+      simulateInTwin: "محاكاة في التوأم الرقمي",
+    },
+
+    digitalTwin: {
+      title: "التوأم الرقمي للمنشأة — محاكاة الفيزياء والطاقة",
+      estimatedBadge: "محاكاة التوأم الرقمي — تقديرية",
+      modelNote: "نموذج القصور الحراري الافتراضي للمبنى وأحمال الدوائر الفرعية",
+      simulating: "جارٍ محاكاة النموذج الحراري...",
+      runSimulation: "تشغيل محاكاة التوأم الرقمي",
+      currentAnomaly: (kwh: number) => `الشذوذ الحالي (${kwh} kWh)`,
+      scenarioACutoff: (kwh: number | string) => `السيناريو A: قطع الساعة 18:00 (${kwh} kWh)`,
+      scenarioBSetpoint: (kwh: number | string) => `السيناريو B: رفع نقطة الضبط +1.5°C (${kwh} kWh)`,
+      scenarioCRecommended: (kwh: number | string) => `السيناريو C: الموصى به (${kwh} kWh)`,
+      baselineReference: (kwh: number) => `المرجع الأساسي (${kwh} kWh)`,
+      floorZoneModel: "نموذج مناطق 3 طوابق",
+      floorZone: "منطقة الطابق:",
+      pvArray: "منظومة ألواح شمسية ثنائية الوجه على السطح (15 kW)",
+      rooftopBadge: "📍 السطح",
+      generating: "توليد +50.0 kWh يوميًا • ذروة 12.4 kW",
+      activeSolar: "طاقة شمسية نشطة",
+      zoneAName: "المنطقة A: مكتب مفتوح",
+      zoneBName: "المنطقة B: مختبر تقني",
+      zoneCName: "المنطقة C: غرف تنفيذية",
+      setpoint: (temp: string) => `نقطة الضبط: ${temp}`,
+      occupancy: "الإشغال:",
+      occupancyValue: "08:00–18:00 (شاغر الآن)",
+      plugLoad: "حمل المقابس:",
+      sleepEnabled: "وضع السكون مفعّل",
+      activeCount: "38 نشط",
+      criticalServers: "الخوادم الحرجة:",
+      protected: "محمية 100%",
+      lighting: "الإضاءة:",
+      lightingOff: "مطفأة (خلية ضوئية)",
+      vavDamper: "مخمد VAV:",
+      damperOpen: "مفتوح (نشط)",
+      damperClosed: "مغلق (ليلي)",
+      ahu: "وحدة تكييف المياه المبردة المركزية (20 kW)",
+      plantRoomBadge: "📍 غرفة معدات السطح",
+      serves: (hours: number, runtime: string) => `يخدم: المناطق A وB وC · التشغيل: ${runtime}`,
+      overtimeRuntime: "تشغيل إضافي ممتد (حتى 22:00)",
+      standbyRuntime: "وضع الاستعداد الليلي المجدول 18:00",
+      hoursPerDay: (h: number) => `${h} ساعة/يوم`,
+      floorArea: (sqm: number) => `مساحة المبنى: ${sqm} م² • ثابت الزمن الحراري τ = 4.2 س`,
+      simulatedConsumption: "الاستهلاك اليومي المحاكى",
+      kwhPerDay: "kWh يوميًا",
+      varianceVsCurrent: (kwh: number) => `الفرق مقابل الحالي (${kwh} kWh):`,
+      overBaseline: (kwh: number) => `+${kwh} kWh فوق خط الأساس`,
+      subCircuitBreakdown: "توزيع الدوائر الفرعية",
+      simulatedMode: "الوضع المحاكى",
+      hvacSystem: "نظام التكييف",
+      rooftopParen: "(السطح):",
+      lightingBreakdown: "الإضاءة",
+      allFloorsParen: "(جميع الطوابق):",
+      equipment: "التجهيزات",
+      zoneBParen: "(المنطقة B):",
+      solar: "الطاقة الشمسية",
+      rooftopArrayParen: "(منظومة السطح):",
+      projectedMonthlySavings: "التوفير الشهري المتوقع",
+      perMonth: "/ شهريًا",
+      operationalRisk: "المخاطر التشغيلية",
+      risk: {
+        current: "مرتفعة (هدر)",
+        A: "منخفضة",
+        B: "متوسطة",
+        C: "منخفضة إلى متوسطة",
+      },
+      scenarioLabels: {
+        current: "الشذوذ الحالي غير المُتحكَّم به (تكييف 08:00–22:00)",
+        baseline: "هدف خط الأساس التاريخي (الجدول المثالي)",
+        A: "السيناريو A: قطع تكييف إلزامي عند 18:00",
+        B: (from: string, to: string) => `السيناريو B: رفع الثرموستات +1.5°C (${from}°C ← ${to}°C)`,
+        C: "السيناريو C: الحل المدمج الموصى به (قطع 18:00 + سكون الخمول)",
+      },
+    },
+
+    loadCurve: {
+      title: "منحنى الحمل على مدار 24 ساعة وتحليل الهدر بعد الدوام",
+      subtitle: "قراءات الاستهلاك بالساعة توضح تشغيل التكييف بعد الدوام مقابل خط الأساس والتحسين المحاكى",
+      baseline: "خط الأساس (500 kWh)",
+      actualAnomaly: "الشذوذ الفعلي (620 kWh)",
+      simulated: (scenario: string) => `المحاكى (${scenario})`,
+      workingHours: "ساعات الدوام (08:00 – 18:00)",
+      afterHoursWaste: "⚠ هدر بعد الدوام (+80 kWh)",
+      snapshot: (time: string) => `لقطة الساعة ${time}`,
+      overtimeActive: "⚠ تشغيل إضافي بعد الدوام نشط (+20 kW استهلاك)",
+      normalBusinessHours: "ساعات عمل طبيعية",
+      nightStandby: "وضع الاستعداد الليلي",
+      measuredLoad: "الحمل المُقاس:",
+      baselineLabel: "خط الأساس:",
+      simulatedLabel: "المحاكى:",
+      savings: (kw: string) => `التوفير: -${kw} kW`,
+      scenarioNames: {
+        C: "السيناريو C: الموصى به (-15%)",
+        A: "السيناريو A: قطع 18:00 (-8%)",
+        B: "السيناريو B: رفع نقطة الضبط (-6%)",
+        baseline: "هدف خط الأساس",
+      },
+    },
+
+    agentLog: {
+      terminalTitle: "سجل نشاط واستدلال وكيل EnerQ",
+      thinking: "جارٍ التفكير...",
+      standingBy: 'في وضع الاستعداد. اضغط "تشغيل تحليل EnerQ" أو اختر مرحلة لبدء خط الأنابيب المستقل.',
+      rootCauseReasoning: "استدلال الوكيل حول السبب الجذري",
+      synthesisReasoning: "توليف الوكيل المستقل والاستدلال التنفيذي",
+      groundedIn: "مستند إلى:",
+      liveOllama: "Ollama · ",
+      deterministicEngine: "محرك حتمي",
+    },
+
+    chat: {
+      title: "مساعد EnerQ",
+      online: "متصل",
+      subtitle: "استدلال مستقل للمنشأة وأسئلة حول التوأم الرقمي",
+      greeting: "مرحبًا! أنا EnerQ، وكيلك المستقل للطاقة بالذكاء الاصطناعي. أنهيت التحقيق في ارتفاع الاستهلاك اليوم بمقدار 620 kWh (+24%)، مستندًا في استدلالي إلى قاعدة معرفة إدارة الطاقة الخاصة بالمنشأة. اسألني عن الأسباب الجذرية، أو محاكاة التوأم الرقمي، أو المفاضلات بين الحلول A وB وC.",
+      justNow: "الآن",
+      quickQuestions: [
+        "لماذا تم اختيار الحل C بدلًا من الحل B؟",
+        "كيف تُحسب درجة الثقة 87%؟",
+        "ما هو تأثير ذلك على راحة الشاغلين؟",
+        "كم يبلغ التوفير المالي شهريًا؟",
+      ],
+      thinkingReply: "EnerQ يصوغ استدلالًا هندسيًا...",
+      placeholder: "اسأل EnerQ عن هدر الطاقة أو الحلول أو مدة الاسترداد...",
+      fallbackReply: (kwh: number | string) => `استنادًا إلى محاكاة التوأم الرقمي الفيزيائية، يزيل الحل C ${kwh} kWh يوميًا من تشغيل التكييف بعد الدوام وحمل الخمول لمحطات العمل مع الحفاظ الكامل على راحة ساعات العمل.`,
+      networkErrorReply: "استدلال وكيل EnerQ: يسترد الحل C ما مقداره 93 kWh يوميًا (خفض 15.0%) عبر قطع التكييف عند 18:00 وإيقاف 38 محطة عمل خاملة.",
+    },
+
+    auditReportModal: {
+      title: "موجز تدقيق الطاقة التنفيذي والتحقق من التوأم الرقمي",
+      generatedBy: (ref: string) => `صادر عن وكيل EnerQ الذكي • مرجع التدقيق: ${ref}`,
+      print: "طباعة / PDF",
+      targetFacility: "المنشأة المستهدفة",
+      area: "المساحة:",
+      workingHoursLabel: "ساعات الدوام:",
+      tariffRate: "تعرفة الكهرباء:",
+      status: "الحالة:",
+      verifiedOptimized: "تم التحقق والتحسين",
+      anomalyIdentified: "تم رصد شذوذ ذاتيًا",
+      section1Title: "1. الملخص التنفيذي ونتيجة التشخيص",
+      section1Body1: (kwh: number, pct: number, variance: number, baseline: number) =>
+        `رصد EnerQ ذاتيًا استهلاكًا يوميًا بلغ ${kwh} kWh، بما يمثّل شذوذًا بنسبة +${pct}% (زيادة قدرها ${variance} kWh) عن خط الأساس الموسمي البالغ ${baseline} kWh.`,
+      section1Body2: "حددت قراءات العدادات الفرعية أن وحدة التكييف المركزية سعة 20 kW عملت 4 ساعات متواصلة بعد جدول الإغلاق الساعة 18:00 (18:00–22:00)، بما يمثّل 80 kWh من الهدر المباشر. في الوقت ذاته، استهلكت 38 دائرة محطات عمل غير مُدارة 13-15 kWh من الطاقة الخاملة خارج ساعات الدوام.",
+      section2Title: "2. مصفوفة الحلول المحاكاة بالتوأم الرقمي",
+      tableOption: "الخيار",
+      tableIntervention: "التدخل",
+      tableDailyKwh: "kWh يوميًا",
+      tableReduction: "الخفض",
+      tableMonthlyRecapture: "الاسترداد الشهري",
+      tableRiskScore: "المخاطر / الدرجة",
+      interventionA: "قطع جدول التكييف عند 18:00",
+      interventionB: "رفع الثرموستات (+1.5°C)",
+      interventionC: "قطع التكييف المدمج + سكون الخمول",
+      best: "الأفضل",
+      section3Title: "3. خارطة طريق التنفيذ الموصى بها",
+      roadmap: [
+        { title: "تجاوز جدول نظام إدارة المبنى (BMS)", body: "تحديث جدول المبرد المركزي للتحول تلقائيًا إلى وضع التراجع الليلي عند 18:00 من الاثنين إلى الجمعة." },
+        { title: "أتمتة مرحّلات وحدات توزيع الطاقة الذكية", body: "جدولة سياسة سكون أحمال المقابس غير الحرجة لمحطات العمل عند 18:15." },
+        { title: "آلية احتياط بحركة الإشغال", body: "السماح بتجاوزات تبريد يدوية لمدة ساعة واحدة بزر ضغط للعاملين المصرح لهم بالدوام الإضافي." },
+        { title: "التحقق المستقل", body: "يتحقق وكيل EnerQ باستمرار من منحنى الحمل على مدار 24 ساعة يوميًا عند الساعة 18:05." },
+      ],
+      section4Title: "إجمالي القيمة المستردة سنويًا",
+      annualEnergyAvoided: "الطاقة الموفرة سنويًا",
+      co2Offset: "خفض انبعاثات ثاني أكسيد الكربون",
+      perYear: "/ سنويًا",
+      footerNote: "منصة وكيل الطاقة المستقل EnerQ • دون أي توسّع غير مطلوب في النطاق",
+      close: "إغلاق الموجز",
+    },
+
+    settings: {
+      title: "تعرفة المنشأة ومعايير النموذج",
+      facilityProfile: "ملف المنشأة",
+      tariffCurrency: "عملة التعرفة",
+      electricityTariff: (symbol: string) => `تعرفة الكهرباء (${symbol}/kWh)`,
+      tariffNote: "تعديل التعرفة يعيد احتساب العائد اليومي والشهري والسنوي عبر جميع السيناريوهات المحاكاة فوريًا.",
+      workingSchedule: "جدول الدوام:",
+      workingHoursValue: (start: string, end: string) => `${start} – ${end} (10 ساعات)`,
+      expectedBaseline: "خط الأساس اليومي المتوقع:",
+      cancel: "إلغاء",
+      applyParameters: "تطبيق المعايير",
+    },
+
+    verification: {
+      actionImplemented: "تم تنفيذ الإجراء — محاكاة",
+      title: "تم التحقق من التحسين المحاكى",
+      statement: "تم تحديث المنشأة الافتراضية بالسياسة المعتمدة:",
+      statementPolicy: "قطع تكييف تلقائي عند 18:00 + سكون خمول محطات العمل",
+      verifiedLine: (pct: number) => `تم التحقق بنجاح من خفض الطاقة المتوقع بنسبة ${pct}%.`,
+      beforeImplementation: "قبل التنفيذ",
+      uncontrolledOvertime: "تشغيل إضافي غير مُتحكَّم به",
+      afterImplementation: "بعد التنفيذ",
+      monthlyRecaptured: "القيمة المستردة شهريًا:",
+      annualRecaptured: "القيمة المستردة سنويًا:",
+      annualCo2: "خفض ثاني أكسيد الكربون سنويًا:",
+      nextAudit: "التدقيق المستقل القادم:",
+      disclaimer: "ملاحظة: هذه نتيجة محاكاة توأم رقمي تم التحقق منها بناءً على نموذج طاقة المنشأة.",
+      done: "تم — العودة إلى مركز الوكيل الحي",
+      perMonth: "/ شهريًا",
+      perYear: "/ سنويًا",
+    },
   },
 } as const;
 
 export function getTranslation(lang: Language) {
   return translations[lang];
+}
+
+// ---------------------------------------------------------------------------
+// Data-driven content: solution copy (name/tagline/description/pros/risk)
+// keyed by solution id. Kept as plain functions rather than folded into
+// `translations` because pros for Solution C interpolate the solution's own
+// computed numbers (savings %, kWh, recaptured amount).
+// ---------------------------------------------------------------------------
+export function getSolutionText(lang: Language, sol: SolutionNumbers, currencySymbol: string) {
+  if (lang === "en") {
+    switch (sol.id) {
+      case "A":
+        return {
+          name: "Enforce HVAC Schedule Cutoff",
+          shortLabel: "HVAC Schedule",
+          tagline: "Terminate cooling cycles promptly at 18:00",
+          description: "Automatically command the BMS chiller and AHU units to switch to standby mode at 18:00, matching official facility working hours.",
+          riskLevel: "Low",
+          pros: [
+            "Zero occupant comfort compromise during work hours",
+            "Simple BMS calendar schedule update",
+            "Reliable 50 kWh/day recapture",
+          ],
+        };
+      case "B":
+        return {
+          name: "Adjust HVAC Temperature Setpoint",
+          shortLabel: "HVAC Setpoint (+1.5°C)",
+          tagline: "Increase cooling setpoint from 22.0°C to 23.5°C",
+          description: "Raise the facility indoor temperature setpoint by 1.5°C across all floors to reduce overall compressor lift work during all operating hours.",
+          riskLevel: "Low / Medium",
+          pros: [
+            "Reduces daytime peak cooling load",
+            "No complex hardware modifications required",
+          ],
+        };
+      case "C":
+      default:
+        return {
+          name: "Optimized HVAC Schedule + Idle Equipment Sleep",
+          shortLabel: "Combined Optimization",
+          tagline: "Automated 18:00 HVAC cutoff + smart plug-load power down",
+          description: "Synchronize HVAC shutdown at 18:00 with building vacancy and trigger automated sleep states on 38 unmanaged workstation & peripheral circuits.",
+          riskLevel: "Low / Medium",
+          pros: [
+            `Highest energy reduction: ${sol.estimated_saving_pct}% (${sol.estimated_saving_kwh} kWh/day saved)`,
+            `Recovers ${currencySymbol}${Math.round(sol.monthly_cost_saving)}+/month in wasted energy`,
+            "Zero comfort disruption during core working hours (08:00-18:00)",
+            "Eliminates phantom vampire power across workstation circuits",
+          ],
+        };
+    }
+  }
+
+  switch (sol.id) {
+    case "A":
+      return {
+        name: "تفعيل قطع جدول التكييف",
+        shortLabel: "جدولة التكييف",
+        tagline: "إنهاء دورات التبريد فورًا عند الساعة 18:00",
+        description: "أمر آلي لوحدات المبرد والتكييف في نظام إدارة المبنى (BMS) للتحول إلى وضع الاستعداد عند 18:00، بما يطابق ساعات دوام المنشأة الرسمية.",
+        riskLevel: "منخفضة",
+        pros: [
+          "لا تأثير إطلاقًا على راحة الشاغلين خلال ساعات العمل",
+          "تحديث بسيط لجدول نظام إدارة المبنى",
+          "استرداد موثوق قدره 50 kWh يوميًا",
+        ],
+      };
+    case "B":
+      return {
+        name: "تعديل نقطة ضبط حرارة التكييف",
+        shortLabel: "نقطة ضبط التكييف (+1.5°C)",
+        tagline: "رفع نقطة ضبط التبريد من 22.0°C إلى 23.5°C",
+        description: "رفع نقطة ضبط درجة الحرارة الداخلية للمنشأة بمقدار 1.5°C في جميع الطوابق لتقليل حِمل عمل الضاغط الإجمالي خلال ساعات التشغيل كافة.",
+        riskLevel: "منخفضة إلى متوسطة",
+        pros: [
+          "يقلل ذروة حِمل التبريد النهاري",
+          "لا يتطلب أي تعديلات معقدة في الأجهزة",
+        ],
+      };
+    case "C":
+    default:
+      return {
+        name: "جدولة تكييف محسّنة + سكون التجهيزات الخاملة",
+        shortLabel: "التحسين المدمج",
+        tagline: "قطع تكييف تلقائي عند 18:00 + إيقاف ذكي لأحمال المقابس",
+        description: "مزامنة إيقاف التكييف عند الساعة 18:00 مع خلو المبنى، وتفعيل أوضاع سكون تلقائية لـ 38 دائرة محطة عمل وملحقاتها غير المُدارة.",
+        riskLevel: "منخفضة إلى متوسطة",
+        pros: [
+          `أعلى خفض للطاقة: ${sol.estimated_saving_pct}% (${sol.estimated_saving_kwh} kWh يوميًا)`,
+          `يسترد أكثر من ${currencySymbol}${Math.round(sol.monthly_cost_saving)} شهريًا من الطاقة المهدورة`,
+          "دون أي إخلال بالراحة خلال ساعات العمل الأساسية (08:00-18:00)",
+          "يقضي على استهلاك الطاقة الخفي في دوائر محطات العمل",
+        ],
+      };
+  }
 }

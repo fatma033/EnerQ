@@ -1,16 +1,20 @@
 import React, { useState } from "react";
 import { TrendingUp, Clock, AlertCircle, Sparkles, CheckCircle2 } from "lucide-react";
 import { HourlyEnergyPoint } from "../types";
+import { getTranslation } from "../i18n";
 
 interface LoadCurveChartProps {
   hourlyData: HourlyEnergyPoint[];
   activeScenarioName: string;
+  t: ReturnType<typeof getTranslation>;
 }
 
 export const LoadCurveChart: React.FC<LoadCurveChartProps> = ({
   hourlyData,
   activeScenarioName,
+  t,
 }) => {
+  const lc = t.loadCurve;
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(19); // default hover at 19:00 (after-hours waste peak)
 
   // Chart dimensions & scaling
@@ -62,11 +66,11 @@ export const LoadCurveChart: React.FC<LoadCurveChartProps> = ({
           <div className="flex items-center gap-2">
             <TrendingUp className="w-4 h-4 text-teal-400" />
             <h3 className="text-sm font-bold text-white tracking-tight">
-              24-Hour Load Profile & After-Hours Waste Analysis
+              {lc.title}
             </h3>
           </div>
           <p className="text-xs text-slate-400 mt-0.5">
-            Hourly consumption telemetry showing after-hours HVAC run vs baseline and simulated optimization
+            {lc.subtitle}
           </p>
         </div>
 
@@ -74,15 +78,15 @@ export const LoadCurveChart: React.FC<LoadCurveChartProps> = ({
         <div className="flex flex-wrap items-center gap-3 text-xs">
           <div className="flex items-center gap-1.5">
             <span className="w-3 h-0.5 bg-slate-400 inline-block" />
-            <span className="text-slate-400">Baseline (500 kWh)</span>
+            <span className="text-slate-400">{lc.baseline}</span>
           </div>
           <div className="flex items-center gap-1.5">
             <span className="w-3 h-1 bg-red-400 inline-block rounded" />
-            <span className="text-red-400 font-medium">Actual Anomaly (620 kWh)</span>
+            <span className="text-red-400 font-medium">{lc.actualAnomaly}</span>
           </div>
           <div className="flex items-center gap-1.5">
             <span className="w-3 h-1 bg-emerald-400 inline-block rounded" />
-            <span className="text-emerald-400 font-semibold">Simulated ({activeScenarioName})</span>
+            <span className="text-emerald-400 font-semibold">{lc.simulated(activeScenarioName)}</span>
           </div>
         </div>
       </div>
@@ -150,7 +154,7 @@ export const LoadCurveChart: React.FC<LoadCurveChartProps> = ({
             fontWeight="bold"
             letterSpacing="0.05em"
           >
-            WORKING HOURS (08:00 – 18:00)
+            {lc.workingHours}
           </text>
 
           {/* Background Band: Anomaly Waste Window (18:00 - 22:00) */}
@@ -173,7 +177,7 @@ export const LoadCurveChart: React.FC<LoadCurveChartProps> = ({
             fontWeight="bold"
             letterSpacing="0.05em"
           >
-            ⚠ AFTER-HOURS WASTE (+80 kWh)
+            {lc.afterHoursWaste}
           </text>
 
           {/* Area fill under Actual */}
@@ -275,38 +279,38 @@ export const LoadCurveChart: React.FC<LoadCurveChartProps> = ({
         <div className="mt-3 bg-slate-950/80 border border-slate-800 rounded-xl p-3 flex flex-wrap items-center justify-between gap-3 text-xs">
           <div className="flex items-center gap-2">
             <Clock className="w-4 h-4 text-teal-400" />
-            <span className="font-bold text-white text-sm">{hoveredPoint.timeLabel} Snapshot</span>
+            <span className="font-bold text-white text-sm">{lc.snapshot(hoveredPoint.timeLabel)}</span>
             {hoveredPoint.isAfterHoursWaste ? (
               <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-red-950 text-red-300 border border-red-800">
-                ⚠ After-Hours Overtime Active (+20 kW Draw)
+                {lc.overtimeActive}
               </span>
             ) : hoveredPoint.isWorkingHour ? (
               <span className="px-2 py-0.5 rounded text-[10px] font-medium bg-slate-800 text-slate-300">
-                Normal Business Hours
+                {lc.normalBusinessHours}
               </span>
             ) : (
               <span className="px-2 py-0.5 rounded text-[10px] font-medium bg-slate-800 text-slate-400">
-                Night Standby Mode
+                {lc.nightStandby}
               </span>
             )}
           </div>
 
           <div className="flex items-center flex-wrap gap-4">
             <div>
-              <span className="text-slate-400 mr-1">Measured Load:</span>
+              <span className="text-slate-400 mr-1">{lc.measuredLoad}</span>
               <span className="font-bold text-red-400">{hoveredPoint.actual_kwh} kW</span>
             </div>
             <div>
-              <span className="text-slate-400 mr-1">Baseline:</span>
+              <span className="text-slate-400 mr-1">{lc.baselineLabel}</span>
               <span className="font-medium text-slate-300">{hoveredPoint.baseline_kwh} kW</span>
             </div>
             <div>
-              <span className="text-slate-400 mr-1">Simulated:</span>
+              <span className="text-slate-400 mr-1">{lc.simulatedLabel}</span>
               <span className="font-bold text-emerald-400">{hoveredPoint.simulated_kwh} kW</span>
             </div>
             {hoveredPoint.actual_kwh > hoveredPoint.simulated_kwh && (
               <div className="text-emerald-300 font-semibold bg-emerald-950/80 px-2 py-0.5 rounded border border-emerald-800/60">
-                Savings: -{(hoveredPoint.actual_kwh - hoveredPoint.simulated_kwh).toFixed(1)} kW
+                {lc.savings((hoveredPoint.actual_kwh - hoveredPoint.simulated_kwh).toFixed(1))}
               </div>
             )}
           </div>

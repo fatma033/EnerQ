@@ -11,12 +11,15 @@ import {
   Zap,
 } from "lucide-react";
 import { ProposedSolution } from "../types";
+import { getTranslation, getSolutionText } from "../i18n";
 
 interface SolutionsComparisonProps {
   solutions: Record<"A" | "B" | "C", ProposedSolution>;
   selectedSolutionId: "A" | "B" | "C";
   onSelectSolution: (id: "A" | "B" | "C") => void;
   currencySymbol: string;
+  t: ReturnType<typeof getTranslation>;
+  language: "en" | "ar";
 }
 
 export const SolutionsComparison: React.FC<SolutionsComparisonProps> = ({
@@ -24,8 +27,11 @@ export const SolutionsComparison: React.FC<SolutionsComparisonProps> = ({
   selectedSolutionId,
   onSelectSolution,
   currencySymbol,
+  t,
+  language,
 }) => {
   const solutionList = [solutions.A, solutions.B, solutions.C];
+  const sc = t.solutionsComparison;
 
   return (
     <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-md">
@@ -34,16 +40,16 @@ export const SolutionsComparison: React.FC<SolutionsComparisonProps> = ({
           <div className="flex items-center gap-2">
             <Scale className="w-5 h-5 text-emerald-400" />
             <h3 className="text-base font-bold text-white tracking-tight">
-              Candidate Interventions & Multi-Criteria Decision Matrix
+              {sc.title}
             </h3>
           </div>
           <p className="text-xs text-slate-400 mt-0.5">
-            EnerQ evaluated 3 physics-simulated scenarios balancing energy savings, occupant comfort, and operational risk
+            {sc.subtitle}
           </p>
         </div>
 
         <span className="text-xs text-slate-400 font-medium">
-          Deterministic Simulation Output
+          {sc.deterministicOutput}
         </span>
       </div>
 
@@ -52,6 +58,7 @@ export const SolutionsComparison: React.FC<SolutionsComparisonProps> = ({
         {solutionList.map((sol) => {
           const isSelected = selectedSolutionId === sol.id;
           const isWinner = sol.is_recommended;
+          const solText = getSolutionText(language, sol, currencySymbol);
 
           return (
             <div
@@ -68,17 +75,17 @@ export const SolutionsComparison: React.FC<SolutionsComparisonProps> = ({
               {/* Badges */}
               <div className="flex items-center justify-between mb-2.5">
                 <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-                  Option {sol.id}
+                  {sc.option(sol.id)}
                 </span>
 
                 {isWinner ? (
                   <span className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-950 text-emerald-300 border border-emerald-600/70">
                     <Sparkles className="w-3 h-3 text-emerald-400" />
-                    EnerQ Best Pick
+                    {sc.bestPick}
                   </span>
                 ) : (
                   <span className="text-[11px] font-medium text-slate-400 bg-slate-800 px-2 py-0.5 rounded">
-                    Alternative
+                    {sc.alternative}
                   </span>
                 )}
               </div>
@@ -86,34 +93,34 @@ export const SolutionsComparison: React.FC<SolutionsComparisonProps> = ({
               {/* Title & Tagline */}
               <div>
                 <h4 className="text-base font-bold text-white tracking-tight">
-                  {sol.name}
+                  {solText.name}
                 </h4>
                 <p className="text-xs text-emerald-400 font-medium mt-0.5">
-                  {sol.tagline}
+                  {solText.tagline}
                 </p>
                 <p className="text-xs text-slate-300 mt-2 leading-relaxed line-clamp-3">
-                  {sol.description}
+                  {solText.description}
                 </p>
               </div>
 
               {/* Metrics Box */}
               <div className="my-3.5 p-3 rounded-xl bg-slate-950 border border-slate-800/90 space-y-2 text-xs">
                 <div className="flex items-center justify-between">
-                  <span className="text-slate-400">Energy Reduction:</span>
+                  <span className="text-slate-400">{sc.energyReduction}</span>
                   <span className="font-bold text-emerald-400 text-sm">
                     -{sol.estimated_saving_pct}% <span className="text-xs font-normal text-slate-400">({sol.estimated_saving_kwh} kWh/d)</span>
                   </span>
                 </div>
 
                 <div className="flex items-center justify-between">
-                  <span className="text-slate-400">Monthly Cost Recapture:</span>
+                  <span className="text-slate-400">{sc.monthlyCostRecapture}</span>
                   <span className="font-bold text-slate-100">
                     {currencySymbol}{sol.monthly_cost_saving} <span className="text-[10px] text-slate-400 font-normal">/mo</span>
                   </span>
                 </div>
 
                 <div className="flex items-center justify-between">
-                  <span className="text-slate-400">Operational Risk:</span>
+                  <span className="text-slate-400">{sc.operationalRisk}</span>
                   <span
                     className={`font-semibold ${
                       sol.risk_level === "Low"
@@ -123,12 +130,12 @@ export const SolutionsComparison: React.FC<SolutionsComparisonProps> = ({
                         : "text-amber-400"
                     }`}
                   >
-                    {sol.risk_level} (Score {sol.risk_score}/10)
+                    {solText.riskLevel} ({sc.score(sol.risk_score)})
                   </span>
                 </div>
 
                 <div className="flex items-center justify-between pt-1 border-t border-slate-800/80">
-                  <span className="text-slate-400">Decision Score:</span>
+                  <span className="text-slate-400">{sc.decisionScore}</span>
                   <div className="flex items-center gap-1.5">
                     <div className="w-16 h-2 rounded-full bg-slate-800 overflow-hidden">
                       <div
@@ -150,9 +157,9 @@ export const SolutionsComparison: React.FC<SolutionsComparisonProps> = ({
               {/* Pros / Key Highlights */}
               <div className="space-y-1 text-[11px] text-slate-300 mb-3">
                 <div className="font-semibold text-slate-400 text-[10px] uppercase tracking-wider mb-1">
-                  Key Trade-Offs:
+                  {sc.keyTradeOffs}
                 </div>
-                {sol.pros.slice(0, 2).map((pro, i) => (
+                {solText.pros.slice(0, 2).map((pro, i) => (
                   <div key={i} className="flex items-start gap-1.5 text-slate-300">
                     <CheckCircle2 className="w-3 h-3 text-emerald-400 shrink-0 mt-0.5" />
                     <span className="line-clamp-1">{pro}</span>
@@ -172,7 +179,7 @@ export const SolutionsComparison: React.FC<SolutionsComparisonProps> = ({
                     : "bg-slate-800 hover:bg-slate-700 text-slate-200"
                 }`}
               >
-                <span>{isSelected ? "Active in Digital Twin" : "Simulate in Digital Twin"}</span>
+                <span>{isSelected ? sc.activeInTwin : sc.simulateInTwin}</span>
                 <ArrowRight className="w-3.5 h-3.5" />
               </button>
             </div>
