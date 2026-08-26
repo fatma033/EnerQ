@@ -10,6 +10,17 @@ export interface PeriodReport {
   totalCo2SavedKg: number;
   dailyReductionKwh: number;
   dailyReductionPct: number;
+  // Three-way period comparison -- what the facility was designed to use,
+  // what it would burn through if the anomaly stayed unaddressed for the
+  // whole period, and what it actually uses once the recommended solution
+  // is applied. This is what makes the report a *comparison*, not just an
+  // isolated total.
+  baselineTotalKwh: number;
+  withoutEnerQTotalKwh: number;
+  withEnerQTotalKwh: number;
+  withoutEnerQTotalCost: number;
+  withEnerQTotalCost: number;
+  annualizedCostSaved: number;
 }
 
 /**
@@ -50,6 +61,9 @@ export class ReportsAgent {
     const days = this.daysInPeriod(period, customStart, customEnd);
     const rate = facility.config.electricity_rate;
 
+    const withoutEnerQTotalKwh = Math.round(facility.current_kwh * days);
+    const withEnerQTotalKwh = Math.round((facility.current_kwh - solution.estimated_saving_kwh) * days);
+
     return {
       period,
       days,
@@ -58,6 +72,12 @@ export class ReportsAgent {
       totalCo2SavedKg: Math.round(solution.estimated_saving_kwh * days * facility.config.co2_factor_kg_per_kwh),
       dailyReductionKwh: solution.estimated_saving_kwh,
       dailyReductionPct: solution.estimated_saving_pct,
+      baselineTotalKwh: Math.round(facility.baseline_kwh * days),
+      withoutEnerQTotalKwh,
+      withEnerQTotalKwh,
+      withoutEnerQTotalCost: Number((withoutEnerQTotalKwh * rate).toFixed(2)),
+      withEnerQTotalCost: Number((withEnerQTotalKwh * rate).toFixed(2)),
+      annualizedCostSaved: Number((solution.estimated_saving_kwh * rate * 365).toFixed(2)),
     };
   }
 }

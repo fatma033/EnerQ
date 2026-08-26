@@ -5,7 +5,7 @@ export const initialFacilityData: FacilityState = {
     id: "fac-comm-092",
     name: "Sultan Qaboos Complex for Youth, Culture and Entertainment",
     type: "Youth, Culture & Entertainment Complex (3 Floors)",
-    location: "Muscat, Oman",
+    location: "Salalah, Dhofar Governorate, Oman",
     area_sqm: 3200,
     working_hours: {
       start: "08:00",

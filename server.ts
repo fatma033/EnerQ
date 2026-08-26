@@ -185,9 +185,9 @@ number them inline ("first... second...") instead of a bulleted list.`;
 - Daily Normal Baseline: ${facilityData?.baseline_kwh || 500} kWh
 - Current Daily Measured: ${facilityData?.current_kwh || 620} kWh (+${facilityData?.variance_pct || 24}%)
 - HVAC Operating: ${facilityData?.hvac?.actual_hours || 14}h (normal: ${facilityData?.hvac?.normal_hours || 10}h), central chilled-water AHU on the rooftop, serves all 3 zones
-- Zone A (Floor 1, Open Office): standard workstations, occupied 08:00-18:00, no equipment anomaly reported here
-- Zone B (Floor 2, Tech Lab): 38 workstations/PCs and auxiliary monitors — THIS is the zone with the idle-power anomaly, drawing power after-hours while unoccupied; critical servers in this zone are on a separate always-on protected circuit, not part of the anomaly
-- Zone C (Floor 3, Executive Rooms): lighting on automated photocell schedule, normal
+- Zone A (Floor 1, Library): reading areas and shelving, occupied 08:00-18:00, no equipment anomaly reported here
+- Zone B (Floor 2, Computer Lab): 38 public-use workstations/PCs and auxiliary monitors — THIS is the zone with the idle-power anomaly, drawing power after-hours while unoccupied; the lab's servers are on a separate always-on protected circuit, not part of the anomaly
+- Zone C (Floor 3, Auditorium): 120-seat auditorium with theatre facility, lighting on automated photocell schedule, normal
 - Lighting: 140 LED fixtures, automated schedule, functioning normally, not a contributor to the anomaly
 - Rooftop Solar PV: 15 kWp array, ~50 kWh/day generation, functioning normally, not a contributor to the anomaly
 - Candidate interventions already simulated: Solution A (HVAC schedule cutoff only, ${facilityData?.solution_a_saving_pct ?? 8.1}% saving), Solution B (setpoint offset only, ${facilityData?.solution_b_saving_pct ?? 6.0}% saving), Solution C (combined HVAC cutoff + idle equipment sleep, ${facilityData?.solution_c_saving_pct ?? 15.0}% saving — the recommended pick, highest savings with low risk)
@@ -273,9 +273,9 @@ function generateDeterministicAnalysis(stage: string, facility: any, userPrompt?
     // same specific answers an English one does, not just fall through to
     // the generic summary. Zone letters stay Latin A/B/C in both languages.
     const q = normalizeArabic(userPrompt.toLowerCase());
-    const mentionsZoneA = /zone\s*a|open office|المنطقة\s*a|مكتب مفتوح/.test(q);
-    const mentionsZoneB = /zone\s*b|tech lab|\bpc\b|pcs|workstation|computer|المنطقة\s*b|مختبر تقني|حاسوب|حواسيب|كمبيوتر|محطة عمل|محطات عمل/.test(q);
-    const mentionsZoneC = /zone\s*c|exec|المنطقة\s*c|تنفيذي/.test(q);
+    const mentionsZoneA = /zone\s*a|library|open office|المنطقة\s*a|مكتبة|مكتب مفتوح/.test(q);
+    const mentionsZoneB = /zone\s*b|tech lab|computer lab|\bpc\b|pcs|workstation|computer|المنطقة\s*b|مختبر الحاسوب|مختبر تقني|حاسوب|حواسيب|كمبيوتر|محطة عمل|محطات عمل/.test(q);
+    const mentionsZoneC = /zone\s*c|auditorium|theatre|theater|المنطقة\s*c|مسرح|قاعة/.test(q);
     const mentionsServer = /server|خادم|خوادم/.test(q);
     const mentionsLighting = /light|إضاءة|انارة|إنارة/.test(q);
     const mentionsSolar = /solar|pv|panel|شمس|لوح/.test(q);
@@ -301,13 +301,13 @@ function generateDeterministicAnalysis(stage: string, facility: any, userPrompt?
     }
     if (mentionsZoneA) {
       return isAr
-        ? `المنطقة A (المكتب المفتوح) لا تساهم في الشذوذ. محطات العمل فيها تلتزم بدوام طبيعي من 08:00 حتى ${closeTime} دون أي مشكلة استهلاك خامل مسجّلة. الاستهلاك الزائد مصدره تجهيزات المنطقة B وتشغيل التكييف الإضافي على مستوى المبنى، وليس المنطقة A.`
-        : `Zone A (the open office) is not contributing to the anomaly. Its workstations follow normal 08:00 to ${closeTime} occupancy with no idle-power issue reported. The excess consumption traces to Zone B's equipment and the building-wide HVAC overtime, not Zone A.`;
+        ? `المنطقة A (المكتبة) لا تساهم في الشذوذ. تلتزم بدوام طبيعي من 08:00 حتى ${closeTime} دون أي مشكلة استهلاك خامل مسجّلة. الاستهلاك الزائد مصدره تجهيزات المنطقة B (مختبر الحاسوب) وتشغيل التكييف الإضافي على مستوى المبنى، وليس المنطقة A.`
+        : `Zone A (the library) is not contributing to the anomaly. It follows normal 08:00 to ${closeTime} occupancy with no idle-power issue reported. The excess consumption traces to Zone B's (Computer Lab) equipment and the building-wide HVAC overtime, not Zone A.`;
     }
     if (mentionsZoneC) {
       return isAr
-        ? `المنطقة C (الغرف التنفيذية) تعمل بشكل طبيعي — الإضاءة تتبع جدول الخلية الضوئية الآلي دون أي انحراف. إنها ليست مساهمة في شذوذ اليوم.`
-        : `Zone C (executive rooms) is operating normally — lighting follows the automated photocell schedule with no deviation. It is not a contributor to today's anomaly.`;
+        ? `المنطقة C (قاعة المسرح، 120 مقعدًا) تعمل بشكل طبيعي — الإضاءة تتبع جدول الخلية الضوئية الآلي دون أي انحراف. إنها ليست مساهمة في شذوذ اليوم.`
+        : `Zone C (the 120-seat auditorium) is operating normally — lighting follows the automated photocell schedule with no deviation. It is not a contributor to today's anomaly.`;
     }
     if (mentionsLighting) {
       return isAr

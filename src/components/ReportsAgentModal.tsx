@@ -136,14 +136,47 @@ export const ReportsAgentModal: React.FC<ReportsAgentModalProps> = ({
             </div>
           </div>
 
+          {/* Three-way comparison: what the facility should use, what it
+              would burn through unaddressed, and what it actually uses
+              with EnerQ's recommendation applied -- the actual comparison,
+              not just an isolated total. */}
+          <div>
+            <h5 className="text-[11px] font-bold text-slate-300 uppercase tracking-wider mb-2.5">{r.comparisonTitle}</h5>
+            <div className="space-y-2.5">
+              {([
+                { label: r.baselineLabel, kwh: report.baselineTotalKwh, cost: Number((report.baselineTotalKwh * facility.config.electricity_rate).toFixed(2)), color: "bg-slate-600" },
+                { label: r.withoutLabel, kwh: report.withoutEnerQTotalKwh, cost: report.withoutEnerQTotalCost, color: "bg-red-500" },
+                { label: r.withLabel, kwh: report.withEnerQTotalKwh, cost: report.withEnerQTotalCost, color: "bg-emerald-500" },
+              ] as const).map((row) => {
+                const maxKwh = report.withoutEnerQTotalKwh || 1;
+                const widthPct = Math.max(4, Math.min(100, (row.kwh / maxKwh) * 100));
+                return (
+                  <div key={row.label}>
+                    <div className="flex items-center justify-between text-[11px] mb-1">
+                      <span className="text-slate-400">{row.label}</span>
+                      <span className="font-semibold text-slate-200 tabular-nums">
+                        {row.kwh.toLocaleString()} kWh <span className="text-slate-500">· {symbol}{row.cost.toLocaleString()}</span>
+                      </span>
+                    </div>
+                    <div className="h-2.5 rounded-full bg-slate-950 border border-slate-800/80 overflow-hidden">
+                      <div className={`h-full rounded-full ${row.color}`} style={{ width: `${widthPct}%` }} />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div className="p-4 rounded-xl bg-emerald-950/40 border border-emerald-800/50 text-center">
               <div className="text-[10px] uppercase tracking-wider text-emerald-400 font-semibold">{r.totalEnergyAvoided}</div>
               <div className="text-xl font-extrabold text-white mt-1">{report.totalKwhAvoided.toLocaleString()} <span className="text-xs font-normal text-slate-400">kWh</span></div>
+              <div className="text-[10px] text-emerald-400/90 font-medium mt-0.5">-{report.dailyReductionPct}% {r.vsWithout}</div>
             </div>
             <div className="p-4 rounded-xl bg-teal-950/40 border border-teal-800/50 text-center">
               <div className="text-[10px] uppercase tracking-wider text-teal-400 font-semibold">{r.totalCostSaved}</div>
               <div className="text-xl font-extrabold text-white mt-1">{symbol}{report.totalCostSaved.toLocaleString()}</div>
+              <div className="text-[10px] text-slate-500 mt-0.5">{r.annualizedNote(symbol, report.annualizedCostSaved)}</div>
             </div>
             <div className="p-4 rounded-xl bg-slate-950 border border-slate-800 text-center">
               <div className="text-[10px] uppercase tracking-wider text-slate-400 font-semibold">{r.totalCo2Offset}</div>
