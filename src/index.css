@@ -37,6 +37,48 @@
   color: #020617;
 }
 
+/*
+ * Accent color families (emerald/teal/amber/red/purple) follow the exact same
+ * pattern throughout the app: a -950/-900 tinted background pairs with -300/-400
+ * bright text for badges, pills, and status cards. Same flip logic as slate:
+ * dark tints become light tints, bright text becomes dark/saturated text.
+ *
+ * --color-teal-900 is deliberately NOT remapped here — its only use in this
+ * codebase is the chat avatar (bg-teal-900 text-white), which needs to stay a
+ * genuinely dark teal for white text to read. Every other family's -900 (and
+ * all -950s) are confirmed badge-role by grep before being included below.
+ */
+[data-theme="light"] {
+  --color-emerald-950: #ecfdf5;
+  --color-emerald-900: #d1fae5;
+  --color-emerald-800: #6ee7b7;
+  --color-emerald-400: #059669;
+  --color-emerald-300: #047857;
+  --color-emerald-200: #065f46;
+
+  --color-teal-950: #f0fdfa;
+  --color-teal-800: #5eead4;
+  --color-teal-400: #0d9488;
+  --color-teal-300: #0f766e;
+
+  --color-amber-950: #fffbeb;
+  --color-amber-900: #fef3c7;
+  --color-amber-800: #fcd34d;
+  --color-amber-400: #d97706;
+  --color-amber-300: #b45309;
+
+  --color-red-950: #fef2f2;
+  --color-red-900: #fee2e2;
+  --color-red-800: #fca5a5;
+  --color-red-400: #dc2626;
+  --color-red-300: #b91c1c;
+  --color-red-200: #991b1b;
+
+  --color-purple-950: #faf5ff;
+  --color-purple-400: #9333ea;
+  --color-purple-300: #7e22ce;
+}
+
 /* Inverse collision: white text set directly on a solid teal button/bubble needs to
    stay white in light mode too (mid-tone teal keeps working as a button color in both
    themes) even though --color-white above was flipped dark for use as heading/value text. */
