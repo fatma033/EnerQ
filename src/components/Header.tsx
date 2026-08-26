@@ -74,74 +74,7 @@ export const Header: React.FC<HeaderProps> = ({
 
         {/* Right: Actions & Agent Controls */}
         <div className="flex items-center flex-wrap gap-2 sm:gap-3">
-          {/* Autonomy Level Toggle */}
-          <div
-            title="Controls what happens after EnerQ decides on a recommendation: wait for human approval, or execute autonomously for pre-authorized low-risk actions."
-            className="hidden lg:flex items-center gap-0.5 p-0.5 rounded-lg bg-slate-800/90 border border-slate-700/80"
-          >
-            <button
-              onClick={() => onSetAutonomyMode("approval")}
-              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-semibold transition-all ${
-                autonomyMode === "approval"
-                  ? "bg-teal-600 text-white shadow-sm"
-                  : "text-slate-400 hover:text-slate-200"
-              }`}
-            >
-              <Handshake className="w-3.5 h-3.5" />
-              <span>Approval</span>
-            </button>
-            <button
-              onClick={() => onSetAutonomyMode("autonomous")}
-              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-semibold transition-all ${
-                autonomyMode === "autonomous"
-                  ? "bg-amber-500 text-slate-950 shadow-sm"
-                  : "text-slate-400 hover:text-slate-200"
-              }`}
-            >
-              <ZapAuto className="w-3.5 h-3.5 fill-current" />
-              <span>Autonomous</span>
-            </button>
-          </div>
-
-          {/* Reasoning Engine Transparency Badge */}
-          {engineStatus && (
-            <div
-              title={engineStatus.hasApiKey ? "Live local Ollama reasoning, grounded in the RAG knowledge base" : "Deterministic reasoning engine (start Ollama locally for live LLM synthesis)"}
-              className="hidden md:flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-slate-800/90 border border-slate-700/80 text-[11px] text-slate-300"
-            >
-              <BrainCircuit className={`w-3.5 h-3.5 ${engineStatus.hasApiKey ? "text-emerald-400" : "text-slate-400"}`} />
-              <span className={engineStatus.hasApiKey ? "text-emerald-300 font-medium" : "text-slate-400"}>
-                {engineStatus.hasApiKey ? `Ollama ${engineStatus.model} + RAG` : "Deterministic Engine"}
-              </span>
-            </div>
-          )}
-
-          {/* Agent Activity Badge */}
-          <div className="hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-800/90 border border-slate-700/80 text-xs text-slate-300">
-            {isRunningAutonomous ? (
-              <>
-                <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
-                <span className="text-amber-300 font-medium">Agent Active: {currentStage}</span>
-              </>
-            ) : currentStage === "COMPLETED" ? (
-              <>
-                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
-                <span className="text-emerald-300 font-medium">Verified Optimized (-15%)</span>
-              </>
-            ) : currentStage !== "IDLE" ? (
-              <>
-                <AlertTriangle className="w-3.5 h-3.5 text-amber-400" />
-                <span className="text-slate-200 font-medium">Stage: {currentStage}</span>
-              </>
-            ) : (
-              <>
-                <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
-                <span className="text-slate-300">Autonomous Observer Ready</span>
-              </>
-            )}
-          </div>
-
-          {/* Run Autonomous Analysis Button */}
+          {/* Run Autonomous Analysis Button — the primary action, first and brightest */}
           <button
             id="btn-run-analysis"
             onClick={onRunAnalysis}
@@ -174,6 +107,76 @@ export const Header: React.FC<HeaderProps> = ({
           >
             <RotateCcw className="w-4 h-4" />
           </button>
+
+          {/* Status cluster: quieter than the primary action — informational, not the first thing to scan */}
+          <div className="hidden lg:flex items-center gap-1.5 pl-2 border-l border-slate-800">
+            {/* Autonomy Level Toggle */}
+            <div
+              title="Controls what happens after EnerQ decides on a recommendation: wait for human approval, or execute autonomously for pre-authorized low-risk actions."
+              className="flex items-center gap-0.5 p-0.5 rounded-md bg-slate-800/60"
+            >
+              <button
+                onClick={() => onSetAutonomyMode("approval")}
+                className={`flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium transition-all ${
+                  autonomyMode === "approval"
+                    ? "bg-teal-700/70 text-teal-100"
+                    : "text-slate-500 hover:text-slate-300"
+                }`}
+              >
+                <Handshake className="w-3 h-3" />
+                <span>Approval</span>
+              </button>
+              <button
+                onClick={() => onSetAutonomyMode("autonomous")}
+                className={`flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium transition-all ${
+                  autonomyMode === "autonomous"
+                    ? "bg-amber-700/70 text-amber-100"
+                    : "text-slate-500 hover:text-slate-300"
+                }`}
+              >
+                <ZapAuto className="w-3 h-3 fill-current" />
+                <span>Autonomous</span>
+              </button>
+            </div>
+
+            {/* Reasoning Engine Transparency Badge */}
+            {engineStatus && (
+              <div
+                title={engineStatus.hasApiKey ? "Live local Ollama reasoning, grounded in the RAG knowledge base" : "Deterministic reasoning engine (start Ollama locally for live LLM synthesis)"}
+                className="hidden xl:flex items-center gap-1 px-2 py-1 rounded-md text-[10px] text-slate-500"
+              >
+                <BrainCircuit className={`w-3 h-3 ${engineStatus.hasApiKey ? "text-emerald-500" : "text-slate-500"}`} />
+                <span className={engineStatus.hasApiKey ? "text-emerald-500" : "text-slate-500"}>
+                  {engineStatus.hasApiKey ? `Ollama ${engineStatus.model}` : "Deterministic"}
+                </span>
+              </div>
+            )}
+
+            {/* Agent Activity Badge */}
+            <div className="hidden xl:flex items-center gap-1.5 px-2 py-1 rounded-md text-[10px] text-slate-500">
+              {isRunningAutonomous ? (
+                <>
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
+                  <span className="text-amber-400">Active: {currentStage}</span>
+                </>
+              ) : currentStage === "COMPLETED" ? (
+                <>
+                  <CheckCircle2 className="w-3 h-3 text-emerald-500" />
+                  <span className="text-emerald-500">Verified</span>
+                </>
+              ) : currentStage !== "IDLE" ? (
+                <>
+                  <AlertTriangle className="w-3 h-3 text-amber-500" />
+                  <span>Stage: {currentStage}</span>
+                </>
+              ) : (
+                <>
+                  <Sparkles className="w-3 h-3 text-slate-500" />
+                  <span>Observer Ready</span>
+                </>
+              )}
+            </div>
+          </div>
 
           {/* Ask AI Agent Chat Drawer */}
           <button
