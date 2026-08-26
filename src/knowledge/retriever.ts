@@ -13,6 +13,24 @@ const STOPWORDS = new Set([
   "هو", "هي", "و", "أو", "كل", "مع", "كان", "كانت",
 ]);
 
+// Arabic morphology glues prefixes directly onto the next word with no
+// space -- بأجهزة ("with devices") vs أجهزة ("devices"), الحاسوب ("the
+// computer") vs حاسوب ("computer"). Without stripping these, a knowledge
+// chunk tagged "حاسوب" almost never exact-matches a real question, because
+// real questions almost always carry a preposition or definite article.
+// Longest prefixes first so "بال" strips as one unit, not "ب" then leaving
+// a dangling "ال". Only applied to tokens long enough that stripping can't
+// eat the whole word.
+const ARABIC_PREFIXES = ["وبال", "فبال", "كال", "بال", "وال", "فال", "لل", "ال", "و", "ف", "ب", "ك", "ل"];
+function stripArabicPrefix(word: string): string {
+  for (const p of ARABIC_PREFIXES) {
+    if (word.length > p.length + 2 && word.startsWith(p)) {
+      return word.slice(p.length);
+    }
+  }
+  return word;
+}
+
 /**
  * Tokenizes English and Arabic together. The original regex stripped every
  * non-ASCII character, which silently discarded all Arabic text before
@@ -24,6 +42,7 @@ function tokenize(text: string): string[] {
     .toLowerCase()
     .replace(/[^a-z0-9؀-ۿﭐ-﷿ﹰ-﻿\s%.-]/g, " ")
     .split(/\s+/)
+    .map(stripArabicPrefix)
     .filter((t) => t.length > 1 && !STOPWORDS.has(t));
 }
 
@@ -42,7 +61,11 @@ export function retrieveKnowledge(query: string, topK = 3): RetrievedChunk[] {
   const scored: RetrievedChunk[] = ENERGY_KNOWLEDGE_BASE.map((chunk) => {
     const contentTerms = tokenize(`${chunk.title} ${chunk.content} ${chunk.title_ar} ${chunk.content_ar}`);
     const contentSet = new Set(contentTerms);
-    const tagSet = new Set(chunk.tags.map((t) => t.toLowerCase()));
+    // Tokenized, not just lowercased: a multi-word tag like "أجهزة حاسوب"
+    // needs to match on either of its words individually, and needs the
+    // same prefix-stripping as everything else or "الحاسوب" in a real
+    // question won't match a tag written as "حاسوب".
+    const tagSet = new Set(tokenize(chunk.tags.join(" ")));
 
     let score = 0;
     for (const term of queryTerms) {

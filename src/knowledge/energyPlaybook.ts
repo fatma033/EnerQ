@@ -63,7 +63,7 @@ export const ENERGY_KNOWLEDGE_BASE: KnowledgeChunk[] = [
     title: "Unmanaged Idle / Vampire Plug Load",
     title_ar: "حمل المقابس الخامل غير المُدار",
     category: "plug-loads",
-    tags: ["plug load", "idle", "workstation", "vampire power", "equipment", "حمل خامل", "محطة عمل", "طاقة شبح", "تجهيزات"],
+    tags: ["plug load", "idle", "workstation", "computer", "pc", "vampire power", "equipment", "حمل خامل", "محطة عمل", "حاسوب", "حواسيب", "كمبيوتر", "أجهزة حاسوب", "طاقة شبح", "تجهيزات"],
     content:
       "Workstations, monitors, and auxiliary peripherals left powered outside working hours ('vampire power') typically account for 5-15% of total idle-period draw in office facilities. Smart PDU/power-strip sleep policies or OS-level wake-on-LAN shutdown scripts are low-risk, low-cost interventions that combine well with an HVAC schedule fix because they attack the same after-hours time window without touching climate control.",
     content_ar:

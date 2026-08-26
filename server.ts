@@ -17,7 +17,11 @@ const PORT = Number(process.env.PORT) || 3000;
 // that mismatch causes a silent ECONNREFUSED on every request even
 // though `curl localhost:11434` works fine from the same machine.
 const OLLAMA_BASE_URL = process.env.OLLAMA_BASE_URL || "http://127.0.0.1:11434/v1";
-const OLLAMA_MODEL = process.env.OLLAMA_MODEL || "llama3.2:3b";
+// Qwen2.5, not Llama 3.2: at the same ~3B size (safe for an 8GB-RAM, no-GPU
+// laptop) Qwen's multilingual training data gives it meaningfully stronger
+// Arabic quality and instruction-following -- the language this demo is
+// actually judged in. `ollama pull qwen2.5:3b-instruct` to get it locally.
+const OLLAMA_MODEL = process.env.OLLAMA_MODEL || "qwen2.5:3b-instruct";
 
 app.use(express.json());
 
@@ -69,12 +73,34 @@ function buildRetrievalQuery(stage: string | undefined, facilityData: any, userP
   }
 }
 
+// NOTE: JavaScript's \b (word boundary) is defined off \w = [A-Za-z0-9_] only --
+// it does NOT recognize Arabic letters as "word" characters. A pattern like
+// /شكرا\b/ silently never matches, because \b never fires next to Arabic
+// script at all. Every Arabic alternative below uses a (?=\s|$) lookahead
+// instead of \b for exactly that reason -- this is the same class of bug
+// that broke the RAG tokenizer earlier (see retriever.ts).
+//
+// Separately: Arabic diacritics (tashkeel) are optional and their presence/
+// placement varies by how someone types -- "مرحباً" (tanween after the alef,
+// the standard placement) and "مرحبًا" (tanween before it) are both "valid"
+// typed text for the same word, and neither matches a regex written for the
+// other. normalizeArabic() strips diacritics and folds alef/yaa/taa-marbuta
+// variants so matching is robust to however the user actually typed it --
+// applied before every Arabic-aware match in this file, not just greetings.
+function normalizeArabic(text: string): string {
+  // Diacritics only -- NOT folding alef/yaa/taa-marbuta variants, since the
+  // keyword regexes below are written against specific unfolded spellings
+  // (e.g. "محطة") and folding here without also updating every pattern
+  // literal would silently break those matches instead of fixing anything.
+  return text.replace(/[ً-ْٰـ]/g, ""); // tashkeel (fatha/damma/kasra/sukun/tanween/etc.) + tatweel
+}
+
 const HOW_ARE_YOU_RE = /how are you|how'?s it going|what'?s up|كيف حالك|كيفك|شلونك|اخبارك|أخبارك/i;
-const THANKS_RE = /^\s*(thanks|thank you|شكرا|شكرًا)\b/i;
-const GREETING_RE = /^\s*(hi|hello|hey|good morning|good afternoon|good evening)\b|^\s*(مرحبا|مرحبًا|اهلا|أهلاً|السلام عليكم|صباح الخير|مساء الخير|هلا)\b/i;
+const THANKS_RE = /^\s*(thanks|thank you)\b|^\s*(شكرا)(?=\s|$)/i;
+const GREETING_RE = /^\s*(hi|hello|hey|good morning|good afternoon|good evening)\b|^\s*(مرحبا|اهلا|السلام عليكم|وعليكم السلام|صباح الخير|مساء الخير|هلا)(?=\s|$)/i;
 
 function isSmallTalk(prompt: string): boolean {
-  const p = prompt.trim();
+  const p = normalizeArabic(prompt.trim());
   return GREETING_RE.test(p) || HOW_ARE_YOU_RE.test(p) || THANKS_RE.test(p);
 }
 
@@ -84,7 +110,10 @@ function isSmallTalk(prompt: string): boolean {
  * different replies) before pivoting to what it can help with.
  */
 function smallTalkReply(prompt: string, lang: "en" | "ar"): string {
-  const p = prompt.trim();
+  const p = normalizeArabic(prompt.trim());
+  if (/^\s*(السلام عليكم|سلام عليكم)/i.test(p)) {
+    return "وعليكم السلام ورحمة الله وبركاته! أنا EnerQ، وكيلك المستقل للطاقة. تفضّل، كيف أقدر أساعدك؟";
+  }
   if (THANKS_RE.test(p)) {
     return lang === "ar" ? "على الرحب! أخبرني إن احتجت أي شيء آخر." : "You're welcome! Let me know if there's anything else you'd like to dig into.";
   }
@@ -123,7 +152,9 @@ app.post("/api/agent/reason", async (req, res) => {
   try {
     const languageInstruction =
       lang === "ar"
-        ? `Respond ONLY in Modern Standard Arabic (فصحى). The user's app is set to Arabic — every reply must be in Arabic regardless of what language the facility data or knowledge excerpts below are written in. Keep numbers, unit abbreviations (kWh, kW, °C), and zone/solution labels (Zone A/B/C, Solution A/B/C) in their original Latin form — only the surrounding sentences are Arabic.`
+        ? `Respond ONLY in Modern Standard Arabic (فصحى) — full, fluent Arabic sentences, not a mix of Arabic and English prose. The user's app is set to Arabic — every reply must be in Arabic regardless of what language the facility data or knowledge excerpts below are written in.
+
+The ONLY things allowed to stay in Latin script are: numbers, unit abbreviations (kWh, kW, °C, %), and the short zone/solution labels "Zone A/B/C" and "Solution A/B/C" exactly as written. Every other word — including technical and engineering terms like "anomaly", "idle load", "after-hours", "root cause" — MUST be translated into Arabic (e.g. شذوذ, حمل خامل, بعد ساعات الدوام, السبب الجذري). Do not leave an English phrase untranslated just because it sounds technical.`
         : `Respond in English.`;
 
     const systemInstruction = `You are EnerQ, an autonomous AI Energy Agent and Digital Energy Manager for a commercial facility.
@@ -239,7 +270,7 @@ function generateDeterministicAnalysis(stage: string, facility: any, userPrompt?
     // render.yaml), so an Arabic-language question needs to route to the
     // same specific answers an English one does, not just fall through to
     // the generic summary. Zone letters stay Latin A/B/C in both languages.
-    const q = userPrompt.toLowerCase();
+    const q = normalizeArabic(userPrompt.toLowerCase());
     const mentionsZoneA = /zone\s*a|open office|المنطقة\s*a|مكتب مفتوح/.test(q);
     const mentionsZoneB = /zone\s*b|tech lab|\bpc\b|pcs|workstation|computer|المنطقة\s*b|مختبر تقني|حاسوب|حواسيب|كمبيوتر|محطة عمل|محطات عمل/.test(q);
     const mentionsZoneC = /zone\s*c|exec|المنطقة\s*c|تنفيذي/.test(q);
