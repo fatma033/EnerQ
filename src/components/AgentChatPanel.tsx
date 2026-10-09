@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Send, Bot, User, ArrowRight } from "lucide-react";
+import { Send, User, ArrowRight } from "lucide-react";
 import { FacilityState, ProposedSolution } from "../types";
 import { getTranslation, Language } from "../i18n";
 
@@ -154,7 +154,7 @@ export const AgentChatPanel: React.FC<AgentChatPanelProps> = ({
       {variant === "compact" && (
         <div className="p-4 bg-slate-950 border-b border-slate-800 flex items-center gap-2.5">
           <div className="p-2 rounded-xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
-            <Bot className="w-5 h-5" />
+            <img src="/enerq-mark.svg" alt="" className="w-5 h-5" />
           </div>
           <div>
             <h3 className="text-sm font-bold text-white flex items-center gap-1.5">
@@ -188,7 +188,7 @@ export const AgentChatPanel: React.FC<AgentChatPanelProps> = ({
           >
             {msg.sender === "agent" && (
               <div className="w-7 h-7 rounded-lg bg-emerald-950 text-emerald-400 border border-emerald-800 flex items-center justify-center shrink-0 mt-0.5">
-                <Bot className="w-4 h-4" />
+                <img src="/enerq-mark.svg" alt="" className="w-4 h-4" />
               </div>
             )}
 
@@ -268,7 +268,7 @@ export const AgentChatPanel: React.FC<AgentChatPanelProps> = ({
         {isLoading && (
           <div className="flex gap-2.5 items-center text-xs text-slate-400">
             <div className="w-7 h-7 rounded-lg bg-emerald-950 text-emerald-400 border border-emerald-800 flex items-center justify-center shrink-0">
-              <Bot className="w-4 h-4" />
+              <img src="/enerq-mark.svg" alt="" className="w-4 h-4" />
             </div>
             <div className="p-2.5 rounded-xl bg-slate-950 border border-slate-800 flex items-center gap-2">
               <div className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />

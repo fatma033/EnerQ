@@ -97,8 +97,13 @@ export const AuditReportModal: React.FC<AuditReportModalProps> = ({
           {/* Print-only masthead: buttons above are hidden when printing, so
               the title still needs to appear somewhere in the printed output. */}
           <div className="print-only hidden">
-            <h1 className="text-lg font-bold text-white">{ar.title}</h1>
-            <p className="text-slate-400">{ar.generatedBy(`ENERQ-${new Date().toISOString().slice(0, 7).replace("-", "")}`)}</p>
+            <div className="flex items-center gap-3">
+              <img src="/logo.svg" alt="EnerQ" className="w-10 h-10 rounded-lg shrink-0" />
+              <div>
+                <h1 className="text-lg font-bold text-white">{ar.title}</h1>
+                <p className="text-slate-400">{ar.generatedBy(`ENERQ-${new Date().toISOString().slice(0, 7).replace("-", "")}`)}</p>
+              </div>
+            </div>
           </div>
 
           {/* Facility Header Section */}

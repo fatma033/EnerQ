@@ -225,6 +225,7 @@ export default function App() {
         <div className={`${show("home")} flex flex-col flex-1 min-h-[70vh] items-center`}>
           <div className="flex flex-col flex-1 w-full max-w-3xl min-h-0">
             <div className="mb-3 text-center">
+              <img src="/logo.svg" alt="EnerQ" className="w-14 h-14 rounded-2xl mx-auto mb-3 shadow-lg shadow-emerald-500/20" />
               <h1 className="text-lg font-bold text-white tracking-tight">{t.home.heading}</h1>
               <p className="text-xs text-slate-400 mt-0.5">{t.home.subheading}</p>
             </div>
@@ -350,6 +351,7 @@ export default function App() {
       <footer className="mt-auto border-t border-slate-900 bg-slate-950 py-4 px-4 sm:px-8 text-center text-xs text-slate-500">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2">
           <div className="flex items-center gap-2">
+            <img src="/enerq-mark.svg" alt="" className="w-4 h-4" />
             <span className="font-semibold text-slate-400">EnerQ</span>
             <span>•</span>
             <span>{t.footer.tagline}</span>

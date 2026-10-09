@@ -1,6 +1,4 @@
-<img src="public/logo-512.png" alt="EnerQ" width="72" />
-
-# EnerQ
+<img src="brand/enerq-lockup-2000.png" alt="EnerQ — إنر كيو" width="280" />
 
 **[Live demo → enerq.onrender.com](https://enerq.onrender.com)**
 
