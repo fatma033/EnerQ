@@ -69,7 +69,7 @@ export const Header: React.FC<HeaderProps> = ({
           <div className="min-w-0">
             <div className="flex items-center gap-2 min-w-0">
               <h1 className="text-xl font-bold tracking-tight text-white flex items-center gap-1.5 shrink-0">
-                EnerQ <span className="text-emerald-400 font-semibold text-[10px] px-2 py-0.5 rounded-full bg-emerald-950/80 border border-emerald-800/60 uppercase tracking-wider whitespace-nowrap">{t.tagline}</span>
+                {language === "ar" ? "إنر كيو" : "EnerQ"} <span className="text-emerald-400 font-semibold text-[10px] px-2 py-0.5 rounded-full bg-emerald-950/80 border border-emerald-800/60 uppercase tracking-wider whitespace-nowrap">{t.tagline}</span>
               </h1>
               <span className="text-slate-500 text-xs hidden sm:inline shrink-0">•</span>
               <span
