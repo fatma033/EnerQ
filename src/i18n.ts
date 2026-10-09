@@ -44,7 +44,7 @@ export const translations = {
     runAnalysis: "Run EnerQ Analysis",
     runningAnalysis: "Running Agent Pipeline...",
     resetTooltip: "Reset to Initial Anomaly State",
-    askAgent: "Ask Agent",
+    askAgent: "Ask the Guide",
     auditReport: "Audit Report",
     approval: "Approval",
     autonomous: "Autonomous",
@@ -61,10 +61,10 @@ export const translations = {
     stepOf: (n: number) => `Step ${n} of 9`,
 
     agentNames: {
-      observer: "Observer Agent",
-      diagnostic: "Diagnostic Agent",
-      simulation: "Simulation Agent",
-      action: "Action Agent",
+      observer: "Observer",
+      diagnostic: "Investigator",
+      simulation: "Simulator",
+      action: "Executor",
     },
 
     stages: {
@@ -96,7 +96,7 @@ export const translations = {
 
     home: {
       heading: "Ask EnerQ",
-      subheading: "Your autonomous AI energy agent — ask about the anomaly, the solutions, or how the system itself works.",
+      subheading: "Your AI energy guide — ask about the anomaly, the solutions, or how the system itself works.",
     },
 
     facility: {
@@ -123,7 +123,7 @@ export const translations = {
 
     footer: {
       tagline: "Your Autonomous AI Energy Expert & Digital Twin",
-      note: "From Energy Data to Intelligent Action • 4 Coordinated Agents + Deterministic Physics + Local Ollama RAG Reasoning",
+      note: "From Energy Data to Intelligent Action • 6 Coordinated Agents + Deterministic Physics + Local Ollama RAG Reasoning",
     },
 
     anomalyBanner: {
@@ -357,10 +357,10 @@ export const translations = {
     },
 
     chat: {
-      title: "EnerQ Assistant",
+      title: "EnerQ Guide",
       online: "Online",
       subtitle: "Autonomous Facility Reasoning & Digital Twin Q&A",
-      greeting: "Hello! I am EnerQ, your autonomous AI Energy Agent. I have completed the investigation of today's 620 kWh consumption spike (+24%), grounding my reasoning in a facility energy-management knowledge base. Ask me anything about the root causes, the Digital Twin simulation, or the trade-offs between Solutions A, B, and C.",
+      greeting: "Hello! I'm the EnerQ Guide. I've completed the investigation of today's 620 kWh consumption spike (+24%), grounding my reasoning in a facility energy-management knowledge base. Ask me anything about the root causes, the Digital Twin simulation, or the trade-offs between Solutions A, B, and C, and I'll guide you to the next step.",
       justNow: "Just now",
       quickQuestions: [
         "Why was Solution C chosen over Solution B?",
@@ -466,7 +466,7 @@ export const translations = {
     },
 
     reportsAgent: {
-      agentName: "ReportsAgent",
+      agentName: "Reporter",
       badge: "Autonomous Reporting",
       subtitle: "Ask for a report over any period — week, month, year, or a custom range",
       periodWeek: "This Week",
@@ -492,19 +492,19 @@ export const translations = {
       trendDayLabel: (day: number) => `Day ${day}`,
       methodologyNote: (dailyKwh: number, dailyPct: number, days: number) =>
         `Projected by extrapolating the recommended solution's verified daily reduction (${dailyKwh} kWh, ${dailyPct}%) across ${days} days — not fabricated historical variation. Once the facility has real multi-day telemetry, this would report actual measured savings per IPMVP-style verification instead.`,
-      footerNote: "EnerQ ReportsAgent • Same template as the Audit Report, scoped to a period",
+      footerNote: "EnerQ Reporter • Same template as the Audit Report, scoped to a period",
       download: "Download PDF",
       close: "Close",
     },
   },
   ar: {
-    tagline: "متعدد الوكلاء بالذكاء الاصطناعي",
-    subtitle: "خبير طاقة مستقل للمنشأة وتوأم رقمي",
+    tagline: "منظومة ذكاء اصطناعي متعددة الوكلاء",
+    subtitle: "خبير طاقة ذاتي التشغيل مع توأم رقمي للمنشأة",
     rate: "التعرفة",
-    runAnalysis: "تشغيل تحليل EnerQ",
-    runningAnalysis: "جارٍ تشغيل الوكيل...",
+    runAnalysis: "تشغيل تحليل إنر كيو",
+    runningAnalysis: "جارٍ التحليل...",
     resetTooltip: "إعادة التعيين لحالة الشذوذ الأولية",
-    askAgent: "اسأل الوكيل",
+    askAgent: "اسأل المرشد",
     auditReport: "تقرير التدقيق",
     approval: "بموافقة",
     autonomous: "مستقل",
@@ -512,35 +512,35 @@ export const translations = {
     themeToLight: "التبديل إلى الوضع الفاتح",
     themeToDark: "التبديل إلى الوضع الداكن",
     langToggle: "English",
-    liveSync: "حالة المنشأة المستقلة • مزامنة حية",
+    liveSync: "حالة المنشأة • مزامنة حية",
 
-    timelineTitle: "سير عمل EnerQ متعدد الوكلاء",
-    timelineSubtitle: "خط أنابيب القرار والتحقق المستقل",
-    reasoningActive: "الاستدلال المستقل نشط",
-    workflowCompleted: "اكتملت العملية وتم التحقق",
+    timelineTitle: "مسار عمل إنر كيو متعدد الوكلاء",
+    timelineSubtitle: "من الرصد إلى القرار والتحقق الذاتي",
+    reasoningActive: "الاستدلال الذاتي قيد العمل",
+    workflowCompleted: "اكتمل المسار وتم التحقق",
     stepOf: (n: number) => `الخطوة ${n} من 9`,
 
     agentNames: {
-      observer: "وكيل المراقبة",
-      diagnostic: "وكيل التشخيص",
-      simulation: "وكيل المحاكاة",
-      action: "وكيل التنفيذ",
+      observer: "الراصد",
+      diagnostic: "المحقّق",
+      simulation: "المحاكي",
+      action: "المنفّذ",
     },
 
     stages: {
-      OBSERVE: { label: "مراقبة", description: "استيعاب قراءات العدادات وجداول المنشأة" },
-      DETECT: { label: "اكتشاف", description: "تقييم الانحراف عن خط الأساس (+24%)" },
-      INVESTIGATE: { label: "تحقيق", description: "عزل السبب الجذري (تكييف 4 ساعات إضافية)" },
-      GENERATE_SOLUTIONS: { label: "توليد", description: "صياغة حلول مرشحة (A، B، C)" },
-      SIMULATE: { label: "محاكاة", description: "اختبار السيناريوهات في التوأم الرقمي" },
-      COMPARE: { label: "مقارنة", description: "تقييم متعدد المعايير" },
-      DECIDE: { label: "قرار", description: "اختيار أفضل تدخل آمن" },
-      RECOMMEND: { label: "توصية", description: "تقديم خطة قابلة للتنفيذ مع العائد المالي" },
-      VERIFY: { label: "تحقق", description: "محاكاة التنفيذ بعد الموافقة (-15%)" },
+      OBSERVE: { label: "مراقبة", description: "قراءة بيانات العدادات وجداول المنشأة" },
+      DETECT: { label: "اكتشاف", description: "قياس الانحراف عن خط الأساس (+24%)" },
+      INVESTIGATE: { label: "تحقيق", description: "تحديد السبب الجذري (تكييف يعمل 4 ساعات إضافية)" },
+      GENERATE_SOLUTIONS: { label: "توليد", description: "اقتراح حلول بديلة (A وB وC)" },
+      SIMULATE: { label: "محاكاة", description: "تجربة السيناريوهات على التوأم الرقمي" },
+      COMPARE: { label: "مقارنة", description: "مقارنة الحلول بعدة معايير" },
+      DECIDE: { label: "قرار", description: "اختيار الحل الأفضل والأكثر أمانًا" },
+      RECOMMEND: { label: "توصية", description: "عرض خطة تنفيذ مع العائد المالي" },
+      VERIFY: { label: "تحقق", description: "التحقق من النتيجة بعد الموافقة (-15%)" },
     },
 
     nav: {
-      home: "اسأل EnerQ",
+      home: "اسأل إنر كيو",
       dashboard: "لوحة التحكم",
       twin: "التوأم الرقمي",
       solutions: "الحلول",
@@ -548,8 +548,8 @@ export const translations = {
     },
 
     home: {
-      heading: "اسأل EnerQ",
-      subheading: "وكيلك المستقل للطاقة بالذكاء الاصطناعي — اسأل عن الشذوذ، أو الحلول، أو كيفية عمل النظام نفسه.",
+      heading: "اسأل إنر كيو",
+      subheading: "مرشدك الذكي في إدارة الطاقة — اسأل عن الارتفاع غير الطبيعي، أو الحلول، أو طريقة عمل النظام نفسه.",
     },
 
     tabs: {
@@ -582,22 +582,22 @@ export const translations = {
     severity: { critical: "حرجة", warning: "تحذير", info: "معلومة" },
 
     footer: {
-      tagline: "خبير الطاقة المستقل بالذكاء الاصطناعي والتوأم الرقمي الخاص بك",
-      note: "من بيانات الطاقة إلى إجراء ذكي • 4 وكلاء منسّقون + فيزياء طاقة حتمية + استدلال محلي عبر Ollama وقاعدة معرفة RAG",
+      tagline: "خبيرك الذكي للطاقة، ومعه توأمك الرقمي",
+      note: "من بيانات الطاقة إلى إجراء ذكي • 6 وكلاء يعملون بتناسق + فيزياء طاقة حتمية + استدلال محلي عبر Ollama وقاعدة معرفة RAG",
     },
 
     anomalyBanner: {
-      verifiedBadge: "تم التحقق من الإجراء المحاكى",
+      verifiedBadge: "تم التحقق من الإجراء (محاكاة)",
       verifiedTwinState: "حالة التوأم الرقمي: مُحسّنة",
       verifiedTitle: "سياسة جدولة التكييف وإيقاف الخمول نشطة",
       verifiedSummary: (before: number, after: number, pct: number, symbol: string, monthly: number) =>
         `انخفض استهلاك المنشأة من ${before} kWh إلى ${after} kWh يوميًا (-${pct}%). استرداد يُقدَّر بـ ${symbol}${monthly} شهريًا.`,
       dailyReduction: "الخفض اليومي",
       netEfficiency: "صافي الكفاءة",
-      detectedBadge: "تم اكتشاف شذوذ ذاتيًا",
+      detectedBadge: "رصد النظام ارتفاعًا غير طبيعي",
       exceedsThreshold: (pct: number) => `يتجاوز عتبة خط الأساس بنسبة +${pct}%`,
       spikeTitle: (kwh: number) => `ارتفاع طاقة يومي: +${kwh} kWh فوق خط الأساس المتوقع`,
-      spikeSummaryPrefix: "رصد المسح الذاتي للقراءات استهلاكًا غير طبيعي. المُسبب الرئيسي:",
+      spikeSummaryPrefix: "رصد النظام استهلاكًا غير طبيعي. السبب الرئيسي:",
       spikeSummarySuffix: "(18:00–22:00) إلى جانب أحمال مقابس خاملة غير مُدارة لمحطات العمل.",
       spikeDriver: "استمرار تشغيل التكييف المركزي 4 ساعات بعد نهاية الدوام",
       actualToday: "الفعلي اليوم",
@@ -626,13 +626,13 @@ export const translations = {
     },
 
     recommendation: {
-      badge: "توصية وكيل EnerQ الذكي",
+      badge: "توصية إنر كيو",
       scoreLabel: (score: number) => `درجة محرك القرار متعدد المعايير: ${score}/100`,
       responsibleTeamName: "فريق المرافق والعمليات",
       notified: (team: string) => `تم إشعار: ${team}`,
       reminderSent: "تم إرسال تذكير — الإجراء لا يزال معلقًا",
       escalated: "تم التصعيد إلى الإدارة",
-      whyTitle: "لماذا يوصي EnerQ بهذا الإجراء؟",
+      whyTitle: "لماذا يوصي إنر كيو بهذا الإجراء؟",
       whyBody1: (pct: number, kwh: number) => `أثبتت محاكاة التوأم الرقمي أن هذا التدخل يحقق أعلى خفض للطاقة (${pct}% / ${kwh} kWh يوميًا) من خلال معالجة كل من ساعات التكييف الإضافية بعد الدوام وحمل الخمول غير المُدار لمحطات العمل الذي تم رصده أثناء التحقيق.`,
       whyBody2: "راحة الشاغلين خلال ساعات العمل الرسمية (08:00–18:00) محفوظة بنسبة 100% دون أي انجراف حراري.",
       dailyReduction: "الخفض اليومي",
@@ -650,10 +650,10 @@ export const translations = {
 
     solutionsComparison: {
       title: "التدخلات المرشحة ومصفوفة القرار متعددة المعايير",
-      subtitle: "قيّم EnerQ 3 سيناريوهات محاكاة فيزيائية توازن بين توفير الطاقة وراحة الشاغلين والمخاطر التشغيلية",
+      subtitle: "قيّم إنر كيو 3 سيناريوهات محاكاة فيزيائية توازن بين توفير الطاقة وراحة الشاغلين والمخاطر التشغيلية",
       deterministicOutput: "مخرجات محاكاة حتمية",
       option: (id: string) => `الخيار ${id}`,
-      bestPick: "الاختيار الأفضل من EnerQ",
+      bestPick: "اختيار إنر كيو الأفضل",
       alternative: "بديل",
       energyReduction: "خفض الطاقة:",
       monthlyCostRecapture: "الاسترداد الشهري للتكلفة:",
@@ -728,7 +728,7 @@ export const translations = {
       customizeCutoffLabel: "وقت قطع التكييف",
       customizeSetpointLabel: "إزاحة نقطة الضبط",
       customizeIdleLabel: "تضمين سياسة سكون التجهيزات الخاملة",
-      customizeNote: "معاينة فقط — تُحتسب فوريًا، ولا تغيّر توصية الوكيل نفسها إلا بعد الموافقة عليها.",
+      customizeNote: "معاينة فقط — تُحتسب فوريًا، ولا تغيّر التوصية نفسها إلا بعد الموافقة عليها.",
       schematicTitle: "وحدة التكييف المركزية (AHU)",
       paramsTitle: "المعايير التشغيلية",
       operatingHours: "ساعات التشغيل",
@@ -806,21 +806,21 @@ export const translations = {
     },
 
     agentLog: {
-      terminalTitle: "سجل نشاط وكلاء EnerQ المتعددين",
+      terminalTitle: "سجل نشاط وكلاء إنر كيو",
       thinking: "جارٍ التفكير...",
-      standingBy: 'في وضع الاستعداد. اضغط "تشغيل تحليل EnerQ" أو اختر مرحلة لبدء خط الأنابيب المستقل.',
-      rootCauseReasoning: "استدلال الوكيل حول السبب الجذري",
-      synthesisReasoning: "توليف الوكيل المستقل والاستدلال التنفيذي",
+      standingBy: 'في وضع الاستعداد. اضغط "تشغيل تحليل إنر كيو" أو اختر مرحلة لبدء المسار.',
+      rootCauseReasoning: "تحليل السبب الجذري",
+      synthesisReasoning: "الخلاصة والاستدلال التنفيذي",
       groundedIn: "مستند إلى:",
       liveOllama: "Ollama · ",
       deterministicEngine: "محرك حتمي",
     },
 
     chat: {
-      title: "مساعد EnerQ",
+      title: "مرشد إنر كيو",
       online: "متصل",
-      subtitle: "استدلال مستقل للمنشأة وأسئلة حول التوأم الرقمي",
-      greeting: "EnerQ، وكيلك المستقل بالذكاء الاصطناعي للطاقة، أهلاً بك! أنهيت التحقيق في ارتفاع الاستهلاك اليوم بمقدار 620 kWh (+24%)، مستندًا في استدلالي إلى قاعدة معرفة إدارة الطاقة الخاصة بالمنشأة. اسألني عن الأسباب الجذرية، أو محاكاة التوأم الرقمي، أو المفاضلات بين الحلول A وB وC.",
+      subtitle: "اسأل عن المنشأة والتوأم الرقمي واحصل على إرشاد خطوة بخطوة",
+      greeting: "أهلاً بك، أنا مرشد إنر كيو. انتهيتُ من تحليل ارتفاع استهلاك اليوم إلى 620 kWh (+24%) بالاعتماد على قاعدة المعرفة الخاصة بإدارة الطاقة في المنشأة. اسألني عن الأسباب الجذرية، أو محاكاة التوأم الرقمي، أو المقارنة بين الحلول A وB وC، وسأرشدك إلى الخطوة التالية.",
       justNow: "الآن",
       quickQuestions: [
         "لماذا تم اختيار الحل C بدلًا من الحل B؟",
@@ -829,9 +829,9 @@ export const translations = {
         "كم يبلغ التوفير المالي شهريًا؟",
       ],
       thinkingReply: "جارٍ التفكير...",
-      placeholder: "اسأل EnerQ عن هدر الطاقة أو الحلول أو مدة الاسترداد...",
+      placeholder: "اسأل إنر كيو عن هدر الطاقة أو الحلول أو مدة الاسترداد...",
       fallbackReply: (kwh: number | string) => `استنادًا إلى محاكاة التوأم الرقمي الفيزيائية، يزيل الحل C ${kwh} kWh يوميًا من تشغيل التكييف بعد الدوام وحمل الخمول لمحطات العمل مع الحفاظ الكامل على راحة ساعات العمل.`,
-      networkErrorReply: "استدلال وكيل EnerQ: يسترد الحل C ما مقداره 93 kWh يوميًا (خفض 15.0%) عبر قطع التكييف عند 18:00 وإيقاف 38 محطة عمل خاملة.",
+      networkErrorReply: "خلاصة إنر كيو: يوفّر الحل C ما مقداره 93 kWh يوميًا (خفض 15.0%) عبر قطع التكييف عند 18:00 وإيقاف 38 محطة عمل خاملة.",
       showInTwin: (id: string) => `عرض الحل ${id} في التوأم الرقمي`,
       navDashboard: "الذهاب إلى لوحة التحكم",
       navTwin: "الذهاب إلى التوأم الرقمي",
@@ -841,7 +841,7 @@ export const translations = {
 
     auditReportModal: {
       title: "موجز تدقيق الطاقة التنفيذي والتحقق من التوأم الرقمي",
-      generatedBy: (ref: string) => `صادر عن وكيل EnerQ الذكي • مرجع التدقيق: ${ref}`,
+      generatedBy: (ref: string) => `صادر عن إنر كيو • مرجع التدقيق: ${ref}`,
       print: "تنزيل PDF",
       printTooltip: "يفتح مربع حوار الطباعة في المتصفح — اختر \"حفظ كملف PDF\" كوجهة للتنزيل.",
       comparisonTitle: "قبل مقابل بعد",
@@ -857,10 +857,10 @@ export const translations = {
       tariffRate: "تعرفة الكهرباء:",
       status: "الحالة:",
       verifiedOptimized: "تم التحقق والتحسين",
-      anomalyIdentified: "تم رصد شذوذ ذاتيًا",
+      anomalyIdentified: "تم رصد ارتفاع غير طبيعي",
       section1Title: "1. الملخص التنفيذي ونتيجة التشخيص",
       section1Body1: (kwh: number, pct: number, variance: number, baseline: number) =>
-        `رصد EnerQ ذاتيًا استهلاكًا يوميًا بلغ ${kwh} kWh، بما يمثّل شذوذًا بنسبة +${pct}% (زيادة قدرها ${variance} kWh) عن خط الأساس الموسمي البالغ ${baseline} kWh.`,
+        `رصد إنر كيو استهلاكًا يوميًا بلغ ${kwh} kWh، بما يمثّل شذوذًا بنسبة +${pct}% (زيادة قدرها ${variance} kWh) عن خط الأساس الموسمي البالغ ${baseline} kWh.`,
       section1Body2: "حددت قراءات العدادات الفرعية أن وحدة التكييف المركزية سعة 20 kW عملت 4 ساعات متواصلة بعد جدول الإغلاق الساعة 18:00 (18:00–22:00)، بما يمثّل 80 kWh من الهدر المباشر. في الوقت ذاته، استهلكت 38 دائرة محطات عمل غير مُدارة 13-15 kWh من الطاقة الخاملة خارج ساعات الدوام.",
       section2Title: "2. مصفوفة الحلول المحاكاة بالتوأم الرقمي",
       tableOption: "الخيار",
@@ -878,13 +878,13 @@ export const translations = {
         { title: "تجاوز جدول نظام إدارة المبنى (BMS)", body: "تحديث جدول المبرد المركزي للتحول تلقائيًا إلى وضع التراجع الليلي عند 18:00 من الاثنين إلى الجمعة." },
         { title: "أتمتة مرحّلات وحدات توزيع الطاقة الذكية", body: "جدولة سياسة سكون أحمال المقابس غير الحرجة لمحطات العمل عند 18:15." },
         { title: "آلية احتياط بحركة الإشغال", body: "السماح بتجاوزات تبريد يدوية لمدة ساعة واحدة بزر ضغط للعاملين المصرح لهم بالدوام الإضافي." },
-        { title: "التحقق المستقل", body: "يتحقق وكيل EnerQ باستمرار من منحنى الحمل على مدار 24 ساعة يوميًا عند الساعة 18:05." },
+        { title: "التحقق المستمر", body: "يراجع المنفّذ منحنى الحمل على مدار 24 ساعة يوميًا عند الساعة 18:05 للتأكد من استمرار النتيجة." },
       ],
       section4Title: "إجمالي القيمة المستردة سنويًا",
       annualEnergyAvoided: "الطاقة الموفرة سنويًا",
       co2Offset: "خفض انبعاثات ثاني أكسيد الكربون",
       perYear: "/ سنويًا",
-      footerNote: "منصة وكيل الطاقة المستقل EnerQ • دون أي توسّع غير مطلوب في النطاق",
+      footerNote: "إنر كيو • منظومة وكلاء الطاقة الذكية",
       close: "إغلاق الموجز",
     },
 
@@ -918,16 +918,16 @@ export const translations = {
       monthlyRecaptured: "القيمة المستردة شهريًا:",
       annualRecaptured: "القيمة المستردة سنويًا:",
       annualCo2: "خفض ثاني أكسيد الكربون سنويًا:",
-      nextAudit: "التدقيق المستقل القادم:",
+      nextAudit: "المراجعة الذاتية القادمة:",
       disclaimer: "ملاحظة: هذه نتيجة محاكاة توأم رقمي تم التحقق منها بناءً على نموذج طاقة المنشأة.",
-      done: "تم — العودة إلى مركز الوكيل الحي",
+      done: "تم — العودة إلى لوحة المتابعة الحية",
       perMonth: "/ شهريًا",
       perYear: "/ سنويًا",
     },
 
     reportsAgent: {
-      agentName: "وكيل التقارير",
-      badge: "تقارير مستقلة",
+      agentName: "المراسل",
+      badge: "تقارير عند الطلب",
       subtitle: "اطلب تقريرًا عن أي فترة — أسبوع، شهر، سنة، أو نطاق مخصص",
       periodWeek: "هذا الأسبوع",
       periodMonth: "هذا الشهر",
@@ -941,8 +941,8 @@ export const translations = {
       totalCo2Offset: "خفض ثاني أكسيد الكربون",
       comparisonTitle: "مقارنة الفترة",
       baselineLabel: "خط الأساس المتوقع (الجدول المثالي)",
-      withoutLabel: "بدون EnerQ (استمرار الشذوذ)",
-      withLabel: "مع EnerQ (محسّن)",
+      withoutLabel: "بدون إنر كيو (استمرار الارتفاع)",
+      withLabel: "مع إنر كيو (بعد التحسين)",
       vsWithout: "مقابل عدم المعالجة",
       annualizedNote: (symbol: string, amount: number) => `≈ ${symbol}${amount.toLocaleString()} سنويًا إذا استمر`,
       breakdownTitle: "مصدر التوفير",
@@ -952,7 +952,7 @@ export const translations = {
       trendDayLabel: (day: number) => `اليوم ${day}`,
       methodologyNote: (dailyKwh: number, dailyPct: number, days: number) =>
         `تقدير مبني على مد التخفيض اليومي المتحقق منه للحل الموصى به (${dailyKwh} كيلوواط/ساعة، ${dailyPct}%) عبر ${days} يومًا — وليس تباينًا تاريخيًا مُختلقًا. عندما تتوفر للمنشأة قراءات فعلية متعددة الأيام، سيُبلّغ هذا عن التوفير المقاس فعليًا وفق بروتوكول تحقق على طراز IPMVP بدلاً من ذلك.`,
-      footerNote: "وكيل التقارير EnerQ • نفس قالب تقرير التدقيق، مخصص لفترة زمنية",
+      footerNote: "المراسل — إنر كيو • بنفس قالب تقرير التدقيق، لفترة زمنية تحددها",
       download: "تنزيل PDF",
       close: "إغلاق",
     },

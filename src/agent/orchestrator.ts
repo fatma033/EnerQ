@@ -51,7 +51,7 @@ export interface AgentContext {
 }
 
 /**
- * EnerQAgentOrchestrator -- the coordinator, not a fifth agent.
+ * EnerQAgentOrchestrator -- the coordinator, not another agent.
  *
  * It owns the shared AgentContext (the one thing every specialist agent
  * needs to read from and write into), the pub/sub that keeps the React

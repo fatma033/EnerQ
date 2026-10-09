@@ -41,7 +41,7 @@ export interface PeriodReport {
 }
 
 /**
- * ReportsAgent -- a fifth, standalone agent focused entirely on reporting.
+ * ReportsAgent -- the sixth, standalone agent (the Reporter) focused entirely on reporting.
  * Unlike the four pipeline agents (Observer/Diagnostic/Simulation/Action),
  * it doesn't participate in the observe-to-verify loop; it's invoked
  * on demand from the Reports panel to summarize the *implication* of the

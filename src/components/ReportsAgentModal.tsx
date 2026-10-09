@@ -15,7 +15,7 @@ interface ReportsAgentModalProps {
 
 /**
  * The visible face of ReportsAgent (src/agent/agents/reportsAgent.ts) --
- * a fifth agent, separate from the observe-to-verify pipeline, whose only
+ * the sixth agent, separate from the observe-to-verify pipeline, whose only
  * job is turning the recommended daily reduction rate into a period report
  * (week/month/year/custom range) in the same visual template as the rest
  * of the site, with a real PDF export.

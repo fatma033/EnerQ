@@ -2,7 +2,7 @@
 
 **[Live demo → enerq.onrender.com](https://enerq.onrender.com)**
 
-A multi-agent AI energy system for commercial facilities, piloted on the Sultan Qaboos Complex for Youth, Culture and Entertainment in Salalah, Oman. Five specialist agents — coordinated, not one monolithic script — observe consumption, investigate waste, simulate candidate interventions against a facility Digital Twin, decide, act, and report. EnerQ doesn't stop at a dashboard alert; it acts, and it explains itself in fluent Arabic or English.
+A multi-agent AI energy system for commercial facilities, piloted on the Sultan Qaboos Complex for Youth, Culture and Entertainment in Salalah, Oman. Six agents (a chat Guide, the Observer, Investigator, Simulator and Executor pipeline, and the Reporter) — coordinated, not one monolithic script — observe consumption, investigate waste, simulate candidate interventions against a facility Digital Twin, decide, act, and report. EnerQ doesn't stop at a dashboard alert; it acts, and it explains itself in fluent Arabic or English.
 
 ## The agents
 
@@ -14,7 +14,7 @@ Each agent owns 2-3 of the pipeline's nine stages and lives in its own file unde
 | **DiagnosticAgent** | Investigate, Generate Solutions | Isolates root cause, drafts candidate interventions | [`diagnosticAgent.ts`](src/agent/agents/diagnosticAgent.ts) |
 | **SimulationAgent** | Simulate, Compare, Decide | Runs the Digital Twin, scores candidates, picks a winner | [`simulationAgent.ts`](src/agent/agents/simulationAgent.ts) |
 | **ActionAgent** | Recommend, Verify | Hands off for approval (or executes autonomously), then confirms the result | [`actionAgent.ts`](src/agent/agents/actionAgent.ts) |
-| **ReportsAgent** | — (on-demand, outside the pipeline) | Turns the verified daily reduction rate into a week/month/year/custom period report — comparison, cost/CO₂ totals, a projected savings graph, and a root-cause breakdown | [`reportsAgent.ts`](src/agent/agents/reportsAgent.ts) |
+| **Reporter** (`ReportsAgent`) | — (on-demand, outside the pipeline) | Turns the verified daily reduction rate into a week/month/year/custom period report — comparison, cost/CO₂ totals, a projected savings graph, and a root-cause breakdown | [`reportsAgent.ts`](src/agent/agents/reportsAgent.ts) |
 
 The split isn't cosmetic: each agent is independently replaceable. ObserverAgent, for instance, is the one piece you'd swap to point at a real BMS/IoT feed instead of mock telemetry — nothing else in the system needs to change.
 

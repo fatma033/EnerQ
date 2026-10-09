@@ -195,7 +195,7 @@ export const Header: React.FC<HeaderProps> = ({
           </div>
 
           {/* Ask AI Agent Chat Drawer */}
-          {/* ReportsAgent — the 5th agent, period-based reports */}
+          {/* ReportsAgent — the 6th agent, period-based reports */}
           <button
             id="btn-open-reports-agent"
             onClick={onOpenReportsAgent}

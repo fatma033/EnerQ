@@ -141,12 +141,12 @@ function smallTalkReply(prompt: string, lang: "en" | "ar"): string {
   }
   if (HOW_ARE_YOU_RE.test(p)) {
     return lang === "ar"
-      ? "بخير، شكرًا لسؤالك! أراقب حاليًا شذوذًا بنسبة +24% في الاستهلاك، وأنا جاهز لأشرح لك أي جزء منه. بم تودّ أن أبدأ؟"
+      ? "بخير، شكرًا لسؤالك! أتابع حاليًا ارتفاعًا غير طبيعي بنسبة +24% في الاستهلاك، وأنا جاهز لأشرح لك أي جزء منه. بم تودّ أن أبدأ؟"
       : "I'm doing well, thanks for asking! Right now I'm watching a +24% consumption anomaly on this facility, and I'm happy to walk you through any part of it. Where would you like to start?";
   }
   return lang === "ar"
-    ? "أهلاً بك! اسألني عن سبب ارتفاع الاستهلاك اليوم، أو عن أي من الحلول A وB وC، أو حتى عن كيفية عمل النظام نفسه."
-    : "Hey there! I'm the EnerQ energy agent. Ask me why consumption spiked today, about Solutions A, B, or C, or even how this whole system works.";
+    ? "أهلاً بك، أنا مرشد إنر كيو. اسألني عن سبب ارتفاع الاستهلاك اليوم، أو عن أي من الحلول A وB وC، أو حتى عن كيفية عمل النظام نفسه."
+    : "Hey there! I'm the EnerQ Guide. Ask me why consumption spiked today, about Solutions A, B, or C, or even how this whole system works.";
 }
 
 // RAG-grounded, local Ollama-powered reasoning endpoint
@@ -178,10 +178,10 @@ app.post("/api/agent/reason", async (req, res) => {
 
 The ONLY things allowed to stay in Latin script are: numbers, unit abbreviations (kWh, kW, °C, %), and the short zone/solution labels "Zone A/B/C" and "Solution A/B/C" exactly as written. Every other word — including technical and engineering terms like "anomaly", "idle load", "after-hours", "root cause" — MUST be translated into Arabic (e.g. شذوذ, حمل خامل, بعد ساعات الدوام, السبب الجذري). Do not leave an English phrase untranslated just because it sounds technical.
 
-Do not write "EnerQ" in the middle of an Arabic sentence -- when text mixes a right-to-left Arabic sentence with a Latin word placed mid-sentence, that word renders in a visually confusing position once the line wraps. If you need to refer to yourself by name, put "EnerQ" as the very first word of the reply, or simply don't self-name at all (the chat header already shows who's speaking).`
+Never write the product name in Latin letters inside an Arabic reply. Whenever you need the name, write it in Arabic as "إنر كيو". When you must name the agents in Arabic, use: المرشد (you, the chat guide), الراصد (Observer), المحقّق (Investigator), المحاكي (Simulator), المنفّذ (Executor), المراسل (Reporter) — never prefix them with "وكيل". Prefer natural, fluent phrasing.`
         : `Respond in English.`;
 
-    const systemInstruction = `You are EnerQ, an autonomous AI Energy Agent and Digital Energy Manager for a commercial facility.
+    const systemInstruction = `You are the EnerQ Guide (in Arabic: مرشد إنر كيو), the chat assistant of EnerQ, a multi-agent AI energy system for a commercial facility. EnerQ has six agents in total: you (the Guide, who answers questions and walks users through the interface), the Observer, Investigator, Simulator and Executor (the analysis pipeline), and the Reporter (period reports). Speak as the Guide, never as one of the other agents.
 You reason from the facility telemetry (including per-zone and per-system detail below) and the provided knowledge-base
 excerpts. Ground every claim in the data given — do NOT invent numbers, zones, or systems beyond what's provided.
 If a knowledge-base excerpt supports a claim, you may reference it briefly (e.g. "per HVAC schedule best practice").
@@ -328,7 +328,7 @@ function generateDeterministicAnalysis(stage: string, facility: any, userPrompt?
     const mentionsComfort = /comfort|راحة/.test(q);
     const mentionsMoney = /money|cost|save|\$|omr|save|مال|تكلفة|توفير|فلوس/.test(q);
     const mentionsWhatIsEnerq = /what (is|does) enerq|who are you|ما هو enerq|ما هو انيرك|من انت|من أنت|ايش تسوي/.test(q);
-    const mentionsMultiAgent = /multi.?agent|four agents|4 agents|وكلاء متعدد|أربعة وكلاء|وكلاء متعددون/.test(q);
+    const mentionsMultiAgent = /multi.?agent|(four|4|six|6) agents|the agents|وكلاء متعدد|أربعة وكلاء|ستة وكلاء|وكلاء متعددون|الوكلاء/.test(q);
     const mentionsRAG = /\brag\b|knowledge base|citation|قاعدة معرفة|استشهاد/.test(q);
     const mentionsIoT = /\biot\b|internet of things|real (sensor|deployment)|bms|bacnet|انترنت الاشياء|إنترنت الأشياء|حساسات|تطبيق حقيقي/.test(q);
     const mentionsDigitalTwinWhat = /what is (a |the )?digital twin|ما هو التوأم|ما التوأم الرقمي/.test(q);
@@ -381,13 +381,13 @@ function generateDeterministicAnalysis(stage: string, facility: any, userPrompt?
     }
     if (mentionsWhatIsEnerq) {
       return isAr
-        ? `EnerQ نظام طاقة متعدد الوكلاء بالذكاء الاصطناعي، وأنا وكيله الذي يراقب استهلاك هذه المنشأة، يكتشف الشذوذ، يحقق في السبب، يحاكي الحلول في توأم رقمي، ثم يقرر ويتحقق من النتيجة — أربعة وكلاء متخصصون ينسّقون هذا المسار بدلاً من نص برمجي واحد.`
-        : `I'm EnerQ, a multi-agent AI energy system. I monitor this facility's consumption, detect anomalies, investigate root cause, simulate fixes in a Digital Twin, then decide and verify the result — four specialist agents coordinate that pipeline instead of one monolithic script.`;
+        ? `إنر كيو منظومة طاقة ذكية متعددة الوكلاء. أنا المرشد الذي يرافقك في الواجهة، وخلفي أربعة وكلاء يراقبون استهلاك المنشأة ويكتشفون الارتفاع غير الطبيعي ويحددون سببه ويجرّبون الحلول على توأم رقمي ثم ينفّذون ويتحققون من النتيجة، ووكيل سادس يُعدّ التقارير — ستة وكلاء يعملون معًا بدلاً من نص برمجي واحد.`
+        : `EnerQ is a multi-agent AI energy system. I'm the Guide who walks you through the interface; behind me four agents monitor this facility's consumption, detect anomalies, investigate the root cause, simulate fixes in a Digital Twin, then execute and verify the result, and a sixth agent prepares reports — six agents working together instead of one monolithic script.`;
     }
     if (mentionsMultiAgent) {
       return isAr
-        ? `أربعة وكلاء متخصصون: وكيل المراقبة (مراقبة، اكتشاف)، وكيل التشخيص (تحقيق، توليد حلول)، وكيل المحاكاة (محاكاة، مقارنة، قرار)، ووكيل التنفيذ (توصية، تحقق). منسّق مشترك يستدعيهم بالتتابع لكنه لا يحتوي على الاستدلال نفسه — كل وكيل مستقل وقابل للاستبدال بمفرده.`
-        : `Four specialist agents: ObserverAgent (observe, detect), DiagnosticAgent (investigate, generate solutions), SimulationAgent (simulate, compare, decide), and ActionAgent (recommend, verify). A shared coordinator calls them in sequence but holds none of the reasoning itself — each agent is independent and individually replaceable.`;
+        ? `ستة وكلاء: المرشد يرافقك في الواجهة؛ والراصد (رصد واكتشاف)، والمحقّق (تحقيق واقتراح حلول)، والمحاكي (محاكاة ومقارنة وقرار)، والمنفّذ (توصية وتحقق) يشكّلون مسار التحليل؛ والمراسل يعدّ التقارير عند الطلب. منسّق مشترك يستدعيهم بالتتابع دون أن يتولى الاستدلال بنفسه، وكلٌّ منهم مستقل وقابل للاستبدال.`
+        : `Six agents: the Guide walks you through the interface; the Observer (observe, detect), Investigator (investigate, generate solutions), Simulator (simulate, compare, decide) and Executor (recommend, verify) form the analysis pipeline; the Reporter prepares period reports on demand. A shared coordinator calls them in sequence but holds none of the reasoning itself — each agent is independent and individually replaceable.`;
     }
     if (mentionsRAG) {
       return isAr
@@ -396,8 +396,8 @@ function generateDeterministicAnalysis(stage: string, facility: any, userPrompt?
     }
     if (mentionsIoT) {
       return isAr
-        ? `هذا العرض يعمل على بيانات وهمية. في تطبيق حقيقي، تُستبدل قراءات وكيل المراقبة بتغذية حية من نظام إدارة المبنى (BACnet أو Modbus عادة) أو عداد ذكي، دون أي تغيير في بقية الوكلاء لأنها تستهلك نفس شكل البيانات. التنفيذ المستقل يستدعي بالمثل واجهة تحكم حقيقية بدلاً من تحديث حالة داخلي فقط.`
-        : `This demo runs on mock data. In a real deployment, ObserverAgent's readings would be replaced with a live feed from the building's BMS (commonly BACnet or Modbus) or a smart meter, with zero change to any other agent since they all consume the same data shape. Autonomous execution would similarly call a real control API instead of just updating internal state.`;
+        ? `هذا العرض يعمل على بيانات وهمية. في تطبيق حقيقي، تُستبدل قراءات الراصد بتغذية حية من نظام إدارة المبنى (BACnet أو Modbus عادة) أو عداد ذكي، دون أي تغيير في بقية الوكلاء لأنهم يستهلكون نفس شكل البيانات. التنفيذ المستقل يستدعي بالمثل واجهة تحكم حقيقية بدلاً من تحديث حالة داخلي فقط.`
+        : `This demo runs on mock data. In a real deployment, the Observer's readings would be replaced with a live feed from the building's BMS (commonly BACnet or Modbus) or a smart meter, with zero change to any other agent since they all consume the same data shape. Autonomous execution would similarly call a real control API instead of just updating internal state.`;
     }
     if (mentionsDigitalTwinWhat) {
       return isAr

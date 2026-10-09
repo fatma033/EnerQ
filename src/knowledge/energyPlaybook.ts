@@ -89,7 +89,7 @@ export const ENERGY_KNOWLEDGE_BASE: KnowledgeChunk[] = [
     content:
       "A defensible facility-optimization recommendation should weigh at least three axes: (1) energy/cost savings magnitude, (2) occupant comfort or operational disruption, and (3) implementation risk and reversibility. A solution with a smaller savings percentage but materially lower comfort/risk cost can still be the wrong recommendation if a combined alternative achieves both higher savings and an acceptable (not necessarily zero) risk delta — the agent should recommend the pareto-best option, not simply the largest single number.",
     content_ar:
-      "يجب أن توازن أي توصية معتبرة لتحسين المنشأة بين ثلاثة محاور على الأقل: (1) حجم التوفير في الطاقة/التكلفة، (2) راحة الشاغلين أو الإخلال التشغيلي، (3) مخاطرة التنفيذ وإمكانية التراجع. الحل ذو نسبة توفير أقل لكن بتكلفة راحة/مخاطرة أقل بكثير قد يظل خيارًا خاطئًا إذا كان البديل المدمج يحقق توفيرًا أعلى بمخاطرة مقبولة (ليست بالضرورة صفرية) — يجب أن يوصي الوكيل بالخيار الأمثل باريتو، لا بأكبر رقم منفرد فقط.",
+      "يجب أن توازن أي توصية معتبرة لتحسين المنشأة بين ثلاثة محاور على الأقل: (1) حجم التوفير في الطاقة/التكلفة، (2) راحة الشاغلين أو الإخلال التشغيلي، (3) مخاطرة التنفيذ وإمكانية التراجع. الحل ذو نسبة توفير أقل لكن بتكلفة راحة/مخاطرة أقل بكثير قد يظل خيارًا خاطئًا إذا كان البديل المدمج يحقق توفيرًا أعلى بمخاطرة مقبولة (ليست بالضرورة صفرية) — يجب أن يوصي النظام بالخيار الأمثل باريتو، لا بأكبر رقم منفرد فقط.",
   },
   {
     id: "ipmvp-verification",
@@ -111,7 +111,7 @@ export const ENERGY_KNOWLEDGE_BASE: KnowledgeChunk[] = [
     content:
       "Autonomous energy agents should not silently act without a named responsible owner for each piece of equipment. Best practice is a three-step cadence: (1) initial notification with quantified cost impact and a deadline, (2) a single reminder if unresolved that restates accumulating cost, (3) an escalation after a defined SLA (commonly 7-14 days) that surfaces cumulative waste to management. This keeps the human accountable while the agent keeps the issue from being forgotten.",
     content_ar:
-      "لا ينبغي لوكلاء الطاقة المستقلين التصرف بصمت دون مالك مسؤول محدد لكل قطعة تجهيزات. أفضل الممارسات هي وتيرة من ثلاث خطوات: (1) إشعار أولي مع تحديد التأثير المالي وموعد نهائي، (2) تذكير واحد إن لم يُحل، يعيد ذكر التكلفة المتراكمة، (3) تصعيد بعد مدة زمنية محددة (عادة 7-14 يومًا) يعرض الهدر التراكمي على الإدارة. هذا يبقي الإنسان مسؤولاً بينما يمنع الوكيل نسيان المشكلة.",
+      "لا ينبغي لأنظمة الطاقة الذاتية التصرف بصمت دون مالك مسؤول محدد لكل قطعة تجهيزات. أفضل الممارسات هي وتيرة من ثلاث خطوات: (1) إشعار أولي مع تحديد التأثير المالي وموعد نهائي، (2) تذكير واحد إن لم يُحل، يعيد ذكر التكلفة المتراكمة، (3) تصعيد بعد مدة زمنية محددة (عادة 7-14 يومًا) يعرض الهدر التراكمي على الإدارة. هذا يبقي الإنسان مسؤولاً بينما يمنع النظام نسيان المشكلة.",
   },
   {
     id: "digital-twin-simulation-value",
@@ -122,7 +122,7 @@ export const ENERGY_KNOWLEDGE_BASE: KnowledgeChunk[] = [
     content:
       "Testing a candidate intervention in a Digital Twin before real-world deployment lets the agent quantify expected savings and comfort impact without any operational risk. This is especially important for combined interventions, where the interaction between two changed systems (e.g. HVAC schedule + plug-load sleep) is not always the simple sum of their individual effects and benefits from an explicit simulated check.",
     content_ar:
-      "اختبار تدخل مرشح في التوأم الرقمي قبل التطبيق الفعلي يتيح للوكيل تحديد التوفير المتوقع وتأثير الراحة كميًا دون أي مخاطرة تشغيلية. هذا مهم خصوصًا للتدخلات المدمجة، حيث لا يكون التفاعل بين نظامين متغيّرين (مثل جدول التكييف + سكون أحمال المقابس) دائمًا مجرد مجموع تأثيريهما المنفردين، ويستفيد من فحص محاكى صريح.",
+      "اختبار تدخل مرشح في التوأم الرقمي قبل التطبيق الفعلي يتيح للنظام تحديد التوفير المتوقع وتأثير الراحة كميًا دون أي مخاطرة تشغيلية. هذا مهم خصوصًا للتدخلات المدمجة، حيث لا يكون التفاعل بين نظامين متغيّرين (مثل جدول التكييف + سكون أحمال المقابس) دائمًا مجرد مجموع تأثيريهما المنفردين، ويستفيد من فحص محاكى صريح.",
   },
   {
     id: "solar-self-consumption",
@@ -151,24 +151,24 @@ export const ENERGY_KNOWLEDGE_BASE: KnowledgeChunk[] = [
   {
     id: "meta-what-is-enerq",
     title: "What EnerQ Is",
-    title_ar: "ما هو EnerQ",
+    title_ar: "ما هو إنر كيو",
     category: "meta",
-    tags: ["enerq", "what is", "overview", "agent", "ما هو", "نظرة عامة", "وكيل"],
+    tags: ["enerq", "what is", "overview", "agent", "ما هو", "نظرة عامة", "وكيل", "إنر كيو"],
     content:
-      "EnerQ is a multi-agent AI energy system for commercial facilities. It doesn't just display a dashboard — it observes consumption, detects anomalies, investigates root cause, simulates candidate fixes in a Digital Twin, decides on the best one using a computed multi-criteria score, and either asks for approval or acts autonomously, then verifies the result. Four specialist agents (Observer, Diagnostic, Simulation, Action) each own part of that pipeline, coordinated by a shared orchestrator.",
+      "EnerQ is a multi-agent AI energy system for commercial facilities. It doesn't just display a dashboard — it observes consumption, detects anomalies, investigates root cause, simulates candidate fixes in a Digital Twin, decides on the best one using a computed multi-criteria score, and either asks for approval or acts autonomously, then verifies the result. Six agents work together: a chat Guide that walks users through the interface, four pipeline agents (Observer, Investigator, Simulator, Executor) that each own part of the analysis, and a Reporter that produces period reports, coordinated by a shared orchestrator.",
     content_ar:
-      "EnerQ هو نظام طاقة متعدد الوكلاء بالذكاء الاصطناعي للمنشآت التجارية. لا يكتفي بعرض لوحة بيانات — بل يراقب الاستهلاك، يكتشف الشذوذ، يحقق في السبب الجذري، يحاكي الحلول المرشحة في توأم رقمي، يقرر الأفضل باستخدام درجة محسوبة متعددة المعايير، ثم يطلب الموافقة أو ينفّذ باستقلالية، ويتحقق من النتيجة بعد ذلك. أربعة وكلاء متخصصون (المراقبة، التشخيص، المحاكاة، التنفيذ) يتولى كل منهم جزءًا من هذا المسار، بتنسيق من منسّق مشترك.",
+      "إنر كيو منظومة طاقة ذكية متعددة الوكلاء للمنشآت التجارية. لا يكتفي بعرض لوحة بيانات، بل يرصد الاستهلاك، ويكشف الارتفاع غير الطبيعي، ويحدد السبب الجذري، ويجرّب الحلول المقترحة على توأم رقمي، ويختار الأفضل بدرجة محسوبة تراعي عدة معايير، ثم يطلب الموافقة أو ينفّذ ذاتيًا، ويتحقق من النتيجة. ستة وكلاء يعملون معًا: المرشد يرافقك في الواجهة، والراصد والمحقّق والمحاكي والمنفّذ يتولّون مسار التحليل، والمراسل يُعدّ التقارير، بتنسيق من منسّق مشترك.",
   },
   {
     id: "meta-multi-agent-architecture",
     title: "Why Multiple Agents Instead of One Script",
-    title_ar: "لماذا وكلاء متعددون بدلًا من نص برمجي واحد",
+    title_ar: "لماذا عدة وكلاء بدلًا من نص برمجي واحد",
     category: "meta",
     tags: ["multi-agent", "architecture", "agents", "orchestrator", "وكلاء متعددون", "معمارية", "منسق"],
     content:
-      "A single monolithic script that does everything is hard to reason about, test, or replace piece by piece. EnerQ splits its nine-stage pipeline across four agents, each with one job: ObserverAgent (observe, detect), DiagnosticAgent (investigate, generate solutions), SimulationAgent (simulate, compare, decide), and ActionAgent (recommend, verify). A coordinator (the orchestrator) holds shared state and calls each agent in turn but contains none of the actual reasoning itself. This means, for example, ObserverAgent alone could be replaced with a real IoT/BMS data feed without touching any other agent.",
+      "A single monolithic script that does everything is hard to reason about, test, or replace piece by piece. EnerQ splits its nine-stage pipeline across four agents, each with one job: the Observer (observe, detect), the Investigator (investigate, generate solutions), the Simulator (simulate, compare, decide), and the Executor (recommend, verify). Two more agents sit beside the pipeline: the Guide (chat) and the Reporter (reports). A coordinator (the orchestrator) holds shared state and calls each agent in turn but contains none of the actual reasoning itself. This means, for example, the Observer alone could be replaced with a real IoT/BMS data feed without touching any other agent.",
     content_ar:
-      "نص برمجي واحد ضخم يقوم بكل شيء يصعب فهمه أو اختباره أو استبدال جزء منه. يقسّم EnerQ مساره التسع-مراحل على أربعة وكلاء، لكل منهم مهمة واحدة: وكيل المراقبة (مراقبة، اكتشاف)، وكيل التشخيص (تحقيق، توليد حلول)، وكيل المحاكاة (محاكاة، مقارنة، قرار)، ووكيل التنفيذ (توصية، تحقق). منسّق مشترك (Orchestrator) يحمل الحالة المشتركة ويستدعي كل وكيل بدوره، لكنه لا يحتوي على أي من الاستدلال الفعلي بنفسه. هذا يعني، على سبيل المثال، أن وكيل المراقبة وحده يمكن استبداله بمصدر بيانات IoT/BMS حقيقي دون المساس بأي وكيل آخر.",
+      "نص برمجي واحد ضخم يتولى كل شيء يصعب فهمه واختباره واستبدال أجزائه. لذلك يوزّع إنر كيو مساره ذا المراحل التسع على أربعة وكلاء، لكل منهم مهمة واحدة: الراصد (رصد واكتشاف)، والمحقّق (تحقيق واقتراح حلول)، والمحاكي (محاكاة ومقارنة وقرار)، والمنفّذ (توصية وتحقق). ويقف بجانب المسار وكيلان آخران: المرشد في المحادثة، والمراسل للتقارير. منسّق مشترك يحمل الحالة المشتركة ويستدعي كل وكيل بدوره دون أن يتولى الاستدلال بنفسه. وهذا يعني مثلًا أن استبدال الراصد وحده بمصدر بيانات حقيقي من IoT/BMS لا يمسّ بقية الوكلاء.",
   },
   {
     id: "meta-what-is-rag",
@@ -179,18 +179,18 @@ export const ENERGY_KNOWLEDGE_BASE: KnowledgeChunk[] = [
     content:
       "Before the LLM answers, EnerQ retrieves the most relevant entries from a small energy-management knowledge base using keyword/term-overlap matching (no vector database needed for this scale), and gives those excerpts to the model as grounding context. This is why answers can cite a real source instead of the model inventing one — the citation chip shown under a chat reply names the actual knowledge-base entry that was retrieved and used.",
     content_ar:
-      "قبل أن يجيب النموذج اللغوي، يسترجع EnerQ أكثر المدخلات صلة من قاعدة معرفة صغيرة لإدارة الطاقة باستخدام مطابقة الكلمات المفتاحية (دون الحاجة لقاعدة بيانات متجهة بهذا الحجم)، ويقدّم تلك المقتطفات للنموذج كسياق استرشادي. لهذا يمكن للإجابات أن تستشهد بمصدر حقيقي بدلاً من أن يخترعه النموذج — شارة الاستشهاد الظاهرة أسفل رد المحادثة تسمّي مدخل قاعدة المعرفة الفعلي الذي تم استرجاعه واستخدامه.",
+      "قبل أن يجيب النموذج اللغوي، يسترجع إنر كيو أكثر المدخلات صلة من قاعدة معرفة صغيرة لإدارة الطاقة باستخدام مطابقة الكلمات المفتاحية (دون الحاجة لقاعدة بيانات متجهة بهذا الحجم)، ويقدّم تلك المقتطفات للنموذج كسياق استرشادي. لهذا يمكن للإجابات أن تستشهد بمصدر حقيقي بدلاً من أن يخترعه النموذج — شارة الاستشهاد الظاهرة أسفل رد المحادثة تسمّي مدخل قاعدة المعرفة الفعلي الذي تم استرجاعه واستخدامه.",
   },
   {
     id: "meta-deterministic-fallback",
     title: "Why the Agent Still Works Without the LLM",
-    title_ar: "لماذا يستمر الوكيل بالعمل دون النموذج اللغوي",
+    title_ar: "لماذا يواصل النظام عمله دون النموذج اللغوي",
     category: "meta",
     tags: ["deterministic", "fallback", "resilience", "offline", "ollama", "حتمي", "احتياطي", "مرونة", "دون اتصال"],
     content:
       "EnerQ's decisions never depend on the LLM being reachable. Every stage's pipeline logic and the multi-criteria scoring run on deterministic code regardless of whether a local Ollama instance is running; only the free-form narrative explanation and chat replies are LLM-generated when available, falling back to templated (but still data-grounded, and now bilingual) text when it isn't. This was a deliberate design choice — an energy agent that stops working when a language model is unreachable isn't reliable enough for real facility operations.",
     content_ar:
-      "قرارات EnerQ لا تعتمد أبدًا على توفر النموذج اللغوي. منطق كل مرحلة والتقييم متعدد المعايير يعملان بشكل حتمي بغض النظر عن تشغيل Ollama محليًا؛ فقط السرد الحر والردود في المحادثة تُولَّد بواسطة النموذج اللغوي عند توفره، وتعود إلى نص جاهز (لكنه مستند إلى البيانات الفعلية، وثنائي اللغة الآن) عند عدم توفره. كان هذا قرار تصميم متعمد — وكيل طاقة يتوقف عن العمل عند تعذّر الوصول لنموذج لغوي ليس موثوقًا بما يكفي لعمليات منشأة حقيقية.",
+      "قرارات إنر كيو لا تعتمد أبدًا على توفر النموذج اللغوي. فمنطق كل مرحلة والتقييم متعدد المعايير يعملان بشكل حتمي سواء كان Ollama يعمل محليًا أم لا؛ والنموذج اللغوي يتولى فقط الشرح الحر وردود المحادثة عند توفره، وإلا عاد النظام إلى نص جاهز مبني على البيانات الفعلية وبلغتين. وهذا قرار تصميم متعمد، فنظام طاقة يتوقف عند تعذّر الوصول إلى نموذج لغوي لا يصلح لتشغيل منشأة حقيقية.",
   },
   {
     id: "meta-iot-real-deployment",
@@ -199,9 +199,9 @@ export const ENERGY_KNOWLEDGE_BASE: KnowledgeChunk[] = [
     category: "meta",
     tags: ["iot", "bms", "bacnet", "modbus", "sensors", "real deployment", "انترنت الاشياء", "نظام ادارة مبنى", "حساسات", "تطبيق حقيقي"],
     content:
-      "This demo runs on mock facility data. In a real deployment, ObserverAgent's telemetry read would be replaced with a live feed from the building's BMS (commonly BACnet or Modbus protocol) or smart-meter API instead of a static mock object — every other agent consumes the same FacilityState shape either way, so nothing downstream changes. Autonomous execution (ActionAgent) would similarly call a real BMS control API or smart-relay/PDU vendor API to actually cut power, gated behind the same approval/autonomous authorization levels already in the UI.",
+      "This demo runs on mock facility data. In a real deployment, the Observer's telemetry read would be replaced with a live feed from the building's BMS (commonly BACnet or Modbus protocol) or smart-meter API instead of a static mock object — every other agent consumes the same FacilityState shape either way, so nothing downstream changes. Autonomous execution (the Executor) would similarly call a real BMS control API or smart-relay/PDU vendor API to actually cut power, gated behind the same approval/autonomous authorization levels already in the UI.",
     content_ar:
-      "يعمل هذا العرض التوضيحي على بيانات منشأة وهمية. في تطبيق حقيقي، يُستبدل استيعاب القراءات لدى وكيل المراقبة بتغذية حية من نظام إدارة المبنى (عادة بروتوكول BACnet أو Modbus) أو واجهة برمجية للعداد الذكي بدلاً من كائن ثابت وهمي — تستهلك بقية الوكلاء نفس شكل بيانات المنشأة (FacilityState) في الحالتين، فلا يتغير شيء في المراحل التالية. التنفيذ المستقل (وكيل التنفيذ) يستدعي بالمثل واجهة برمجية حقيقية للتحكم بنظام إدارة المبنى أو مرحّل ذكي/وحدة توزيع طاقة لقطع التيار فعليًا، ضمن نفس مستويات تفويض الموافقة/الاستقلالية الموجودة بالفعل في الواجهة.",
+      "يعمل هذا العرض التوضيحي على بيانات منشأة وهمية. في تطبيق حقيقي، تُستبدل قراءات الراصد بتغذية حية من نظام إدارة المبنى (عادة بروتوكول BACnet أو Modbus) أو واجهة برمجية للعداد الذكي بدلاً من كائن ثابت وهمي — تستهلك بقية الوكلاء نفس شكل بيانات المنشأة (FacilityState) في الحالتين، فلا يتغير شيء في المراحل التالية. أما التنفيذ المستقل (المنفّذ) فيستدعي بالمثل واجهة برمجية حقيقية للتحكم بنظام إدارة المبنى أو مرحّل ذكي/وحدة توزيع طاقة لقطع التيار فعليًا، ضمن نفس مستويات تفويض الموافقة/الاستقلالية الموجودة بالفعل في الواجهة.",
   },
   {
     id: "meta-autonomy-levels",
@@ -210,8 +210,8 @@ export const ENERGY_KNOWLEDGE_BASE: KnowledgeChunk[] = [
     category: "meta",
     tags: ["autonomy", "approval", "autonomous", "level 3", "human in the loop", "استقلالية", "موافقة", "مستقل", "إنسان في الحلقة"],
     content:
-      "EnerQ supports two authorization levels. In Approval mode, ActionAgent hands the decision to a human and, if left unanswered, reminds then escalates rather than acting on its own. In Autonomous mode, for a solution whose risk score falls within a pre-authorized threshold, ActionAgent proceeds directly to implementation without waiting — still logged transparently, still followed by the same verification step. This mirrors how real facility automation is typically deployed: low-risk actions autonomous, higher-stakes ones human-gated.",
+      "EnerQ supports two authorization levels. In Approval mode, the Executor hands the decision to a human and, if left unanswered, reminds then escalates rather than acting on its own. In Autonomous mode, for a solution whose risk score falls within a pre-authorized threshold, the Executor proceeds directly to implementation without waiting — still logged transparently, still followed by the same verification step. This mirrors how real facility automation is typically deployed: low-risk actions autonomous, higher-stakes ones human-gated.",
     content_ar:
-      "يدعم EnerQ مستويي تفويض. في وضع الموافقة، يسلّم وكيل التنفيذ القرار لإنسان، وإن لم يُجَب عليه يذكّر ثم يصعّد بدلًا من التصرف بمفرده. في الوضع المستقل، بالنسبة لحل تقع درجة مخاطرته ضمن عتبة مفوَّضة مسبقًا، ينتقل وكيل التنفيذ مباشرة إلى التنفيذ دون انتظار — مع تسجيل شفاف دائمًا، ومتبوعًا بنفس خطوة التحقق. هذا يعكس كيفية نشر أتمتة المنشآت الحقيقية عادة: إجراءات منخفضة المخاطر مستقلة، وإجراءات أعلى حساسية تمر عبر بوابة بشرية.",
+      "يدعم إنر كيو مستويين من التفويض. في وضع الموافقة، يعرض المنفّذ القرار على إنسان، وإن لم يأتِه رد يذكّره ثم يصعّد الأمر بدلًا من التصرف بمفرده. وفي الوضع الذاتي، إذا كانت درجة مخاطرة الحل ضمن حدّ مفوَّض مسبقًا، ينتقل المنفّذ مباشرة إلى التنفيذ دون انتظار، مع تسجيل شفاف دائمًا وبعده خطوة التحقق نفسها. هذا يعكس كيفية نشر أتمتة المنشآت الحقيقية عادة: إجراءات منخفضة المخاطر مستقلة، وإجراءات أعلى حساسية تمر عبر بوابة بشرية.",
   },
 ];
