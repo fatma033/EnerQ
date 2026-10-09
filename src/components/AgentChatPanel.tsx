@@ -28,6 +28,7 @@ interface ChatMessage {
   timestamp: string;
   citations?: { id: string; title: string; snippet: string }[];
   suggestedNav?: { page: ChatPageId; scenario?: "A" | "B" | "C" };
+  suggestReports?: boolean;
 }
 
 /** Matches "Solution C" / "Option A" / "الحل C" etc. regardless of language --
@@ -113,12 +114,12 @@ export const AgentChatPanel: React.FC<AgentChatPanelProps> = ({
         sender: "agent",
         text:
           language === "ar"
-            ? "التقارير من اختصاص وكيل التقارير (ReportsAgent). فتحته لك الآن لإعداد التقرير."
-            : "Reports are handled by the ReportsAgent, so I've opened it for you to generate the report.",
+            ? "التقارير من اختصاص وكيل التقارير (ReportsAgent). افتحه من الزر أدناه، ثم اختر الفترة التي تريدها (هذا الأسبوع، هذا الشهر، هذه السنة، أو نطاق مخصص) وابدأ إنشاء التقرير."
+            : "Reports are handled by the ReportsAgent. Open it with the button below, then pick the period you want (this week, this month, this year, or a custom range) and start generating the report.",
         timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+        suggestReports: true,
       };
       setMessages((prev) => [...prev, handoff]);
-      onOpenReportsAgent();
       return;
     }
 
@@ -231,6 +232,15 @@ export const AgentChatPanel: React.FC<AgentChatPanelProps> = ({
               }`}
             >
               <div className="whitespace-pre-line">{msg.text}</div>
+              {msg.suggestReports && (
+                <button
+                  onClick={onOpenReportsAgent}
+                  className="mt-2 flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-semibold bg-emerald-500 hover:bg-emerald-400 text-slate-950 transition-colors cursor-pointer"
+                >
+                  <span>{language === "ar" ? "افتح وكيل التقارير" : "Open ReportsAgent"}</span>
+                  <ArrowRight className="w-3 h-3" />
+                </button>
+              )}
               {msg.suggestedNav && (
                 <button
                   onClick={() => onNavigate(msg.suggestedNav!.page, msg.suggestedNav!.scenario)}
