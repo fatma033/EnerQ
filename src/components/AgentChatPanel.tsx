@@ -14,6 +14,8 @@ interface AgentChatPanelProps {
    *  that scenario there. Same handler the Solutions comparison cards use,
    *  so acting on a chat suggestion behaves identically to clicking there. */
   onNavigate: (page: ChatPageId, scenario?: "A" | "B" | "C") => void;
+  /** Opens the ReportsAgent modal -- report requests are handed off to it. */
+  onOpenReportsAgent: () => void;
   /** "page": fills its container, no header chrome (used on the Home page).
    *  "compact": adds its own header bar (used in tighter contexts). */
   variant?: "page" | "compact";
@@ -52,12 +54,25 @@ function detectSuggestedNav(text: string): { page: ChatPageId; scenario?: "A" | 
   return null;
 }
 
+/** True when the user is asking for a report to be produced -- that is the
+ *  ReportsAgent's job, not something the chat LLM should improvise. Needs a
+ *  "make/generate/export" style verb next to "report" (or the agent's name) so
+ *  questions merely mentioning a report still go to the normal chat. */
+function isReportRequest(text: string): boolean {
+  const q = text.toLowerCase();
+  return (
+    /(generate|create|make|write|prepare|export|build|produce|download|give me|i need|i want|اعمل|أنشئ|انشئ|اكتب|جهز|جهّز|أصدر|اصدر|ولّد|ولد|اطلع|اريد|أريد|ابغى|ابي|أبي|ابغي|عطني|اعطني|أعطني)[^.?!\n]{0,40}(report|تقرير|تقارير)/.test(q) ||
+    /reports?\s*agent|وكيل\s*(ال)?تقارير|^\s*(report|reports|تقرير|تقارير|التقرير)\s*[.!؟?]*\s*$/.test(q)
+  );
+}
+
 export const AgentChatPanel: React.FC<AgentChatPanelProps> = ({
   facility,
   solutions,
   t,
   language,
   onNavigate,
+  onOpenReportsAgent,
   variant = "page",
 }) => {
   const c = t.chat;
@@ -91,6 +106,22 @@ export const AgentChatPanel: React.FC<AgentChatPanelProps> = ({
 
     setMessages((prev) => [...prev, userMsg]);
     setInputPrompt("");
+
+    if (isReportRequest(query)) {
+      const handoff: ChatMessage = {
+        id: `a-${Date.now()}`,
+        sender: "agent",
+        text:
+          language === "ar"
+            ? "التقارير من اختصاص وكيل التقارير (ReportsAgent). فتحته لك الآن لإعداد التقرير."
+            : "Reports are handled by the ReportsAgent, so I've opened it for you to generate the report.",
+        timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+      };
+      setMessages((prev) => [...prev, handoff]);
+      onOpenReportsAgent();
+      return;
+    }
+
     setIsLoading(true);
 
     try {

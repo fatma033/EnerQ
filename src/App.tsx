@@ -235,6 +235,7 @@ export default function App() {
               t={t}
               language={language}
               onNavigate={handleNavigate}
+              onOpenReportsAgent={() => setIsReportsAgentOpen(true)}
               variant="page"
             />
           </div>

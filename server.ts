@@ -119,7 +119,7 @@ function normalizeArabic(text: string): string {
 
 const HOW_ARE_YOU_RE = /how are you|how'?s it going|what'?s up|كيف حالك|كيفك|شلونك|اخبارك|أخبارك/i;
 const THANKS_RE = /^\s*(thanks|thank you)\b|^\s*(شكرا)(?=\s|$)/i;
-const GREETING_RE = /^\s*(hi|hello|hey|good morning|good afternoon|good evening)\b|^\s*(مرحبا|اهلا|السلام عليكم|وعليكم السلام|صباح الخير|مساء الخير|هلا)(?=\s|$)/i;
+const GREETING_RE = /^\s*(hi+|hel+o+|hey+|yo|sup|good morning|good afternoon|good evening)(?![a-z])|^\s*(مرحبا|اهلا|السلام عليكم|وعليكم السلام|صباح الخير|مساء الخير|هلا)(?=\s|$)/i;
 
 function isSmallTalk(prompt: string): boolean {
   const p = normalizeArabic(prompt.trim());
